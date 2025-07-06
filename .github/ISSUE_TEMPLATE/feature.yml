@@ -1,6 +1,6 @@
 name: ✨ 기능 개발
 description: 새로운 기능을 개발할 때 사용하세요!
-title: "✨ Feature: "
+title: "✨ Feat. "
 labels: ["Feature"]
 body:
   - type: textarea
@@ -39,6 +39,6 @@ body:
     attributes:
       label: 🔗 참고 자료
       description: Figma, Notion, API 명세 등 있으면 추가해주세요.
-      placeholder: ex) Figma 디자인 링크: https://...
+      placeholder: "ex) Figma 디자인 링크: https://..."
     validations:
       required: false

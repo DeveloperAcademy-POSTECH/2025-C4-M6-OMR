@@ -1,6 +1,6 @@
 name: 🧪 테스트 시나리오
 description: 기능 구현 후 검증을 위해 테스트를 요청할 때 사용합니다.
-title: "🧪 Test: "
+title: "🧪 Test. "
 labels: ["QA", "Test"]
 body:
   - type: textarea
