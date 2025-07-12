@@ -1,29 +1,9 @@
-
-# Created by https://www.toptal.com/developers/gitignore/api/xcode,macos,swift,swiftpackagemanager,cocoapods
-# Edit at https://www.toptal.com/developers/gitignore?templates=xcode,macos,swift,swiftpackagemanager,cocoapods
-
-### CocoaPods ###
-## CocoaPods GitIgnore Template
-
-# CocoaPods - Only use to conserve bandwidth / Save time on Pushing
-#           - Also handy if you have a large number of dependant pods
-#           - AS PER https://guides.cocoapods.org/using/using-cocoapods.html NEVER IGNORE THE LOCK FILE
-Pods/
-
 ### macOS ###
-# General
 .DS_Store
 .AppleDouble
 .LSOverride
-
-# Icon must end with two \r
 Icon
-
-
-# Thumbnails
 ._*
-
-# Files that might appear in the root of a volume
 .DocumentRevisions-V100
 .fseventsd
 .Spotlight-V100
@@ -31,121 +11,51 @@ Icon
 .Trashes
 .VolumeIcon.icns
 .com.apple.timemachine.donotpresent
-
-# Directories potentially created on remote AFP share
 .AppleDB
 .AppleDesktop
 Network Trash Folder
 Temporary Items
 .apdisk
-
-### macOS Patch ###
-# iCloud generated files
 *.icloud
 
-### Swift ###
-# Xcode
-#
-# gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
-
-## User settings
-xcuserdata/
-
-## compatibility with Xcode 8 and earlier (ignoring not required starting Xcode 9)
-*.xcscmblueprint
-*.xccheckout
-
-## compatibility with Xcode 3 and earlier (ignoring not required starting Xcode 4)
+### Xcode ###
+# 빌드 결과물 및 사용자 개인 설정
 build/
 DerivedData/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/xcshareddata/WorkspaceSettings.xcsettings
+*.xcuserstate
 *.moved-aside
-*.pbxuser
-!default.pbxuser
-*.mode1v3
-!default.mode1v3
-*.mode2v3
-!default.mode2v3
-*.perspectivev3
-!default.perspectivev3
 
-## Obj-C/Swift specific
-*.hmap
+### SwiftPM ###
+# 로컬 캐시 및 다운로드된 소스코드
+.swiftpm/
+Packages/
+# Package.resolved 파일은 팀의 의존성 버전 통일을 위해 반드시 커밋해야 합니다.
 
-## App packaging
-*.ipa
-*.dSYM.zip
-*.dSYM
+### CocoaPods (사용 시) ###
+Pods/
 
-## Playgrounds
+### Carthage (사용 시) ###
+Carthage/Build/
+
+### Fastlane (사용 시) ###
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+### Playgrounds ###
 timeline.xctimeline
 playground.xcworkspace
 
-# Swift Package Manager
-# Add this line if you want to avoid checking in source code from Swift Package Manager dependencies.
-# Packages/
-# Package.pins
-# Package.resolved
-# *.xcodeproj
-# Xcode automatically generates this directory with a .xcworkspacedata file and xcuserdata
-# hence it is not needed unless you have added a package configuration file to your project
-# .swiftpm
+### ARKit / RealityKit ###
+# 중요: .reality, .usdz 파일이 '소스 에셋'인 경우 아래 줄을 삭제하거나 주석 처리하세요.
+# 빌드 시 '생성되는 파일'인 경우에만 무시하는 것을 권장합니다.
+# *.reality.*
+# *.usdz.*
+# .rcproject 파일은 '소스 파일'이므로 Git에서 관리해야 합니다.
 
-.build/
-
-# CocoaPods
-# We recommend against adding the Pods directory to your .gitignore. However
-# you should judge for yourself, the pros and cons are mentioned at:
-# https://guides.cocoapods.org/using/using-cocoapods.html#should-i-check-the-pods-directory-into-source-control
-# Pods/
-# Add this line if you want to avoid checking in source code from the Xcode workspace
-# *.xcworkspace
-
-# Carthage
-# Add this line if you want to avoid checking in source code from Carthage dependencies.
-# Carthage/Checkouts
-
-Carthage/Build/
-
-# Accio dependency management
-Dependencies/
-.accio/
-
-# fastlane
-# It is recommended to not store the screenshots in the git repo.
-# Instead, use fastlane to re-generate the screenshots whenever they are needed.
-# For more information about the recommended setup visit:
-# https://docs.fastlane.tools/best-practices/source-control/#source-control
-
-fastlane/report.xml
-fastlane/Preview.html
-fastlane/screenshots/**/*.png
-fastlane/test_output
-
-# Code Injection
-# After new code Injection tools there's a generated folder /iOSInjectionProject
-# https://github.com/johnno1962/injectionforxcode
-
-iOSInjectionProject/
-
-### SwiftPackageManager ###
-Packages
-xcuserdata
-*.xcodeproj
-
-### Xcode config file ###
-*.xcconfig
-
-
-### Xcode ###
-
-## Xcode 8 and earlier
-
-### Xcode Patch ###
-*.xcodeproj/*
-!*.xcodeproj/project.pbxproj
-!*.xcodeproj/xcshareddata/
-!*.xcworkspace/contents.xcworkspacedata
-/*.gcno
-**/xcshareddata/WorkspaceSettings.xcsettings
-
-# End of https://www.toptal.com/developers/gitignore/api/xcode,macos,swift,swiftpackagemanager,cocoapods
+### Cursor Editor ###
+.cursor/
