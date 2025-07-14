@@ -90,7 +90,7 @@
 
 ## 🧑‍💻 팀 소개
 
-| [Elena (김지윤)] (https://github.com/Jykim-111) | [Avery (정서진)](https://github.com/averysjung) | [OneThing (천은송)](https://github.com/freeskyES) | [Woody (이창건)(https://github.com/Mark3891) | [Henry (김현목)](https://github.com/NOP-YA) | [Kave (황지민)](https://github.com/RoastedJM) |
+| [Elena (김지윤)](https://github.com/Jykim-111) | [Avery (정서진)](https://github.com/averysjung) | [OneThing (천은송)](https://github.com/freeskyES) | [Woody (이창건)](https://github.com/Mark3891) | [Henry (김현목)](https://github.com/NOP-YA) | [Kave (황지민)](https://github.com/RoastedJM) |
 |:---:|:---:|:---:|:---:|:---:|:---:|
 | <img src="https://github.com/Jykim-111.png" width="100" height="100" style="border-radius:50%"/> | <img src="https://github.com/averysjung.png" width="100" height="100" style="border-radius:50%"/> | <img src="https://github.com/freeskyES.png" width="100" height="100" style="border-radius:50%"/> | <img src="https://github.com/Mark3891.png" width="100" height="100" style="border-radius:50%"/> | <img src="https://github.com/NOP-YA.png" width="100" height="100" style="border-radius:50%"/> | <img src="https://github.com/RoastedJM.png" width="100" height="100" style="border-radius:50%"/> |
 
