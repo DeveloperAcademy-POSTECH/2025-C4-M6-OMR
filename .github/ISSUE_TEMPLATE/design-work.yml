@@ -1,5 +1,5 @@
-name: 🚧 디자인 작업
-description: 하나의 디자인 작업 단위를 기록하고 공유하기 위해 사용합니다.
+name: "🚧 디자인 작업"
+description: "하나의 디자인 작업 단위를 기록하고 공유하기 위해 사용합니다."
 title: "🚧 Design. "
 labels: ["Design-WIP"]
 assignees: []
@@ -8,23 +8,23 @@ body:
   - type: textarea
     id: goal
     attributes:
-      label: 🎯 목적 및 작업 배경
-      placeholder: 이 작업이 왜 필요한지, 어떤 문제를 해결하려는지 설명해주세요.
+      label: "🎯 목적 및 작업 배경"
+      placeholder: "이 작업이 왜 필요한지, 어떤 문제를 해결하려는지 설명해주세요."
     validations:
       required: true
 
   - type: textarea
     id: task
     attributes:
-      label: 📌 작업 내용
-      placeholder: 어떤 디자인 작업을 수행해야 하는지 구체적으로 작성해주세요. (예: UI 컴포넌트 디자인, 화면 플로우 확정 등)
+      label: "📌 작업 내용"
+      placeholder: "어떤 디자인 작업을 수행해야 하는지 구체적으로 작성해주세요. (예: UI 컴포넌트 디자인, 화면 플로우 확정 등)"
     validations:
       required: true
 
   - type: checkboxes
     id: checklist
     attributes:
-      label: 📋 체크리스트
+      label: "📋 체크리스트"
       options:
         - label: "와이어프레임/플로우 설계"
         - label: "UI 디자인"
@@ -37,22 +37,23 @@ body:
   - type: textarea
     id: output
     attributes:
-      label: 🖼️ 결과물 링크
-      placeholder: Figma, Notion, Drive 링크 등을 첨부해주세요.
+      label: "🖼️ 결과물 링크"
+      placeholder: "Figma, Notion, Drive 링크 등을 첨부해주세요."
     validations:
       required: false
-      
+
   - type: textarea
     id: screenshot
     attributes:
-      label: 🖼 스크린샷 또는 로그
-      placeholder: 예) Xcode 콘솔 로그 첨부 또는 에러 화면
+      label: "🖼 스크린샷 / 시안 캡처 (Optional)"
+      placeholder: "디자인 진행 중 참고용 시안, 플로우 캡처 등을 첨부해주세요."
     validations:
+      required: false
 
   - type: input
     id: due
     attributes:
-      label: 📅 Due Date
-      placeholder: YYYY-MM-DD
+      label: "📅 Due Date"
+      placeholder: "YYYY-MM-DD"
     validations:
       required: false
