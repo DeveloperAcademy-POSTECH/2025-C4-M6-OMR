@@ -41,19 +41,14 @@
 
 ## 🛠 기술 스택
 
-	•	Language: Swift 5.9
-	•	UI: SwiftUI + UIKit (필요 시 병행 사용)
-	•	Architecture: MVVM 
-	•	Frameworks:
-	•	MusicKit – Apple Music API 기반 음악 연동
-	•	MapKit – 현재 위치 및 장소 기반 탐색 UI
-	•	ARKit, RealityKit – 공간 내 시각적 상호작용 요소 구현
-	•	IDE: Xcode 15.0
-	•	Testing: XCTest
-	•	Design & Docs: Figma, Notion
-	•	Collaboration & PM: GitHub Projects
-	•	CI/CD: (추후 구성 예정)
-	•	Deployment: (App Store 예정)
+- Swift 5.9 / SwiftUI / UIKit
+- Xcode 15.0
+- 아키텍처: MVVM
+- 프레임워크: MusicKit, MapKit, ARKit, RealityKit
+- 테스트: XCTest
+- 기타 도구: Figma, Notion, GitHub Projects
+- CI/CD: 미정
+- 배포: 미정
 
 
 ## 🌟 주요 기능
