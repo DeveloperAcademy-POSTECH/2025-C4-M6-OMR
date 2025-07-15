@@ -30,8 +30,9 @@ DerivedData/
 
 ### SwiftPM ###
 # 로컬 캐시 및 다운로드된 소스코드
-.swiftpm/
-Packages/
+/.swiftpm/
+/.build/
+!Packages/**
 # Package.resolved 파일은 팀의 의존성 버전 통일을 위해 반드시 커밋해야 합니다.
 
 ### CocoaPods (사용 시) ###
