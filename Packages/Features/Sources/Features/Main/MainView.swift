@@ -6,6 +6,7 @@
 //
 import SwiftUI
 import CoreLocation
+import MapKit
 
 struct MainView: View {
     @EnvironmentObject private var nav: NavigationViewModel
@@ -38,6 +39,22 @@ struct MainView: View {
                     nav.push(.arCamera)
                 }
                 
+                if let currentLocation = locationManager.currentLocation {
+                    let identifiableLocation = IdentifiableLocation(location: currentLocation)
+                    
+                    Map(initialPosition: .region(
+                        MKCoordinateRegion(
+                            center: identifiableLocation.coordinate,
+                            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                        )
+                    )) {
+                        Marker("내 위치", coordinate: identifiableLocation.coordinate)
+                            .tint(.blue)
+                    }
+                    .mapStyle(.standard)
+                    .frame(width: UIScreen.main.bounds.width - 32, height: 200)
+                    .cornerRadius(12)
+                }
                 Spacer()
             }
             
@@ -82,8 +99,11 @@ struct MainView: View {
     }
 }
 
-
-
-
-
-
+struct IdentifiableLocation: Identifiable {
+    let id = UUID()
+    let location: CLLocation
+    
+    var coordinate: CLLocationCoordinate2D {
+        location.coordinate
+    }
+}

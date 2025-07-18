@@ -57,8 +57,3 @@ public final class MainViewModel: ObservableObject {
     }
     
 }
-
-// Helper to make String identifiable for the alert
-extension String: Identifiable {
-    public var id: String { self }
-}
