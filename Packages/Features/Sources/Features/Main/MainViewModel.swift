@@ -6,7 +6,7 @@ import Foundation
 @MainActor
 public final class MainViewModel: ObservableObject {
     // MARK: - State
-    @Published public var motes: [Mote] = []
+    @Published public var motes: [MainMote] = []
     @Published public var isLoading: Bool = false
     @Published public var errorMessage: String?
 
@@ -17,24 +17,45 @@ public final class MainViewModel: ObservableObject {
     public init() {}
 
     // MARK: - Public Methods
-    public func loadNearbyMotes(center: Location, radius: Double) {
+    public func loadNearbyMotesMock(center: Location, radius: Double) {
         isLoading = true
         errorMessage = nil
 
         Task {
-            do {
-                let fetchedMotes = try await fetchNearbyMotesUseCase(
-                    center: center,
-                    radius: radius
+            let allMotes = MockDataProvider.mockObjects()
+            let filtered = allMotes.filter { mote in
+                let distance = haversineDistance(
+                    lat1: center.latitude,
+                    lon1: center.longitude,
+                    lat2: mote.latitude,
+                    lon2: mote.longitude
                 )
-                self.motes = fetchedMotes
-            } catch {
-                self.errorMessage =
-                    "데이터를 불러오는 데 실패했습니다: \(error.localizedDescription)"
+                print("mote: \(mote.title), distance: \(distance) meters")
+                return distance <= radius
             }
+
+            self.motes = filtered.map {
+                MainMote(id: $0.id, latitude: $0.latitude, longitude: $0.longitude)
+            }
+
             self.isLoading = false
         }
     }
+
+
+
+    // Haversine 거리 계산 (미터 단위)
+    private func haversineDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double) -> Double {
+        let R = 6371000.0 // 지구 반지름 (m)
+        let dLat = (lat2 - lat1) * .pi / 180
+        let dLon = (lon2 - lon1) * .pi / 180
+        let a = sin(dLat/2) * sin(dLat/2) +
+                cos(lat1 * .pi / 180) * cos(lat2 * .pi / 180) *
+                sin(dLon/2) * sin(dLon/2)
+        let c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return R * c
+    }
+
 }
 
 // Helper to make String identifiable for the alert
