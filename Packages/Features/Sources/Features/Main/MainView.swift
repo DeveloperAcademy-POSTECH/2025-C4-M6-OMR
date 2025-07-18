@@ -14,24 +14,50 @@ struct MainView: View {
     
     @State private var previousLocation: CLLocation? = nil
     let updateThresholdMeters = 20.0  // 20m 이상 이동했을 때만 업데이트
-    
+
+    // 👇 bottom sheet 제어용
+    @State private var sheetPosition: SheetPosition = .half
+    @GestureState private var dragOffset: CGSize = .zero
+
     var body: some View {
-        VStack(spacing: 16) {
-            Text("현재 위치: \(locationManager.currentAddress)")
-                .font(.headline)
-                .padding()
-            
-            if viewModel.isLoading {
-                ProgressView()
-            } else if !viewModel.motes.isEmpty {
-                Text("주변에 과거에 기록한 \(viewModel.motes.count) 모트가 있어요")
-                    .font(.subheadline)
+        ZStack {
+            VStack(spacing: 16) {
+                Text("현재 위치: \(locationManager.currentAddress)")
+                    .font(.headline)
                     .padding()
+                
+                if viewModel.isLoading {
+                    ProgressView()
+                } else if !viewModel.motes.isEmpty {
+                    Text("주변에 과거에 기록한 \(viewModel.motes.count) 모트가 있어요")
+                        .font(.subheadline)
+                        .padding()
+                }
+                
+                Button("AR 보기") {
+                    nav.push(.arCamera)
+                }
+                
+                Spacer()
             }
-            
-            Button("AR 보기") {
-                nav.push(.arCamera)
-            }
+
+            // 👇 Bottom Sheet
+            MyRecordBottomSheet(sheetPosition: sheetPosition)
+                .offset(y: sheetPosition.yOffset + dragOffset.height)
+                .animation(.easeInOut, value: sheetPosition)
+                .gesture(
+                    DragGesture()
+                        .updating($dragOffset) { value, state, _ in
+                            state = value.translation
+                        }
+                        .onEnded { value in
+                            if value.translation.height < -100 {
+                                sheetPosition = .full
+                            } else if value.translation.height > 100 {
+                                sheetPosition = .half
+                            }
+                        }
+                )
         }
         .onReceive(locationManager.$currentLocation.compactMap { $0 }) { location in
             if let prev = previousLocation {
@@ -53,6 +79,7 @@ struct MainView: View {
         }
     }
 }
+
 
 
 
