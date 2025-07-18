@@ -42,10 +42,12 @@ struct MainView: View {
             }
 
             // 👇 Bottom Sheet
-            MyRecordBottomSheet(sheetPosition: sheetPosition)
+            // 👇 Bottom Sheet
+            MyRecordBottomSheet(sheetPosition: $sheetPosition)
                 .offset(y: sheetPosition.yOffset + dragOffset.height)
                 .animation(.easeInOut, value: sheetPosition)
                 .gesture(
+                    sheetPosition == .full ? nil :  // full 상태에서는 드래그 gesture 제거
                     DragGesture()
                         .updating($dragOffset) { value, state, _ in
                             state = value.translation
@@ -58,6 +60,7 @@ struct MainView: View {
                             }
                         }
                 )
+
         }
         .onReceive(locationManager.$currentLocation.compactMap { $0 }) { location in
             if let prev = previousLocation {
