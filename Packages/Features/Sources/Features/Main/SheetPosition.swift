@@ -11,7 +11,7 @@ import UIKit
 enum SheetPosition {
     case half
     case full
-
+    
     var yOffset: CGFloat {
         let screenHeight = UIScreen.main.bounds.height
         switch self {

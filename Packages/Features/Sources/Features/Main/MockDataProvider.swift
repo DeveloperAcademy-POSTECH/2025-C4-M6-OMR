@@ -18,7 +18,7 @@ struct MockDataProvider {
             thumbnail: "rose_thumb.png",
             objetImage: "rose_object.png"
         )
-
+        
         let flower2 = EmotionObject(
             name: "해바라기",
             floriography: "희망",
@@ -26,7 +26,7 @@ struct MockDataProvider {
             thumbnail: "sunflower_thumb.png",
             objetImage: "sunflower_object.png"
         )
-
+        
         let object1 = Mote(
             userId: UUID(),
             title: "첫 번째 기록",
@@ -38,7 +38,7 @@ struct MockDataProvider {
             flower: flower1,
             isPublic: true
         )
-
+        
         let object2 = Mote(
             userId: UUID(),
             title: "두 번째 기록",
@@ -50,8 +50,8 @@ struct MockDataProvider {
             flower: flower2,
             isPublic: false
         )
-
-
+        
+        
         return [object1, object2]
     }
 }

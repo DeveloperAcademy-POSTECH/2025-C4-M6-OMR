@@ -14,11 +14,11 @@ struct MainView: View {
     
     @State private var previousLocation: CLLocation? = nil
     let updateThresholdMeters = 20.0  // 20m 이상 이동했을 때만 업데이트
-
+    
     // 👇 bottom sheet 제어용
     @State private var sheetPosition: SheetPosition = .half
     @GestureState private var dragOffset: CGSize = .zero
-
+    
     var body: some View {
         ZStack {
             VStack(spacing: 16) {
@@ -40,8 +40,7 @@ struct MainView: View {
                 
                 Spacer()
             }
-
-            // 👇 Bottom Sheet
+            
             // 👇 Bottom Sheet
             MyRecordBottomSheet(sheetPosition: $sheetPosition)
                 .offset(y: sheetPosition.yOffset + dragOffset.height)
@@ -60,7 +59,7 @@ struct MainView: View {
                             }
                         }
                 )
-
+            
         }
         .onReceive(locationManager.$currentLocation.compactMap { $0 }) { location in
             if let prev = previousLocation {

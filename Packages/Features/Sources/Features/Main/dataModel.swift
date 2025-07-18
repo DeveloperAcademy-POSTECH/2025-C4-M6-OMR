@@ -22,7 +22,7 @@ public final class EmotionObject {
     public var emotionType: EmotionType
     public var thumbnail: String
     public var objetImage: String
-
+    
     public init(id: UUID = UUID(),
                 name: String,
                 floriography: String,
@@ -51,7 +51,7 @@ public final class Mote {
     public var address: String
     public var flower: EmotionObject
     public var isPublic: Bool
-
+    
     public init(id: UUID = UUID(),
                 userId: UUID,
                 title: String,
