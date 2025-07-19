@@ -67,64 +67,94 @@ struct MapViewRepresentable: UIViewRepresentable {
     // MARK: - Helper
     
     private func updateAnnotations(from mapView: MKMapView) {
-        mapView.removeAnnotations(mapView.annotations)
+        let existingAnnotations = mapView.annotations
+            .compactMap { $0 as? ObjectAnnotation }
+            .reduce(into: [UUID: ObjectAnnotation]()) { dictionary, annotation in
+                dictionary[annotation.id] = annotation
+            }
         
-        // ViewModel의 objectSummaries를 기반으로 새로운 핀들을 생성
-        let newAnnotations = viewModel.objectSummaries.map { summary -> ObjectAnnotation in
-            let coordinate = CLLocationCoordinate2D(latitude: summary.latitude, longitude: summary.longitude)
-            return ObjectAnnotation(id: summary.id, coordinate: coordinate, title: summary.title)
+        var annotationsToAdd: [ObjectAnnotation] = []
+        var annotationsToRemove: [MKAnnotation] = []
+        
+        for summary in viewModel.objectSummaries {
+            let newAnnotation = ObjectAnnotation(
+                id: summary.id,
+                coordinate: .init(latitude: summary.latitude, longitude: summary.longitude),
+                title: summary.title
+            )
+            
+            if let existingAnnotation = existingAnnotations[summary.id] {
+                // ID는 같지만 제목이 다르면 업데이트
+                if existingAnnotation.title != newAnnotation.title {
+                    annotationsToRemove.append(existingAnnotation)
+                    annotationsToAdd.append(newAnnotation)
+                }
+            } else {
+                // 기존에 없던 ID인 경우 새로 추가
+                annotationsToAdd.append(newAnnotation)
+            }
         }
         
-        // 지도에 새로운 핀들 추가
-        mapView.addAnnotations(newAnnotations)
-    }
-}
-
-// MARK: - Coordinator
-class Coordinator: NSObject, MKMapViewDelegate {
-    
-    // Coordinator는 MapViewRepresentable의 delegate 역할을 수행
-    var parent: MapViewRepresentable
-    private var hasCenteredOnUser = false
-    
-    init(_ parent: MapViewRepresentable) {
-        self.parent = parent
-    }
-    
-    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        guard let objectAnnotation = view.annotation as? ObjectAnnotation else { return }
+        // 새 데이터에 포함되지 않은 나머지 핀은 제거
+        let newAnnotationIDs = Set(viewModel.objectSummaries.map { $0.id })
+        for (id, annotation) in existingAnnotations {
+            if !newAnnotationIDs.contains(id) {
+                annotationsToRemove.append(annotation)
+            }
+        }
         
-        // parent를 통해 ViewModel의 함수를 호출하여 탭 이벤트를 전달
-        parent.viewModel.objectPinTapped(id: objectAnnotation.id)
+        mapView.removeAnnotations(annotationsToRemove)
+        mapView.addAnnotations(annotationsToAdd)
     }
     
-    // 지도에 핀을 어떻게 표시할지 결정
-    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        // 사용자 위치는 기본 파란 점으로 표시
-        if annotation is MKUserLocation { return nil }
+    // MARK: - Coordinator
+    class Coordinator: NSObject, MKMapViewDelegate {
         
-        if let cluster = annotation as? MKClusterAnnotation {
-            // 클러스터 뷰 설정
-            let view = mapView.dequeueReusableAnnotationView(withIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier, for: cluster) as! MKMarkerAnnotationView
-            view.glyphText = "\(cluster.memberAnnotations.count)"
+        // Coordinator는 MapViewRepresentable의 delegate 역할을 수행
+        var parent: MapViewRepresentable
+        private var hasCenteredOnUser = false
+        
+        init(_ parent: MapViewRepresentable) {
+            self.parent = parent
+        }
+        
+        func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+            guard let objectAnnotation = view.annotation as? ObjectAnnotation else { return }
+            
+            // parent를 통해 ViewModel의 함수를 호출하여 탭 이벤트를 전달
+            parent.viewModel.objectPinTapped(id: objectAnnotation.id)
+        }
+        
+        // 지도에 핀을 어떻게 표시할지 결정
+        func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+            // 사용자 위치는 기본 파란 점으로 표시
+            if annotation is MKUserLocation { return nil }
+            
+            if let cluster = annotation as? MKClusterAnnotation {
+                // 클러스터 뷰 설정
+                guard let view = mapView.dequeueReusableAnnotationView(withIdentifier: MKMapViewDefaultClusterAnnotationViewReuseIdentifier, for: cluster) as? MKMarkerAnnotationView else {
+                    return nil
+                }
+                view.glyphText = "\(cluster.memberAnnotations.count)"
+                return view
+            }
+            
+            // 일반 핀(마커) 뷰 설정
+            guard let view = mapView.dequeueReusableAnnotationView(withIdentifier: "marker", for: annotation) as? MKMarkerAnnotationView else { return nil }
+            view.clusteringIdentifier = "marker"
             return view
         }
         
-        // 일반 핀(마커) 뷰 설정
-        let view = mapView.dequeueReusableAnnotationView(withIdentifier: "marker", for: annotation) as! MKMarkerAnnotationView
-        view.clusteringIdentifier = "marker"
-        return view
-    }
-    
-    // 사용자 위치가 처음 업데이트될 때 한 번만 지도를 중앙으로 이동
-    func mapView(_ mapView: MKMapView, didUpdate userLocation: MKUserLocation) {
-        if !hasCenteredOnUser {
-            let region = MKCoordinateRegion(
-                center: userLocation.coordinate,
-                span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-            )
-            mapView.setRegion(region, animated: true)
-            hasCenteredOnUser = true
+        // 사용자 위치가 처음 업데이트될 때 한 번만 지도를 중앙으로 이동
+        func mapView(_ mapView: MKMapView, didUpdate userLocation: MKUserLocation) {
+            if !hasCenteredOnUser {
+                let region = MKCoordinateRegion(
+                    center: userLocation.coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                )
+                mapView.setRegion(region, animated: true)
+                hasCenteredOnUser = true
+            }
         }
     }
 }
