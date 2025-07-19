@@ -6,7 +6,6 @@
 //
 import SwiftUI
 import CoreLocation
-import MapKit
 
 struct MainView: View {
     @EnvironmentObject private var nav: NavigationViewModel
@@ -39,22 +38,6 @@ struct MainView: View {
                     nav.push(.arCamera)
                 }
                 
-                if let currentLocation = locationManager.currentLocation {
-                    let identifiableLocation = IdentifiableLocation(location: currentLocation)
-                    
-                    Map(initialPosition: .region(
-                        MKCoordinateRegion(
-                            center: identifiableLocation.coordinate,
-                            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-                        )
-                    )) {
-                        Marker("내 위치", coordinate: identifiableLocation.coordinate)
-                            .tint(.blue)
-                    }
-                    .mapStyle(.standard)
-                    .frame(width: UIScreen.main.bounds.width - 32, height: 200)
-                    .cornerRadius(12)
-                }
                 Spacer()
             }
             
@@ -63,7 +46,9 @@ struct MainView: View {
                 .offset(y: sheetPosition.yOffset + dragOffset.height)
                 .animation(.easeInOut, value: sheetPosition)
                 .gesture(
-                    sheetPosition == .full ? nil :  // full 상태에서는 드래그 gesture 제거
+                    sheetPosition == .full
+                    ? nil
+                    :  // full 상태에서는 드래그 gesture 제거
                     DragGesture()
                         .updating($dragOffset) { value, state, _ in
                             state = value.translation
@@ -78,7 +63,8 @@ struct MainView: View {
                 )
             
         }
-        .onReceive(locationManager.$currentLocation.compactMap { $0 }) { location in
+        .onReceive(locationManager.$currentLocation.compactMap { $0 }) {
+            location in
             if let prev = previousLocation {
                 let distance = location.distance(from: prev)
                 if distance < updateThresholdMeters {
@@ -93,17 +79,12 @@ struct MainView: View {
                 latitude: location.coordinate.latitude,
                 longitude: location.coordinate.longitude
             )
-            print("현재 위치:", location.coordinate.latitude, location.coordinate.longitude)
+            print(
+                "현재 위치:",
+                location.coordinate.latitude,
+                location.coordinate.longitude
+            )
             viewModel.loadNearbyMotesMock(center: center, radius: 10000)
         }
-    }
-}
-
-struct IdentifiableLocation: Identifiable {
-    let id = UUID()
-    let location: CLLocation
-    
-    var coordinate: CLLocationCoordinate2D {
-        location.coordinate
     }
 }
