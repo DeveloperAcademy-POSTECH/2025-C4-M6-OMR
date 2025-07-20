@@ -6,6 +6,7 @@
 //
 import SwiftUI
 import CoreLocation
+import DesignSystem
 
 struct MainView: View {
     @EnvironmentObject private var nav: NavigationViewModel
@@ -33,9 +34,13 @@ struct MainView: View {
                         .font(.subheadline)
                         .padding()
                 }
-                
+
                 Button("AR 보기") {
                     nav.push(.arCamera)
+                }
+                
+                Button("디자인 시스템 예제 보기") {
+                    nav.push(.designSystemExample)
                 }
                 
                 Spacer()
