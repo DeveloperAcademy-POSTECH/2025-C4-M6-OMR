@@ -12,7 +12,7 @@ public final class MainViewModel: ObservableObject {
     
     // MARK: - Dependencies
     // Domain에 정의된 DependencyKey를 통해 실제 구현체를 주입받습니다.
-    @Dependency(\.fetchNearbyMotesUseCase) private var fetchNearbyMotesUseCase
+    @Dependency(\.fetchMyRecordsUseCase) private var fetchMyRecordsUseCase
     
     public init() {}
     

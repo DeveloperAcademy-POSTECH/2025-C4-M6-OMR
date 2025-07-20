@@ -8,6 +8,5 @@
 import Foundation
 
 public protocol UserRepository: Sendable {
-    /// 현재 로그인한 사용자를 로컬 또는 원격에서 조회
-//    func fetchCurrentUser() async throws -> User
+    func fetch(by id: UUID) async throws -> User
 }
