@@ -19,7 +19,10 @@ public final class RecordDetailViewModel: ObservableObject {
     @Published var flowerMeaning: String = ""
     @Published var location: String = ""
     @Published var date: String = ""
+    @Published var title: String = ""
     @Published var selectedImages: [UIImage] = []
+    
+    @Published var isEditing: Bool = false
     
     // MARK: - Properties
     // TODO: 나중에 실제 UseCase를 주입
@@ -41,6 +44,7 @@ public final class RecordDetailViewModel: ObservableObject {
         self.flowerName = "프리지아"
         self.flowerMeaning = "영원한 사랑"
         self.location = "포항공과대학교"
+        self.title = "\(self.location)에서"
         
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy년 M월 d일"
@@ -76,8 +80,15 @@ public final class RecordDetailViewModel: ObservableObject {
     }
     
     func editButtonTapped() {
-        print("수정 버튼 탭됨")
-        // TODO: 수정 모드로 전환하는 로직 구현
+        isEditing = true
+    }
+    
+    
+    func saveButtonTapped() {
+        // TODO: 변경 내용을 저장 하는 로직 추가
+        print("저장할 제목: \(title)")
+        // isEditing이 false로 바뀌면, 현재 title 값을 저장하는 로직 추가
+        isEditing = false
     }
 }
 

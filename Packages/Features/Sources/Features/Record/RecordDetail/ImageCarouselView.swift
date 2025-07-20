@@ -12,7 +12,10 @@ struct ImageCarouselView: View {
     @ObservedObject var viewModel: RecordDetailViewModel
     // 현재 모달이 확장된 상태인지 여부
     let isExpanded: Bool
+    // 최대 이미지 개수
     let maxImageCount = 4
+    // 수정모드 여부
+    let isEditing: Bool
     
     private let fullSize: CGFloat = 342
     private let halfSize: CGFloat = 150
@@ -64,11 +67,15 @@ struct ImageCarouselView: View {
         return ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: itemSpacing) {
                 ForEach(viewModel.selectedImages, id: \.self) { image in
-                    ImageItemView(image: image, size: fullSize) {
+                    ImageItemView(
+                        image: image,
+                        size: fullSize,
+                        isEditing: isEditing
+                    ) {
                         viewModel.deleteImage(image)
                     }
                 }
-                if viewModel.selectedImages.count < maxImageCount {
+                if isEditing && viewModel.selectedImages.count < maxImageCount {
                     AddPhotoButton(size: fullSize) {
                         isPickerPresented = true
                     }
@@ -108,6 +115,7 @@ struct ImageCarouselView: View {
 struct ImageItemView: View {
     let image: UIImage
     let size: CGFloat
+    let isEditing: Bool
     let deleteAction: () -> Void
     
     var body: some View {
@@ -117,18 +125,20 @@ struct ImageItemView: View {
             .frame(width: size, height: size)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(alignment: .topTrailing) {
-                Button {
-                    deleteAction()
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .symbolRenderingMode(.palette)
-                        .foregroundStyle(.white, .black.opacity(0.6))
-                        .font(.title2)
-                        .padding(12)
-                        .contentShape(Rectangle())
+                if isEditing {
+                    Button {
+                        deleteAction()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, .black.opacity(0.6))
+                            .font(.title2)
+                            .padding(12)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(8)
                 }
-                .buttonStyle(.plain)
-                .padding(8)
             }
     }
 }
@@ -153,7 +163,7 @@ struct AddPhotoButton: View {
 }
 
 #Preview {
-    ImageCarouselView(viewModel: RecordDetailViewModel(), isExpanded: true)
+    ImageCarouselView(viewModel: RecordDetailViewModel(), isExpanded: true, isEditing: true)
 }
 
 
