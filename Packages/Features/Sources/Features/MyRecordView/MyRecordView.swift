@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MyRecordView: View {
-    @State private var records: [ObjectEntity] = []
+    @StateObject private var viewModel = MyRecordViewModel()
     
     var body: some View {
         NavigationView {
@@ -32,21 +32,13 @@ struct MyRecordView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 20)
                 
-                // 20포인트 간격
                 Spacer()
                     .frame(height: 20)
                 
-                RecordList(records: records)
-                    .onAppear {
-                        loadMockData()
-                    }
+                RecordList(records: viewModel.records)
             }
             .navigationBarHidden(true)
         }
-    }
-    
-    private func loadMockData() {
-        records = MockDataManager.shared.sortedRecords
     }
 }
 

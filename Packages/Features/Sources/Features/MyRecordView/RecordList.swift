@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct RecordList: View {
-    let records: [ObjectEntity]
+    let records: [MyRecordModel]
     
     var body: some View {
         ScrollView {
@@ -24,6 +24,6 @@ struct RecordList: View {
 
 #Preview {
     RecordList(
-        records: MockDataManager.shared.sortedRecords
+        records: MyRecordModel.createMock()
     )
 }
