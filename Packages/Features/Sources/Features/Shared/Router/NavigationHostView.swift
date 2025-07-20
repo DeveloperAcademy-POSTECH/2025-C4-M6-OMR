@@ -21,6 +21,9 @@ public struct NavigationHostView: View {
                     case .home:
                         MainView()
                     // TODO: 나머지 route 처리
+                    case .designSystemExample:
+                        DesignSystemExampleView()
+                        
                     default:
                         Text("Not Found")
 

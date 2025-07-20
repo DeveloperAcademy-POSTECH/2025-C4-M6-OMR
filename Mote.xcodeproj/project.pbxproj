@@ -17,6 +17,8 @@
 		C0530CD62E259A0E008CB908 /* Data in Frameworks */ = {isa = PBXBuildFile; productRef = C0530CD52E259A0E008CB908 /* Data */; };
 		C0530CD92E259A20008CB908 /* Domain in Frameworks */ = {isa = PBXBuildFile; productRef = C0530CD82E259A20008CB908 /* Domain */; };
 		C0530CDB2E259A33008CB908 /* Core in Frameworks */ = {isa = PBXBuildFile; productRef = C0530CDA2E259A33008CB908 /* Core */; };
+		C0588ABC2E2BD0F300E94159 /* DesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = C0588ABB2E2BD0F300E94159 /* DesignSystem */; };
+		C0588AD52E2BD2BC00E94159 /* DesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = C0588AD42E2BD2BC00E94159 /* DesignSystem */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,7 +75,9 @@
 				C0530BA62E2547DD008CB908 /* Features in Frameworks */,
 				C0530CD92E259A20008CB908 /* Domain in Frameworks */,
 				C03BFFC22E253D8E00DAEB35 /* Dependencies in Frameworks */,
+				C0588ABC2E2BD0F300E94159 /* DesignSystem in Frameworks */,
 				C0530CD62E259A0E008CB908 /* Data in Frameworks */,
+				C0588AD52E2BD2BC00E94159 /* DesignSystem in Frameworks */,
 				C0530CD42E2599EF008CB908 /* Features in Frameworks */,
 				C0530CDB2E259A33008CB908 /* Core in Frameworks */,
 				C0530CB52E258CE2008CB908 /* Data in Frameworks */,
@@ -150,6 +154,8 @@
 				C0530CD52E259A0E008CB908 /* Data */,
 				C0530CD82E259A20008CB908 /* Domain */,
 				C0530CDA2E259A33008CB908 /* Core */,
+				C0588ABB2E2BD0F300E94159 /* DesignSystem */,
+				C0588AD42E2BD2BC00E94159 /* DesignSystem */,
 			);
 			productName = Mote;
 			productReference = C03BFF442E252F3300DAEB35 /* App.app */;
@@ -241,6 +247,7 @@
 				C0530BA42E2547DD008CB908 /* XCLocalSwiftPackageReference "../EchoNote/Packages/Features" */,
 				C0530CB32E258CE2008CB908 /* XCLocalSwiftPackageReference "../EchoNote/Packages/Data" */,
 				C0530CD72E259A20008CB908 /* XCLocalSwiftPackageReference "../EchoNote/Packages/Domain" */,
+				C0588ABA2E2BD0F300E94159 /* XCLocalSwiftPackageReference "Packages/DesignSystem" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C03BFF452E252F3300DAEB35 /* Products */;
@@ -447,6 +454,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "AR 기능을 사용하기 위해 카메라 접근 권한이 필요합니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -475,6 +483,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "AR 기능을 사용하기 위해 카메라 접근 권한이 필요합니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -623,6 +632,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../EchoNote/Packages/Domain;
 		};
+		C0588ABA2E2BD0F300E94159 /* XCLocalSwiftPackageReference "Packages/DesignSystem" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/DesignSystem;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -678,6 +691,14 @@
 		C0530CDA2E259A33008CB908 /* Core */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Core;
+		};
+		C0588ABB2E2BD0F300E94159 /* DesignSystem */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DesignSystem;
+		};
+		C0588AD42E2BD2BC00E94159 /* DesignSystem */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DesignSystem;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
