@@ -22,4 +22,7 @@ public enum AppRoute: Hashable {
     case recordCompose(songId: String)
     case recordOverview(tempId: UUID)
     case recordComplete(moteId: UUID)
+    
+    // 개발자용
+    case designSystemExample
 }
