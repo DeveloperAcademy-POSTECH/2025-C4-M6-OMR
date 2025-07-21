@@ -13,61 +13,71 @@ import Core
 import Features
 
 public struct AppDI {
+    internal static let modelContext = ModelContext(AppModelContainer.shared)
+    internal static let localRecordDS = LocalRecordDataSource(container: AppModelContainer.shared)
+    internal static let remoteRecordDS = RemoteRecordDatasource()
+    internal static let userLocalDS = UserLocalDatasource(modelContext: modelContext)
+    internal static let userRepo = DefaultUserRepository(local: userLocalDS)
+    internal static let markerLocalDS = MarkerLocalDatasource(modelContext: modelContext)
+    internal static let markerRepo = DefaultMarkerRepository(local: markerLocalDS)
+
     public static func registerDependencies() {
         // Register all application-level dependencies here
     }
 }
 
-// MARK: - MoteUseCase DI
+// MARK: - RecordUseCase DI
 
-private enum FetchNearbyMotesUseCaseKey: DependencyKey {
-    static var liveValue: FetchNearbyMotesUseCase {
-        let modelContext = ModelContext(AppModelContainer.shared)
-        let local = LocalMoteDatasource(modelContext: modelContext)
-        let remote = RemoteMoteDatasource()
-        let repo  = DefaultMoteRepository(local: local, remote: remote) {
-            // 임시: 현재 로그인 유저 ID를 무명 UUID로 대체
+private enum FetchPublicRecordsUseCaseKey: DependencyKey {
+    static var liveValue: FetchPublicRecordsUseCase {
+        let recordRepo  = DefaultRecordRepository(local: AppDI.localRecordDS, remote: AppDI.remoteRecordDS) {
             return UUID()
         }
-        return FetchNearbyMotesUseCase(repository: repo)
+        return FetchPublicRecordsUseCase(
+            recordRepository: recordRepo,
+            userRepository: AppDI.userRepo,
+            markerRepository: AppDI.markerRepo
+        )
     }
 }
 
-private enum FetchMyMotesUseCaseKey: DependencyKey {
-    static var liveValue: FetchMyMotesUseCase {
-        let modelContext = ModelContext(AppModelContainer.shared)
-        let local = LocalMoteDatasource(modelContext: modelContext)
-        let remote = RemoteMoteDatasource()
-        let repo  = DefaultMoteRepository(local: local, remote: remote) {
+private enum FetchMyRecordsUseCaseKey: DependencyKey {
+    static var liveValue: FetchMyRecordsUseCase {
+        let recordRepo  = DefaultRecordRepository(local: AppDI.localRecordDS, remote: AppDI.remoteRecordDS) {
             return UUID()
         }
-        return FetchMyMotesUseCase(repository: repo)
+        return FetchMyRecordsUseCase(
+            recordRepository: recordRepo,
+            userRepository: AppDI.userRepo,
+            markerRepository: AppDI.markerRepo
+        )
     }
 }
 
-private enum FetchMoteDetailUseCaseKey: DependencyKey {
-    static var liveValue: FetchMoteDetailUseCase {
-        let modelContext = ModelContext(AppModelContainer.shared)
-        let local = LocalMoteDatasource(modelContext: modelContext)
-        let remote = RemoteMoteDatasource()
-        let repo  = DefaultMoteRepository(local: local, remote: remote) {
+private enum FetchRecordDetailUseCaseKey: DependencyKey {
+    static var liveValue: FetchRecordDetailUseCase {
+        let recordRepo  = DefaultRecordRepository(local: AppDI.localRecordDS, remote: AppDI.remoteRecordDS) {
             return UUID()
         }
-        return FetchMoteDetailUseCase(repository: repo)
+        return FetchRecordDetailUseCase(
+            recordRepository: recordRepo,
+            userRepository: AppDI.userRepo,
+            markerRepository: AppDI.markerRepo
+        )
     }
 }
 
 extension DependencyValues {
-    var fetchNearbyMotesUseCase: FetchNearbyMotesUseCase {
-        get { self[FetchNearbyMotesUseCaseKey.self] }
-        set { self[FetchNearbyMotesUseCaseKey.self] = newValue }
+    var fetchPublicRecordsUseCase: FetchPublicRecordsUseCase {
+        get { self[FetchPublicRecordsUseCaseKey.self] }
+        set { self[FetchPublicRecordsUseCaseKey.self] = newValue }
     }
-    var fetchMyMotesUseCase: FetchMyMotesUseCase {
-        get { self[FetchMyMotesUseCaseKey.self] }
-        set { self[FetchMyMotesUseCaseKey.self] = newValue }
+    var fetchMyRecordsUseCase: FetchMyRecordsUseCase {
+        get { self[FetchMyRecordsUseCaseKey.self] }
+        set { self[FetchMyRecordsUseCaseKey.self] = newValue }
     }
-    var fetchMoteDetailUseCase: FetchMoteDetailUseCase {
-        get { self[FetchMoteDetailUseCaseKey.self] }
-        set { self[FetchMoteDetailUseCaseKey.self] = newValue }
+    var fetchRecordDetailUseCase: FetchRecordDetailUseCase {
+        get { self[FetchRecordDetailUseCaseKey.self] }
+        set { self[FetchRecordDetailUseCaseKey.self] = newValue }
     }
 }
