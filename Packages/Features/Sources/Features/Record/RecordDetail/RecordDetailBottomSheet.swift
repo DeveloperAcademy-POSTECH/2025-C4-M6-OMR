@@ -17,6 +17,7 @@ public struct RecordDetailBottomSheet: View {
         currentDetent == .large
     }
     
+    // MapView에서 데이터 주입을 위해 사용
     public init(viewModel: RecordDetailViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
     }
@@ -25,20 +26,7 @@ public struct RecordDetailBottomSheet: View {
         GeometryReader { geometry in
             ScrollView {
                 VStack(spacing: 14) {
-                    
-                    VStack(spacing: 28) {
-                        RecordDetailHeaderView(
-                            flowerName: viewModel.flowerName,
-                            flowerMeaning: viewModel.flowerMeaning
-                        )
-                        
-                        RecordInfoView(
-                            title: $viewModel.title,
-                            isEditing: viewModel.isEditing,
-                            date: viewModel.date
-                        )
-                    }
-                    .padding(.horizontal, 20)
+                    topContent
                     
                     ImageCarouselView(
                         viewModel: viewModel,
@@ -48,16 +36,7 @@ public struct RecordDetailBottomSheet: View {
                     
                     Spacer()
                     
-                    if isExpanded {
-                        EditButtonView(isEditing: viewModel.isEditing) {
-                            if viewModel.isEditing {
-                                viewModel.saveButtonTapped()
-                            } else {
-                                viewModel.editButtonTapped()
-                            }
-                        }
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                    }
+                    bottomButton
                 }
                 .padding(.top, 34)
                 .frame(minHeight: geometry.size.height)
@@ -67,8 +46,63 @@ public struct RecordDetailBottomSheet: View {
         .presentationDragIndicator(.visible)
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .onChange(of: currentDetent) { _, newDetent in
-            if newDetent != .large, viewModel.isEditing {
+            guard newDetent != .large, viewModel.isEditing else { return }
                 viewModel.saveButtonTapped()
+        }
+    }
+    
+    // MARK: - Composed Subviews
+    
+    @ViewBuilder
+    private var topContent: some View {
+        if let detail = viewModel.detail {
+            VStack(spacing: 28) {
+                RecordDetailHeaderView(
+                    flowerName: detail.flowerName,
+                    flowerMeaning: detail.flowerMeaning
+                )
+                
+                RecordInfoView(
+                    title: Binding(
+                        get: { viewModel.detail?.title ?? "" },
+                        set: { viewModel.detail?.title = $0 }
+                    ),
+                    originalTitle: viewModel.detail?.title ?? "",
+                    isEditing: viewModel.isEditing,
+                    date: detail.date
+                )
+            }
+            .padding(.horizontal, 20)
+        }
+    }
+    
+    @ViewBuilder
+    private var bottomButton: some View {
+        if isExpanded {
+            if viewModel.isEditing {
+                SaveButtonView(isDisabled: viewModel.isSaveButtonDisabled) {
+                    viewModel.saveButtonTapped()
+                    DispatchQueue.main.async {
+                        currentDetent = .fraction(0.45)
+                    }
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            } else {
+                HStack {
+                    Spacer()
+                    
+                    EditButtonView(
+                        onEdit: {
+                            viewModel.editButtonTapped()
+                        },
+                        onDelete: {
+                            viewModel.deleteButtonTapped()
+                        }
+                    )
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
     }
@@ -96,6 +130,7 @@ public struct RecordDetailBottomSheet: View {
     
     private struct RecordInfoView: View {
         @Binding var title: String
+        let originalTitle: String
         let isEditing: Bool
         let date: String
         
@@ -105,10 +140,17 @@ public struct RecordDetailBottomSheet: View {
             VStack(spacing: 4) {
                 HStack(spacing: 0) {
                     if isEditing {
-                        TextField("", text: $title)
-                            .font(.system(size: 20, weight: .semibold))
-                            .multilineTextAlignment(.center)
-                            .focused($isTitleFieldFocused)
+                        ZStack(alignment: .center) {
+                            if title.isEmpty {
+                                Text(originalTitle)
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15).opacity(0.5))
+                            }
+                            TextField("", text: $title)
+                                .font(.system(size: 20, weight: .semibold))
+                                .multilineTextAlignment(.center)
+                                .focused($isTitleFieldFocused)
+                        }
                     } else {
                         Text(title)
                             .font(.system(size: 20, weight: .semibold))
@@ -132,37 +174,43 @@ public struct RecordDetailBottomSheet: View {
 }
 
 private struct EditButtonView: View {
-    let isEditing: Bool
-    let action: () -> Void
-    
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+
     var body: some View {
-        Button(action: action) {
-            LabelView(isEditing: isEditing)
-        }
-        .buttonStyle(.plain)
-        .padding(.bottom)
-    }
-    
-    private struct LabelView: View {
-        let isEditing: Bool
-        
-        var body: some View {
-            let backgroundColor = isEditing
-            ? Color(red: 0.43, green: 0.65, blue: 0.96)
-            : Color(red: 0.94, green: 0.95, blue: 0.96)
-            
-            let textColor = isEditing
-            ? Color.white
-            : Color(red: 0.56, green: 0.56, blue: 0.56)
-            
-            return Text(isEditing ? "수정완료" : "수정")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(textColor)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(backgroundColor)
+        Menu {
+            Button("기록 수정", action: onEdit)
+            Button(role: .destructive, action: onDelete) {
+                Text("삭제")
+            }
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 14, weight: .semibold))
+                .frame(width: 32, height: 32)
+                .background(Color(red: 0.45, green: 0.51, blue: 0.59).opacity(0.16))
+                .foregroundColor(Color(red: 0.45, green: 0.51, blue: 0.59))
                 .cornerRadius(99)
         }
+    }
+}
+
+private struct SaveButtonView: View {
+    let isDisabled: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text("수정 완료")
+                .font(.headline.bold())
+                .foregroundColor(.white)
+                .frame(height: 52)
+                .frame(maxWidth: .infinity)
+                .background(isDisabled ? Color.gray : Color(red: 0.43, green: 0.65, blue: 0.96))
+                .cornerRadius(12)
+        }
+        .disabled(isDisabled)
+        .padding(.horizontal, 20)
+        .padding(.bottom, 20)
     }
 }
 

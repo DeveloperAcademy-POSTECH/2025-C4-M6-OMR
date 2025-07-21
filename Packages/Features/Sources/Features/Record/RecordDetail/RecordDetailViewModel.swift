@@ -1,5 +1,5 @@
 //
-//  RecordDetailViewModel.swift.swift
+//  RecordDetailViewModel.swift
 //  Features
 //
 //  Created by Henry on 7/19/25.
@@ -10,53 +10,105 @@ import Combine
 import Domain
 import PhotosUI
 
+struct RecordDetailUIModel {
+    var title: String
+    var flowerName: String
+    var flowerMeaning: String
+    var location: String
+    var date: String
+    var images: [UIImage]
+}
+
 @MainActor
 public final class RecordDetailViewModel: ObservableObject {
     
     // MARK: - Published Properties
     
-    @Published var flowerName: String = ""
-    @Published var flowerMeaning: String = ""
-    @Published var location: String = ""
-    @Published var date: String = ""
-    @Published var title: String = ""
-    @Published var selectedImages: [UIImage] = []
-    
+    @Published var detail: RecordDetailUIModel?
     @Published var isEditing: Bool = false
     
-    // MARK: - Properties
-    // TODO: 나중에 실제 UseCase를 주입
-    // private let fetchDetailUseCase: FetchRecordDetailUseCase
+    // 수정 전 원본 데이터를 저장할 프로퍼티
+    private var originalDetail: RecordDetailUIModel?
+    
+    // MARK: - Computed Properties
+    
+    public var isSaveButtonDisabled: Bool {
+        guard let detail = detail, let originalDetail = originalDetail else {
+            return true
+        }
+        
+        // 사진이 하나도 없으면 비활성화
+        if detail.images.isEmpty {
+            return true
+        }
+        
+        // 원본과 현재 상태가 동일하면 (변경사항이 없으면) 비활성화
+        let isTitleChanged = detail.title != originalDetail.title
+        let areImagesChanged = detail.images != originalDetail.images
+        
+        if !isTitleChanged && !areImagesChanged {
+            return true
+        }
+        
+        return false
+    }
     
     // MARK: - Initialization
     
-    // ViewModel이 생성될 때 목업 데이터를 바로 로드합니다.
     public init() {
         fetchRecordDetails()
     }
     
     // MARK: - Methods
+    
     func fetchRecordDetails() {
-        // 지금은 UI 개발을 위해 임시 목업 데이터를 생성
-        // 추후, 실제 UseCase를 통해 서버에서 데이터를 가져오도록 변경 예정
+        // ---  UseCase를 호출하고 Entity를 매핑하는 코드로 대체 ---
         
-        // 1. 임시 텍스트 데이터 생성
-        self.flowerName = "프리지아"
-        self.flowerMeaning = "영원한 사랑"
-        self.location = "포항공과대학교"
-        self.title = "\(self.location)에서"
+        // 임시 데이터 생성
+        let location = "포항공과대학교"
+        let title = "\(location)에서"
+        let dummyPhotos = ["photo.artframe", "camera.fill", "tree.fill"]
+        let images = dummyPhotos.compactMap { UIImage(systemName: $0) }
         
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy년 M월 d일"
-        self.date = dateFormatter.string(from: Date())
         
-        let dummyPhotos = ["photo", "photo.fill", "photo.on.rectangle.angled", "photo.artframe"]
-        self.selectedImages = dummyPhotos.compactMap { UIImage(systemName: $0) }
+        let mockDetail = RecordDetailUIModel(
+            title: title,
+            flowerName: "프리지아",
+            flowerMeaning: "영원한 사랑",
+            location: location,
+            date: dateFormatter.string(from: Date()),
+            images: images
+        )
         
+        self.detail = mockDetail
     }
     
+    // MARK: - User Actions
+    
+    func editButtonTapped() {
+        originalDetail = detail
+        isEditing = true
+    }
+    
+    func saveButtonTapped() {
+        if detail?.title.isEmpty == true {
+            detail?.title = originalDetail?.title ?? ""
+        }
+        
+        // TODO: 변경된 detail 객체를 UseCase에 전달하여 저장하는 로직
+        print("저장할 제목: \(detail?.title ?? "")")
+        
+        isEditing = false
+    }
+    
+    func deleteButtonTapped() {
+        print("삭제 버튼 탭됨")
+    }
     
     // MARK: - Image Handling
+    
     func addImages(from items: [PhotosPickerItem]) {
         Task {
             var newImages: [UIImage] = []
@@ -66,48 +118,19 @@ public final class RecordDetailViewModel: ObservableObject {
                     newImages.append(image)
                 }
             }
-            
-            withAnimation {
-                selectedImages.append(contentsOf: newImages)
-            }
+            detail?.images.append(contentsOf: newImages)
         }
     }
     
     func deleteImage(_ image: UIImage) {
-        withAnimation {
-            selectedImages.removeAll { $0 == image }
-        }
-    }
-    
-    func editButtonTapped() {
-        isEditing = true
-    }
-    
-    
-    func saveButtonTapped() {
-        // TODO: 변경 내용을 저장 하는 로직 추가
-        print("저장할 제목: \(title)")
-        // isEditing이 false로 바뀌면, 현재 title 값을 저장하는 로직 추가
-        isEditing = false
+        detail?.images.removeAll { $0 == image }
     }
 }
 
 
-// 빌드를 위해 임시 RecordDetailViewModel 생성자 추가
 public extension RecordDetailViewModel {
     convenience init(summary: ObjectSummary) {
         self.init()
-        
-        self.flowerName = "프리지아"
-        self.flowerMeaning = "영원한 사랑"
-        self.location = "포항공과대학교"
-        
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy년 M월 d일"
-        self.date = dateFormatter.string(from: Date())
-        
-        // 임시 이미지
-        let dummyPhotos = ["photo", "photo.fill", "photo.on.rectangle.angled", "photo.artframe"]
-        self.selectedImages = dummyPhotos.compactMap { UIImage(systemName: $0) }
+        // TODO: summary 객체로부터 실제 데이터를 받아와 프로퍼티를 채우는 로직 구현
     }
 }

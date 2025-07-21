@@ -10,33 +10,46 @@ import PhotosUI
 
 struct ImageCarouselView: View {
     @ObservedObject var viewModel: RecordDetailViewModel
-    // 현재 모달이 확장된 상태인지 여부
-    let isExpanded: Bool
-    // 최대 이미지 개수
-    let maxImageCount = 4
-    // 수정모드 여부
-    let isEditing: Bool
     
-    private let fullSize: CGFloat = 342
-    private let halfSize: CGFloat = 150
-    private let itemSpacing: CGFloat = 12
+    let isExpanded: Bool
+    let isEditing: Bool
     
     @State private var isPickerPresented = false
     @State private var selectedPhotoItems: [PhotosPickerItem] = []
     
+    private let fullSize: CGFloat = 342
+    private let halfSize: CGFloat = 150
+    private let itemSpacing: CGFloat = 12
+    private let maxImageCount = 4
+    
+    // MARK: - Body
+    
+    var body: some View {
+        if let detail = viewModel.detail {
+            ZStack {
+                collapsedView(images: detail.images)
+                    .opacity(isExpanded ? 0 : 1)
+                
+                expandedView(images: detail.images)
+                    .opacity(isExpanded ? 1 : 0)
+            }
+            .frame(height: isExpanded ? fullSize : halfSize)
+        }
+    }
+    
     // MARK: - Collapsed & Expanded Subviews
-    private var collapsedView: some View {
-        let screenWidth = UIScreen.main.bounds.width
-        return ZStack(alignment: .bottomTrailing) {
-            if let first = viewModel.selectedImages.first {
-                Image(uiImage: first)
+    
+    private func collapsedView(images: [UIImage]) -> some View {
+        ZStack(alignment: .bottomTrailing) {
+            if let firstImage = images.first {
+                Image(uiImage: firstImage)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: halfSize, height: halfSize)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 
-                if viewModel.selectedImages.count > 1 {
-                    Text("+\(viewModel.selectedImages.count - 1)")
+                if images.count > 1 {
+                    Text("+\(images.count - 1)")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white)
                         .padding(.horizontal, 10)
@@ -54,59 +67,48 @@ struct ImageCarouselView: View {
             } else {
                 Rectangle()
                     .fill(Color.gray.opacity(0.2))
-                    .frame(width: screenWidth, height: halfSize)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
-        .frame(width: screenWidth, height: halfSize)
+        .frame(maxWidth: .infinity)
+        .frame(height: halfSize)
     }
     
-    private var expandedView: some View {
-        let screenWidth = UIScreen.main.bounds.width
-        let horizontalPadding = (screenWidth - fullSize) / 2
-        return ScrollView(.horizontal, showsIndicators: false) {
+    private func expandedView(images: [UIImage]) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: itemSpacing) {
-                ForEach(viewModel.selectedImages, id: \.self) { image in
+                ForEach(images, id: \.self) { image in
                     ImageItemView(
                         image: image,
                         size: fullSize,
                         isEditing: isEditing
-                    ) {
+                    ) { withAnimation {
                         viewModel.deleteImage(image)
                     }
+                    }
                 }
-                if isEditing && viewModel.selectedImages.count < maxImageCount {
+                
+                if isEditing && images.count < maxImageCount {
                     AddPhotoButton(size: fullSize) {
                         isPickerPresented = true
                     }
                 }
             }
-            .padding(.horizontal, horizontalPadding)
+            .padding(.horizontal, (UIScreen.main.bounds.width - fullSize) / 2)
             .scrollTargetLayout()
         }
         .scrollTargetBehavior(.viewAligned)
-        .frame(width: screenWidth, height: fullSize)
+        .frame(height: fullSize)
         .photosPicker(
             isPresented: $isPickerPresented,
             selection: $selectedPhotoItems,
-            maxSelectionCount: maxImageCount - viewModel.selectedImages.count,
+            maxSelectionCount: maxImageCount - images.count,
             matching: .images
         )
-        .onChange(of: selectedPhotoItems) {
-            viewModel.addImages(from: selectedPhotoItems)
+        .onChange(of: selectedPhotoItems) { _, newItems in
+            viewModel.addImages(from: newItems)
             selectedPhotoItems.removeAll()
         }
-    }
-    
-    var body: some View {
-        ZStack {
-            collapsedView
-                .opacity(isExpanded ? 0 : 1)
-            expandedView
-                .opacity(isExpanded ? 1 : 0)
-        }
-        .frame(height: isExpanded ? fullSize : halfSize)
-        .animation(nil, value: isExpanded)
     }
 }
 
@@ -126,9 +128,7 @@ struct ImageItemView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(alignment: .topTrailing) {
                 if isEditing {
-                    Button {
-                        deleteAction()
-                    } label: {
+                    Button(action: deleteAction) {
                         Image(systemName: "xmark.circle.fill")
                             .symbolRenderingMode(.palette)
                             .foregroundStyle(.white, .black.opacity(0.6))
