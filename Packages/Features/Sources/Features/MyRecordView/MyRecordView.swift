@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import DesignSystem
 
 struct MyRecordView: View {
     @StateObject private var viewModel = MyRecordViewModel()
@@ -38,7 +39,9 @@ struct MyRecordView: View {
                 RecordList(records: viewModel.records)
             }
             .navigationBarHidden(true)
+            
         }
+
     }
 }
 

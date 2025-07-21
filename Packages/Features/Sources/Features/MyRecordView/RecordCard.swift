@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import DesignSystem
 
 struct RecordCard: View {
     let record: MyRecordModel
@@ -13,11 +14,11 @@ struct RecordCard: View {
     var body: some View {
         HStack(spacing: 18) {
             ZStack {
-                Circle()
+             /*   Circle()
                     .fill(Color.green.opacity(0.1))
-                    .frame(width: 66, height: 66)
+                    .frame(width: 66, height: 66)*/
 
-                Image(record.flowerImageName)
+                DesignSystemAssets.image(named: record.flowerImageName)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 66, height: 66)
