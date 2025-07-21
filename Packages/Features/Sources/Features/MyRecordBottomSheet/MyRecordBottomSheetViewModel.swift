@@ -21,7 +21,7 @@ final class MyRecordBottomSheetViewModel: ObservableObject {
         }
     }
 
-    func filterMotesByLocation(currentLocation: CLLocation, radiusInMeters: Double = 1000) {
+    func filterMotesByLocation(currentLocation: CLLocation, radiusInMeters: Double = 5000) {
         isLoading = true
         errorMessage = nil
 
