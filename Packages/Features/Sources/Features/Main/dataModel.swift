@@ -5,13 +5,7 @@
 //  Created by Woody on 7/18/25.
 //
 import Foundation
-
-
-// MARK: - Emotion Type
-
-public enum EmotionType: String {
-    case happiness, sadness, love, anger, fear
-}
+import Domain
 
 // MARK: - Flower Object
 
