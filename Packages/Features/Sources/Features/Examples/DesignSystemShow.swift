@@ -1,7 +1,14 @@
+//
+//  DesignSystemShow.swift
+//  Features
+//
+//  Created by Jimin on 7/23/25.
+//
+
 import SwiftUI
 import DesignSystem
 
-struct DesignSystemShow: View {
+struct TypographyPreviewView: View {
     var body: some View {
         NavigationView {
             ScrollView {
@@ -11,7 +18,7 @@ struct DesignSystemShow: View {
                     fontSection(
                         title: "Title 1",
                         items: [
-                            FontPreviewItem(name: "Semibold · 24/140", font: DesignSystem.Font.Title1.semibold)
+                            FontItem(name: "Semibold · 24", font: DesignSystem.Font.Title1.semibold)
                         ]
                     )
                     
@@ -19,8 +26,8 @@ struct DesignSystemShow: View {
                     fontSection(
                         title: "Title 2",
                         items: [
-                            FontPreviewItem(name: "Semibold · 18/Auto", font: DesignSystem.Font.Title2.semibold),
-                            FontPreviewItem(name: "Bold · 18/140", font: DesignSystem.Font.Title2.bold)
+                            FontItem(name: "Semibold · 18", font: DesignSystem.Font.Title2.semibold),
+                            FontItem(name: "Bold · 18", font: DesignSystem.Font.Title2.bold)
                         ]
                     )
                     
@@ -28,9 +35,9 @@ struct DesignSystemShow: View {
                     fontSection(
                         title: "Headline",
                         items: [
-                            FontPreviewItem(name: "Semibold · 14/Auto", font: DesignSystem.Font.Headline.semibold),
-                            FontPreviewItem(name: "Medium · 14/150", font: DesignSystem.Font.Headline.medium),
-                            FontPreviewItem(name: "Regular · 14/150", font: DesignSystem.Font.Headline.regular)
+                            FontItem(name: "Semibold · 14", font: DesignSystem.Font.Headline.semibold),
+                            FontItem(name: "Medium · 14", font: DesignSystem.Font.Headline.medium),
+                            FontItem(name: "Regular · 14", font: DesignSystem.Font.Headline.regular)
                         ]
                     )
                     
@@ -38,8 +45,8 @@ struct DesignSystemShow: View {
                     fontSection(
                         title: "Title 3",
                         items: [
-                            FontPreviewItem(name: "Semibold · 16/140", font: DesignSystem.Font.Title3.semibold),
-                            FontPreviewItem(name: "Medium · 16/140", font: DesignSystem.Font.Title3.medium)
+                            FontItem(name: "Semibold · 16", font: DesignSystem.Font.Title3.semibold),
+                            FontItem(name: "Medium · 16", font: DesignSystem.Font.Title3.medium)
                         ]
                     )
                     
@@ -47,7 +54,7 @@ struct DesignSystemShow: View {
                     fontSection(
                         title: "Large Title",
                         items: [
-                            FontPreviewItem(name: "Semibold · 20/140", font: DesignSystem.Font.LargeTitle.semibold)
+                            FontItem(name: "Semibold · 20", font: DesignSystem.Font.LargeTitle.semibold)
                         ]
                     )
                     
@@ -55,7 +62,7 @@ struct DesignSystemShow: View {
                     fontSection(
                         title: "Body",
                         items: [
-                            FontPreviewItem(name: "Regular · 12/Auto", font: DesignSystem.Font.Body.regular)
+                            FontItem(name: "Regular · 12", font: DesignSystem.Font.Body.regular)
                         ]
                     )
                     
@@ -63,7 +70,7 @@ struct DesignSystemShow: View {
                     fontSection(
                         title: "Navigation Title",
                         items: [
-                            FontPreviewItem(name: "Bold · 28/140", font: DesignSystem.Font.NavigationTitle.bold)
+                            FontItem(name: "Bold · 28", font: DesignSystem.Font.NavigationTitle.bold)
                         ]
                     )
                 }
@@ -78,7 +85,7 @@ struct DesignSystemShow: View {
     // MARK: - Helper Views
     
     @ViewBuilder
-    private func fontSection(title: String, items: [FontPreviewItem]) -> some View {
+    private func fontSection(title: String, items: [FontItem]) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             // 섹션 제목
             HStack {
@@ -93,7 +100,7 @@ struct DesignSystemShow: View {
             
             // 폰트 아이템들
             VStack(alignment: .leading, spacing: 12) {
-                ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                ForEach(items, id: \.name) { item in
                     fontPreviewRow(item: item)
                 }
             }
@@ -101,7 +108,7 @@ struct DesignSystemShow: View {
     }
     
     @ViewBuilder
-    private func fontPreviewRow(item: FontPreviewItem) -> some View {
+    private func fontPreviewRow(item: FontItem) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             // 샘플 텍스트
             HStack {
@@ -123,13 +130,20 @@ struct DesignSystemShow: View {
 
 // MARK: - Supporting Types
 
-struct FontPreviewItem {
+struct FontItem {
     let name: String
-    let font: SwiftUI.Font
+    let font: Font
 }
 
 // MARK: - Preview
 
-#Preview {
-    TypographyPreviewView()
+struct TypographyPreviewView_Previews: PreviewProvider {
+    static var previews: some View {
+        TypographyPreviewView()
+            .preferredColorScheme(.light)
+        
+        TypographyPreviewView()
+            .preferredColorScheme(.dark)
+    }
 }
+
