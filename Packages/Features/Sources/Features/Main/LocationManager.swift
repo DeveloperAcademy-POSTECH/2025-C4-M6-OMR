@@ -66,3 +66,11 @@ public struct Location {
     public let longitude: Double
 }
 
+struct IdentifiableLocation: Identifiable {
+    let id = UUID()
+    let location: CLLocation
+    
+    var coordinate: CLLocationCoordinate2D {
+        location.coordinate
+    }
+}

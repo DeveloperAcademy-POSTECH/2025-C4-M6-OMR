@@ -16,7 +16,7 @@ enum SheetPosition {
         let screenHeight = UIScreen.main.bounds.height
         switch self {
         case .half:
-            return screenHeight * 0.8
+            return screenHeight * 0.75
         case .full:
             return 0
         }

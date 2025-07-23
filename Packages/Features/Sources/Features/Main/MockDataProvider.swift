@@ -16,7 +16,7 @@ struct MockDataProvider {
             floriography: "사랑",
             emotionType: .love,
             thumbnail: "rose_thumb.png",
-            objetImage: "rose_object.png"
+            objetImage: "flower1"
         )
 
         let flower2 = EmotionObject(
@@ -24,7 +24,7 @@ struct MockDataProvider {
             floriography: "희망",
             emotionType: .happiness,
             thumbnail: "sunflower_thumb.png",
-            objetImage: "sunflower_object.png"
+            objetImage: "flower1"
         )
 
         let flower3 = EmotionObject(
@@ -32,7 +32,7 @@ struct MockDataProvider {
             floriography: "순수",
             emotionType: .love,
             thumbnail: "lily_thumb.png",
-            objetImage: "lily_object.png"
+            objetImage: "flower2"
         )
 
         let flower4 = EmotionObject(
@@ -40,7 +40,7 @@ struct MockDataProvider {
             floriography: "변화",
             emotionType: .sadness,
             thumbnail: "hydrangea_thumb.png",
-            objetImage: "hydrangea_object.png"
+            objetImage: "flower2"
         )
 
         let baseDate = Date()
@@ -54,7 +54,7 @@ struct MockDataProvider {
                 createdAt: baseDate,
                 latitude: 36.0427,
                 longitude: 129.3589,
-                address: "경상북도 포항시 북구 양덕동 1234-5 스타벅스",
+                address: "경상북도 포항시",
                 flower: flower1,
                 isPublic: true
             ),
@@ -65,7 +65,7 @@ struct MockDataProvider {
                 createdAt: baseDate.addingTimeInterval(-86400),
                 latitude: 36.0425,
                 longitude: 129.3591,
-                address: "경상북도 포항시 북구 양덕동 1234-7 근처",
+                address: "경상북도 포항시",
                 flower: flower2,
                 isPublic: false
             ),
