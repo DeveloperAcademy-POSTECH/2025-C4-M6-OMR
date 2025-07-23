@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Domain
 
 struct FlowerSelectionBottomSheet: View {
     @StateObject var viewModel: FlowerSelectionViewModel
