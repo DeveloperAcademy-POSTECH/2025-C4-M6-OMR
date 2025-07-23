@@ -6,11 +6,10 @@
 //
 
 import SwiftUI
-import Domain
 import DesignSystem
 
 struct FlowerCardView: View {
-    let marker: Marker
+    let marker: FlowerModel
     let isSelected: Bool
     
     var body: some View {

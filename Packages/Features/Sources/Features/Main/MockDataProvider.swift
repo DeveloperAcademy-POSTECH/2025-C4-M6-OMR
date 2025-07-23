@@ -7,7 +7,6 @@
 import Dependencies
 import Foundation
 import FileProvider
-import Domain
 
 
 struct MockDataProvider {
@@ -15,7 +14,6 @@ struct MockDataProvider {
         let flower1 = EmotionObject(
             name: "장미",
             floriography: "사랑",
-            emotionType: .all,
             thumbnail: "rose_thumb.png",
             objetImage: "rose_object.png"
         )
@@ -23,7 +21,6 @@ struct MockDataProvider {
         let flower2 = EmotionObject(
             name: "해바라기",
             floriography: "희망",
-            emotionType: .all,
             thumbnail: "sunflower_thumb.png",
             objetImage: "sunflower_object.png"
         )
@@ -31,7 +28,6 @@ struct MockDataProvider {
         let flower3 = EmotionObject(
             name: "백합",
             floriography: "순수",
-            emotionType: .all,
             thumbnail: "lily_thumb.png",
             objetImage: "lily_object.png"
         )
@@ -39,7 +35,6 @@ struct MockDataProvider {
         let flower4 = EmotionObject(
             name: "수국",
             floriography: "변화",
-            emotionType: .all,
             thumbnail: "hydrangea_thumb.png",
             objetImage: "hydrangea_object.png"
         )
