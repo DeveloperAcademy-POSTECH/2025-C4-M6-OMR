@@ -9,10 +9,6 @@ import SwiftUI
 import PhotosUI
 import DesignSystem
 
-import SwiftUI
-import PhotosUI
-import DesignSystem
-
 public struct PhotoSelectionView: View {
     @ObservedObject var viewModel: RecordSaveSheetViewModel
     
@@ -24,7 +20,7 @@ public struct PhotoSelectionView: View {
     }
     
     public var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             RecentPhotosView(viewModel: viewModel)
             
             photoLibraryButton

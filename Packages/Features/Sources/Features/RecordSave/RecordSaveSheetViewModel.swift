@@ -9,30 +9,69 @@ import SwiftUI
 import Combine
 import Domain
 import PhotosUI
+import Photos
+
+struct SelectedFlowerModel {
+    let id = UUID()
+    let name: String
+    let meaning: String
+    let imageName: String
+}
 
 @MainActor
 public final class RecordSaveSheetViewModel: ObservableObject {
+    
+    @Published var detail: SelectedFlowerModel?
     @Published var recentImages: [UIImage] = []
     @Published var selectedImages: [UIImage] = []
     @Published var authorizationStatus: PHAuthorizationStatus = .notDetermined
     
+    public var isSaveButtonDisabled: Bool {
+        return selectedImages.isEmpty
+    }
+    
     let maxImageCount = 4
+    
+    // MARK: - Initialization
+    
+    public init() {
+        fetchFlower()
+        checkPermissionAndFetchPhotos()
+    }
+    
+    // MARK: - User Actions
     
     func toggleImageSelection(_ image: UIImage) {
         if let index = selectedImages.firstIndex(of: image) {
-            // 이미 선택된 사진이면 배열에서 제거
             selectedImages.remove(at: index)
         } else {
-            // 새로 선택하는 사진이면, 최대 개수를 넘지 않았을 때만 배열에 추가
             if selectedImages.count < maxImageCount {
                 selectedImages.append(image)
             }
         }
     }
     
-    public var isSaveButtonDisabled: Bool {
-        return selectedImages.isEmpty
+    func saveImages() {
+        guard !selectedImages.isEmpty else { return }
+        // TODO: 선택된 사진을 저장하는 UseCase를 구현
     }
+    
+    func addImages(from items: [PhotosPickerItem]) {
+        Task {
+            var newImages: [UIImage] = []
+            for item in items {
+                if let data = try? await item.loadTransferable(type: Data.self),
+                   let uiImage = UIImage(data: data) {
+                    newImages.append(uiImage)
+                }
+            }
+            withAnimation(.spring()) {
+                selectedImages.append(contentsOf: newImages)
+            }
+        }
+    }
+    
+    // MARK: - Data Fetching
     
     func checkPermissionAndFetchPhotos() {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
@@ -55,54 +94,56 @@ public final class RecordSaveSheetViewModel: ObservableObject {
         }
     }
     
-    func saveImages() {
-        guard !selectedImages.isEmpty else { return }
-        // TODO: 선택된 이미지를 저장하는 로직을 구현 예정
-
+    private func fetchFlower() {
+        // 임시 데이터 생성
+        self.detail = SelectedFlowerModel(
+            name: "프리지아",
+            meaning: "영원한 사랑",
+            imageName: "flower"
+        )
     }
     
-    func addImages(from items: [PhotosPickerItem]) {
+    private func fetchRecentPhotos() {
         Task {
-            var newImages: [UIImage] = []
-            for item in items {
-                if let data = try? await item.loadTransferable(type: Data.self),
-                   let uiImage = UIImage(data: data) {
-                    newImages.append(uiImage)
+            let fetchOptions = PHFetchOptions()
+            fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+            fetchOptions.fetchLimit = 20
+            
+            let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
+            
+            let images = await withTaskGroup(of: UIImage?.self, returning: [UIImage].self) { group in
+                var collectedImages: [UIImage] = []
+                
+                for index in 0..<fetchResult.count {
+                    let asset = fetchResult.object(at: index)
+                    group.addTask {
+                        return await self.fetchImage(for: asset, size: CGSize(width: 100, height: 100))
+                    }
                 }
+                
+                for await image in group {
+                    if let image = image {
+                        collectedImages.append(image)
+                    }
+                }
+                
+                return collectedImages
             }
-            selectedImages.append(contentsOf: newImages)
+            
+            self.recentImages = images
         }
     }
     
-    // 최근 사진을 불러오는 로직
-    private func fetchRecentPhotos() {
-        let fetchOptions = PHFetchOptions()
-        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        fetchOptions.fetchLimit = 20
-        
-        let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
+    private func fetchImage(for asset: PHAsset, size: CGSize) async -> UIImage? {
         let imageManager = PHImageManager.default()
-        let dispatchGroup = DispatchGroup()
-        var fetchedImages: [UIImage] = []
-        
-        // 메인 스레드 블락을 방지하기 위해 비동기적으로 작업 수행
         let options = PHImageRequestOptions()
         options.deliveryMode = .highQualityFormat
         options.isSynchronous = false
         
-        fetchResult.enumerateObjects { (asset, _, _) in
-            dispatchGroup.enter()
-            let targetSize = CGSize(width: 100, height: 100)
-            imageManager.requestImage(for: asset, targetSize: targetSize, contentMode: .aspectFill, options: options) { image, _ in
-                if let image = image {
-                    fetchedImages.append(image)
-                }
-                dispatchGroup.leave()
+        return await withCheckedContinuation { continuation in
+            imageManager.requestImage(for: asset, targetSize: size, contentMode: .aspectFill, options: options) { image, _ in
+                continuation.resume(returning: image)
             }
-        }
-        
-        dispatchGroup.notify(queue: .main) {
-            self.recentImages = fetchedImages
         }
     }
 }

@@ -22,18 +22,23 @@ public struct RecordSaveSheetView: View {
         VStack(spacing: 0) {
             RecordSaveHeaderView { dismiss() }
             
-            SelectedFlowerCardView(
-                flowerName: "프리지아",
-                flowerMeaning: "영원한 사랑",
-                flowerImageName: "flower"
-            )
-            .padding(.bottom, 30)
+            if let detail = viewModel.detail {
+                SelectedFlowerCardView(
+                    flowerName: detail.name,
+                    flowerMeaning: detail.meaning,
+                    flowerImageName: detail.imageName
+                )
+                .padding(.bottom, 30)
+            }
             
             PhotoSelectionView(viewModel: viewModel)
+                .padding(.bottom, 20)
             
             SaveButtonView(isDisabled: viewModel.isSaveButtonDisabled) {
                 viewModel.saveImages()
             }
+            
+            Spacer()
         }
         .presentationDetents([.fraction(0.8), .large])
         .interactiveDismissDisabled(true)
@@ -123,7 +128,7 @@ private struct SaveButtonView: View {
                 .cornerRadius(12)
         }
         .disabled(isDisabled)
-        .padding(.top, 36)
+        .padding(.top, 30)
         .padding(.horizontal, 20)
     }
 }

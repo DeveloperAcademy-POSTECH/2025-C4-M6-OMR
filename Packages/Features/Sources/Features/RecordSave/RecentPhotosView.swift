@@ -25,6 +25,7 @@ struct RecentPhotosView: View {
             }
         }
         .onAppear {
+            // 권한 상태 확인 및 사진 불러오기
             viewModel.checkPermissionAndFetchPhotos()
         }
     }
