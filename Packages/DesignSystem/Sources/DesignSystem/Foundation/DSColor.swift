@@ -15,5 +15,13 @@ public extension DesignSystem {
         public static var background: SwiftUI.Color {
             SwiftUI.Color("Background", bundle: .module)
         }
+        
+        public static var background1: SwiftUI.Color {
+            SwiftUI.Color("backgroundColor1", bundle: .module)
+        }
+        
+        public static var background2: SwiftUI.Color {
+            SwiftUI.Color("backgroundColor2", bundle: .module)
+        }
     }
 }
