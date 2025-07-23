@@ -1,10 +1,10 @@
 import SwiftUI
 import CoreLocation
+import DesignSystem
 
 struct MyRecordBottomSheet: View {
     @Binding var selectedPosition: SheetPosition
-    @StateObject private var viewModel = MyRecordBottomSheetViewModel()
-    var locationManager: LocationManager
+    @ObservedObject var viewModel: MyRecordBottomSheetViewModel
     
     var body: some View {
         VStack(spacing: 12) {
@@ -14,31 +14,31 @@ struct MyRecordBottomSheet: View {
                 .foregroundColor(.gray.opacity(0.4))
                 .padding(.top, 8)
                 .frame(maxWidth: .infinity, alignment: .center)
-
-            if viewModel.isLoading {
-                ProgressView("로딩 중...")
-                    .frame(maxWidth: .infinity, alignment: .center)
-            } else if let error = viewModel.errorMessage {
-                Text("❗️오류: \(error)")
-                    .foregroundColor(.red)
-            } else {
-                VStack {
+            
+            
+                VStack (alignment: .leading) {
                     Text("내 꽃")
-                        .font(.headline)
-                    Text("🌼 총 \(viewModel.allMotes.count)개의 기록이 있어요!")
-                        .font(.title3)
-                        .bold()
+                        .font(DesignSystem.Font.title1)
+                        .padding(.bottom, 8)
+                    
+                    Text("\(viewModel.allMotes.count)개의 꽃")
+                        .font(DesignSystem.Font.body)
+                        .foregroundColor(Color(red: 0.41, green: 0.49, blue: 0.6).opacity(0.72))
                 }
-                .frame(maxWidth: .infinity, alignment: .center)
-            }
-
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                
+            
+            
             Spacer(minLength: 0)
         }
-        .padding()
         .background(Color.white)
+        
         .cornerRadius(16)
         .onAppear {
             viewModel.loadAllMotes()
         }
+        
     }
+    
 }
