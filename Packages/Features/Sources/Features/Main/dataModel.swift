@@ -6,33 +6,23 @@
 //
 import Foundation
 
-
-// MARK: - Emotion Type
-
-public enum EmotionType: String {
-    case happiness, sadness, love, anger, fear
-}
-
 // MARK: - Flower Object
 
 public final class EmotionObject {
     public var id: UUID
     public var name: String
     public var floriography: String
-    public var emotionType: EmotionType
     public var thumbnail: String
     public var objetImage: String
     
     public init(id: UUID = UUID(),
                 name: String,
                 floriography: String,
-                emotionType: EmotionType,
                 thumbnail: String,
                 objetImage: String) {
         self.id = id
         self.name = name
         self.floriography = floriography
-        self.emotionType = emotionType
         self.thumbnail = thumbnail
         self.objetImage = objetImage
     }

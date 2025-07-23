@@ -14,7 +14,6 @@ struct MockDataProvider {
         let flower1 = EmotionObject(
             name: "장미",
             floriography: "사랑",
-            emotionType: .love,
             thumbnail: "rose_thumb.png",
             objetImage: "flower1"
         )
@@ -22,7 +21,6 @@ struct MockDataProvider {
         let flower2 = EmotionObject(
             name: "해바라기",
             floriography: "희망",
-            emotionType: .happiness,
             thumbnail: "sunflower_thumb.png",
             objetImage: "flower1"
         )
@@ -30,7 +28,6 @@ struct MockDataProvider {
         let flower3 = EmotionObject(
             name: "백합",
             floriography: "순수",
-            emotionType: .love,
             thumbnail: "lily_thumb.png",
             objetImage: "flower2"
         )
@@ -38,7 +35,6 @@ struct MockDataProvider {
         let flower4 = EmotionObject(
             name: "수국",
             floriography: "변화",
-            emotionType: .sadness,
             thumbnail: "hydrangea_thumb.png",
             objetImage: "flower2"
         )
