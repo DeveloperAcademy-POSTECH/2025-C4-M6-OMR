@@ -57,7 +57,7 @@ struct MainView: View {
 extension MainView {
     private var backgroundGradient: some View {
         LinearGradient(
-            gradient: Gradient(colors: [DesignSystem.Color.background1, DesignSystem.Color.background2]),
+            gradient: Gradient(colors: [DesignSystem.Color.Prime4, DesignSystem.Color.Prime3]),
             startPoint: .top,
             endPoint: .bottom
         )
@@ -127,4 +127,8 @@ extension MainView {
         let center = Location(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
         viewModel.loadNearbyMotesMock(center: center, radius: 1000)
     }
+}
+
+#Preview {
+    MainView()
 }
