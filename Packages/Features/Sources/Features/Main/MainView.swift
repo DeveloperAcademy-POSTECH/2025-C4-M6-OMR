@@ -128,3 +128,7 @@ extension MainView {
         viewModel.loadNearbyMotesMock(center: center, radius: 1000)
     }
 }
+
+#Preview {
+    MainView()
+}
