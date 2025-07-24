@@ -42,6 +42,7 @@ struct CustomButtonView: View {
     var body: some View {
         VStack {
             ARPlusButton()
+            DesignSystemAssets.image(named: "maintest")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DesignSystem.Color.Gray_04)

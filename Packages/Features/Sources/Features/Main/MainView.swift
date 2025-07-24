@@ -57,7 +57,7 @@ struct MainView: View {
 extension MainView {
     private var backgroundGradient: some View {
         LinearGradient(
-            gradient: Gradient(colors: [DesignSystem.Color.background1, DesignSystem.Color.background2]),
+            gradient: Gradient(colors: [DesignSystem.Color.Prime4, DesignSystem.Color.Prime3]),
             startPoint: .top,
             endPoint: .bottom
         )
