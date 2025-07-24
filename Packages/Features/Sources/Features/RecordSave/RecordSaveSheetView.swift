@@ -66,7 +66,6 @@ private struct RecordSaveHeaderView: View {
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15).opacity(0.25))
                     }
-                    .padding(.trailing, 20)
                 }
             }
             

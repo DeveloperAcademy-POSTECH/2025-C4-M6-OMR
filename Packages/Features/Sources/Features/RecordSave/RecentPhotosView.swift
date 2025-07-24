@@ -2,19 +2,19 @@
 //  RecentPhotosView.swift
 //  Features
 //
-//  Created by Henry on 7/22/25.
+//  Created by Henry on 7/25/25.
 //
 
 import SwiftUI
 import PhotosUI
 import DesignSystem
+import Photos
 
 struct RecentPhotosView: View {
     @ObservedObject var viewModel: RecordSaveSheetViewModel
     
     var body: some View {
         VStack {
-            // 현재 권한 상태에 따른 분기
             switch viewModel.authorizationStatus {
             case .authorized, .limited:
                 authorizedView
@@ -24,38 +24,42 @@ struct RecentPhotosView: View {
                 loadingView
             }
         }
-        .onAppear {
-            // 권한 상태 확인 및 사진 불러오기
-            viewModel.checkPermissionAndFetchPhotos()
-        }
     }
     
     // MARK: - Composed Subviews
     
-    // 권한이 허용되었을 때의 뷰
     @ViewBuilder
     private var authorizedView: some View {
-        if viewModel.recentImages.isEmpty {
+        if viewModel.isLoading {
             loadingView
+        } else if viewModel.recentPhotoAssets.isEmpty {
+            VStack {
+                Text("사진이 없습니다.")
+                    .font(.headline)
+                Text("카메라로 사진을 촬영하여 추억을 기록해보세요.")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+            }.frame(height: 100)
         } else {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 4) {
-                    ForEach(viewModel.recentImages, id: \.self) { image in
+                    ForEach(viewModel.recentPhotoAssets, id: \.self) { asset in
                         PhotoItemView(
-                            image: image,
-                            isSelected: viewModel.selectedImages.contains(image),
-                            selectedIndex: viewModel.selectedImages.firstIndex(of: image)
+                            asset: asset,
+                            isSelected: viewModel.selectedAssets.contains(asset),
+                            selectedIndex: viewModel.selectedAssets.firstIndex(of: asset),
+                            viewModel: viewModel
                         ) {
-                            viewModel.toggleImageSelection(image)
+                            viewModel.toggleAssetSelection(asset)
                         }
                     }
                 }
+                .padding(.horizontal)
             }
             .frame(height: 100)
         }
     }
     
-    // 권한이 거부되었을 때의 뷰
     @ViewBuilder
     private var deniedView: some View {
         VStack(spacing: 8) {
@@ -70,38 +74,52 @@ struct RecentPhotosView: View {
             }
             .padding(.top, 8)
         }
-        .frame(height: 72)
+        .frame(height: 100)
     }
     
-    // 로딩 중이거나 상태를 알 수 없을 때의 뷰
     @ViewBuilder
     private var loadingView: some View {
-        ProgressView().frame(height: 72)
+        ProgressView().frame(height: 100)
     }
 }
 
 // MARK: - Subviews
 
 private struct PhotoItemView: View {
-    let image: UIImage
+    let asset: PHAsset
     let isSelected: Bool
     let selectedIndex: Int?
+    let viewModel: RecordSaveSheetViewModel
     let action: () -> Void
     
+    @State private var image: UIImage?
+
     var body: some View {
         Button(action: action) {
-            Image(uiImage: image)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: 100, height: 100)
-                .clipped()
-                .overlay {
-                    if isSelected, let index = selectedIndex {
-                        SelectionOverlay(index: index)
-                    }
+            ZStack {
+                if let image = image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } else {
+                    Rectangle()
+                        .fill(Color(red: 0.85, green: 0.85, blue: 0.85))
                 }
+            }
+            .frame(width: 100, height: 100)
+            .clipped()
+            .overlay {
+                if isSelected, let index = selectedIndex {
+                    SelectionOverlay(index: index)
+                }
+            }
         }
         .buttonStyle(.plain)
+        .onAppear {
+            Task {
+                self.image = await viewModel.fetchImage(for: asset, size: CGSize(width: 250, height: 250))
+            }
+        }
     }
 }
 
@@ -121,4 +139,3 @@ private struct SelectionOverlay: View {
         }
     }
 }
-

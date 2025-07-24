@@ -11,9 +11,7 @@ import DesignSystem
 
 public struct PhotoSelectionView: View {
     @ObservedObject var viewModel: RecordSaveSheetViewModel
-    
-    @State private var isPickerPresented = false
-    @State private var selectedPhotoItems: [PhotosPickerItem] = []
+    @State private var showCustomAlbum = false
     
     public init(viewModel: RecordSaveSheetViewModel) {
         _viewModel = ObservedObject(wrappedValue: viewModel)
@@ -32,13 +30,13 @@ public struct PhotoSelectionView: View {
     }
     
     // MARK: - Composed Subviews
-
+    
     @ViewBuilder
     private var selectedPhotosGrid: some View {
         GeometryReader { geo in
             let totalImageWidth = geo.size.width - (4 * 3)
             let photoSize = totalImageWidth / 4
-
+            
             HStack(spacing: 4) {
                 ForEach(viewModel.selectedImages, id: \.self) { image in
                     SelectedPhotoView(
@@ -58,7 +56,9 @@ public struct PhotoSelectionView: View {
     @ViewBuilder
     private var photoLibraryButton: some View {
         Button(action: {
-            isPickerPresented = true
+            // CustomAlbumView 띄우기 전 전체 사진 호출
+            viewModel.prepareForAllPhotos()
+            showCustomAlbum = true
         }) {
             HStack {
                 Image(systemName: "photo.on.rectangle.angled")
@@ -69,16 +69,8 @@ public struct PhotoSelectionView: View {
             .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
             .background(.clear)
         }
-        .photosPicker(
-            isPresented: $isPickerPresented,
-            selection: $selectedPhotoItems,
-            maxSelectionCount: viewModel.maxImageCount,
-            matching: .images
-        )
-        .onChange(of: selectedPhotoItems) { _, newItems in
-            viewModel.replaceImages(from: newItems)
-            
-            selectedPhotoItems = []
+        .fullScreenCover(isPresented: $showCustomAlbum) {
+            CustomAlbumView(viewModel: viewModel)
         }
     }
 }
