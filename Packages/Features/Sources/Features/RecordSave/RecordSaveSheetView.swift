@@ -40,7 +40,8 @@ public struct RecordSaveSheetView: View {
             
             Spacer()
         }
-        .presentationDetents([.fraction(0.8), .large])
+        .padding(.horizontal, 20)
+        .presentationDetents([.fraction(0.8)])
         .interactiveDismissDisabled(true)
         .presentationDragIndicator(.hidden)
     }
@@ -65,7 +66,6 @@ private struct RecordSaveHeaderView: View {
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15).opacity(0.25))
                     }
-                    .padding(.trailing, 20)
                 }
             }
             
@@ -129,7 +129,6 @@ private struct SaveButtonView: View {
         }
         .disabled(isDisabled)
         .padding(.top, 30)
-        .padding(.horizontal, 20)
     }
 }
         
