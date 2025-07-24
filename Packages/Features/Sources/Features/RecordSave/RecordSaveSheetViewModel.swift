@@ -24,6 +24,7 @@ public final class RecordSaveSheetViewModel: ObservableObject {
     @Published var detail: SelectedFlowerModel?
     @Published var recentImages: [UIImage] = []
     @Published var selectedImages: [UIImage] = []
+    @Published var didSelectFromLibrary: Bool = false
     @Published var authorizationStatus: PHAuthorizationStatus = .notDetermined
     
     public var isSaveButtonDisabled: Bool {
@@ -56,18 +57,20 @@ public final class RecordSaveSheetViewModel: ObservableObject {
         // TODO: 선택된 사진을 저장하는 UseCase를 구현
     }
     
-    func addImages(from items: [PhotosPickerItem]) {
+    func replaceImages(from items: [PhotosPickerItem]) {
+        
+        guard !items.isEmpty else { return }
+        
         Task {
             var newImages: [UIImage] = []
-            for item in items {
+            for item in items.prefix(maxImageCount) {
                 if let data = try? await item.loadTransferable(type: Data.self),
                    let uiImage = UIImage(data: data) {
                     newImages.append(uiImage)
                 }
             }
-            withAnimation(.spring()) {
-                selectedImages.append(contentsOf: newImages)
-            }
+            selectedImages = Array(newImages.prefix(maxImageCount))
+            self.didSelectFromLibrary = true
         }
     }
     
@@ -101,6 +104,17 @@ public final class RecordSaveSheetViewModel: ObservableObject {
             meaning: "영원한 사랑",
             imageName: "flower"
         )
+    }
+    
+    func removeSelectedImage(_ image: UIImage) {
+        if let index = selectedImages.firstIndex(of: image) {
+            selectedImages.remove(at: index)
+        }
+    }
+    
+    func clearSelectedImages() {
+        selectedImages.removeAll()
+        didSelectFromLibrary = false
     }
     
     private func fetchRecentPhotos() {

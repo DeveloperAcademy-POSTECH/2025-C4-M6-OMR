@@ -50,7 +50,6 @@ struct RecentPhotosView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 20)
             }
             .frame(height: 100)
         }

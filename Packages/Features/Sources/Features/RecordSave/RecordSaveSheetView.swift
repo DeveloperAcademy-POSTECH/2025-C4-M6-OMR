@@ -40,7 +40,8 @@ public struct RecordSaveSheetView: View {
             
             Spacer()
         }
-        .presentationDetents([.fraction(0.8), .large])
+        .padding(.horizontal, 20)
+        .presentationDetents([.fraction(0.8)])
         .interactiveDismissDisabled(true)
         .presentationDragIndicator(.hidden)
     }
@@ -129,7 +130,6 @@ private struct SaveButtonView: View {
         }
         .disabled(isDisabled)
         .padding(.top, 30)
-        .padding(.horizontal, 20)
     }
 }
         

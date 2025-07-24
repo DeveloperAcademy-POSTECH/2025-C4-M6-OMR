@@ -21,13 +21,39 @@ public struct PhotoSelectionView: View {
     
     public var body: some View {
         VStack(spacing: 20) {
-            RecentPhotosView(viewModel: viewModel)
+            if viewModel.didSelectFromLibrary {
+                selectedPhotosGrid
+            } else {
+                RecentPhotosView(viewModel: viewModel)
+            }
             
             photoLibraryButton
         }
     }
     
     // MARK: - Composed Subviews
+
+    @ViewBuilder
+    private var selectedPhotosGrid: some View {
+        GeometryReader { geo in
+            let totalImageWidth = geo.size.width - (4 * 3)
+            let photoSize = totalImageWidth / 4
+
+            HStack(spacing: 4) {
+                ForEach(viewModel.selectedImages, id: \.self) { image in
+                    SelectedPhotoView(
+                        image: image,
+                        deleteAction: {
+                            viewModel.removeSelectedImage(image)
+                        },
+                        size: photoSize
+                    )
+                }
+            }
+            .position(x: geo.size.width / 2, y: geo.size.height / 2)
+        }
+        .frame(height: 100)
+    }
     
     @ViewBuilder
     private var photoLibraryButton: some View {
@@ -41,17 +67,17 @@ public struct PhotoSelectionView: View {
             }
             .font(.system(size: 16, weight: .semibold))
             .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
-            .padding(.horizontal, 20)
             .background(.clear)
         }
         .photosPicker(
             isPresented: $isPickerPresented,
             selection: $selectedPhotoItems,
-            maxSelectionCount: viewModel.maxImageCount - viewModel.selectedImages.count,
+            maxSelectionCount: viewModel.maxImageCount,
             matching: .images
         )
         .onChange(of: selectedPhotoItems) { _, newItems in
-            viewModel.addImages(from: newItems)
+            viewModel.replaceImages(from: newItems)
+            
             selectedPhotoItems = []
         }
     }
