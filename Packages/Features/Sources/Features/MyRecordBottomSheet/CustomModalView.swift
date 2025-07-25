@@ -110,6 +110,7 @@ struct CustomModalView: View {
                                     totalCount: viewModel.allMotes.count,
                                     onTap: {
                                         print("전체 기록 보기로 이동")
+                                        nav.push(.myRecord)
                                     }
                                 )
                                 

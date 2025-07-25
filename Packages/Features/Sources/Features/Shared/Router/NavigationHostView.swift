@@ -26,6 +26,10 @@ public struct NavigationHostView: View {
                     
                     case .map:
                         MapView()
+                        
+                    case .myRecord:
+                        MyRecordView()
+                            .navigationBarBackButtonHidden(true)
                     default:
                         Text("Not Found")
 
