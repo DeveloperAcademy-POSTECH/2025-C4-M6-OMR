@@ -1,8 +1,8 @@
 //
-//  RecordSaveSheetView.swift
+//  RecordSaveSheetViewModel.swift
 //  Features
 //
-//  Created by eunsong on 7/15/25.
+//  Created by eunsong on 7/25/25.
 //
 
 import SwiftUI
@@ -21,13 +21,26 @@ struct SelectedFlowerModel {
 @MainActor
 public final class RecordSaveSheetViewModel: ObservableObject {
     
+    // MARK: - Properties
+    
     @Published var detail: SelectedFlowerModel?
-    @Published var recentImages: [UIImage] = []
+    
+    // RecentPhotosView를 위한 20개의 에셋 배열
+    @Published var recentPhotoAssets: [PHAsset] = []
+    // CustomAlbumView를 위한 전체 사진 목록
+    @Published var allPhotoAssetsResult: PHFetchResult<PHAsset>?
+    
+    @Published var selectedAssets: [PHAsset] = []
     @Published var selectedImages: [UIImage] = []
+    
+    @Published var didSelectFromLibrary: Bool = false
     @Published var authorizationStatus: PHAuthorizationStatus = .notDetermined
+    @Published var isLoading = false
+    
+    private let cachingImageManager = PHCachingImageManager()
     
     public var isSaveButtonDisabled: Bool {
-        return selectedImages.isEmpty
+        return selectedAssets.isEmpty
     }
     
     let maxImageCount = 4
@@ -36,112 +49,137 @@ public final class RecordSaveSheetViewModel: ObservableObject {
     
     public init() {
         fetchFlower()
-        checkPermissionAndFetchPhotos()
+        fetchInitialRecentAssets() // 앱 시작 시 최근 에셋 20개 우선 호출
     }
     
     // MARK: - User Actions
     
-    func toggleImageSelection(_ image: UIImage) {
+    func finalizeAssetSelection() {
+        Task {
+            self.isLoading = true
+            var images: [UIImage] = []
+            for asset in selectedAssets {
+                if let image = await fetchImage(for: asset, size: CGSize(width: 400, height: 400)) {
+                    images.append(image)
+                }
+            }
+            self.selectedImages = images
+            self.didSelectFromLibrary = true
+            self.isLoading = false
+        }
+    }
+    
+    func removeSelectedImage(_ image: UIImage) {
         if let index = selectedImages.firstIndex(of: image) {
             selectedImages.remove(at: index)
-        } else {
-            if selectedImages.count < maxImageCount {
-                selectedImages.append(image)
+            if selectedAssets.indices.contains(index) {
+                selectedAssets.remove(at: index)
             }
+        }
+    }
+    
+    func toggleAssetSelection(_ asset: PHAsset) {
+        if let index = selectedAssets.firstIndex(of: asset) {
+            selectedAssets.remove(at: index)
+        } else if selectedAssets.count < maxImageCount {
+            selectedAssets.append(asset)
         }
     }
     
     func saveImages() {
-        guard !selectedImages.isEmpty else { return }
-        // TODO: 선택된 사진을 저장하는 UseCase를 구현
-    }
-    
-    func addImages(from items: [PhotosPickerItem]) {
+        guard !selectedAssets.isEmpty else { return }
         Task {
-            var newImages: [UIImage] = []
-            for item in items {
-                if let data = try? await item.loadTransferable(type: Data.self),
-                   let uiImage = UIImage(data: data) {
-                    newImages.append(uiImage)
+            var imagesToSave: [UIImage] = []
+            for asset in selectedAssets {
+                if let image = await fetchImage(for: asset, size: PHImageManagerMaximumSize) {
+                    imagesToSave.append(image)
                 }
             }
-            withAnimation(.spring()) {
-                selectedImages.append(contentsOf: newImages)
-            }
+            // TODO: imagesToSave 배열을 사용하여 실제 저장 UseCase에 전달
+            print("\(imagesToSave.count)개의 이미지가 저장 준비 완료")
         }
+    }
+    
+    func clearSelectedAssets() {
+        selectedAssets.removeAll()
+        didSelectFromLibrary = false
     }
     
     // MARK: - Data Fetching
     
-    func checkPermissionAndFetchPhotos() {
+    private func fetchFlower() {
+        self.detail = SelectedFlowerModel(name: "프리지아", meaning: "영원한 사랑", imageName: "flower")
+    }
+    
+    /// RecentPhotosView를  위한 최근 사진 20개 우선 호출
+    func fetchInitialRecentAssets() {
+        isLoading = true
+        checkPermission { [weak self] hasPermission in
+            guard let self = self, hasPermission else {
+                DispatchQueue.main.async { self?.isLoading = false }
+                return
+            }
+            
+            DispatchQueue.global(qos: .userInitiated).async {
+                let fetchOptions = PHFetchOptions()
+                fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+                fetchOptions.fetchLimit = 20
+                
+                let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
+                var assets: [PHAsset] = []
+                fetchResult.enumerateObjects { asset, _, _ in assets.append(asset) }
+                
+                DispatchQueue.main.async {
+                    self.recentPhotoAssets = assets
+                    self.isLoading = false
+                }
+            }
+        }
+    }
+    
+    /// CustomAlbumView를 위해 전체 사진 목록(PHFetchResult) 준비
+    func prepareForAllPhotos() {
+        guard allPhotoAssetsResult == nil else { return } // 이미 로드했다면 다시 로드하지 않음
+
+        checkPermission { [weak self] hasPermission in
+            guard let self = self, hasPermission else { return }
+
+            let opts = PHFetchOptions()
+            opts.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+            self.allPhotoAssetsResult = PHAsset.fetchAssets(with: .image, options: opts)
+        }
+    }
+    
+    private func checkPermission(completion: @escaping (Bool) -> Void) {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         self.authorizationStatus = status
         
         switch status {
         case .authorized, .limited:
-            fetchRecentPhotos()
+            completion(true)
         case .notDetermined:
             PHPhotoLibrary.requestAuthorization(for: .readWrite) { newStatus in
                 DispatchQueue.main.async {
                     self.authorizationStatus = newStatus
-                    if newStatus == .authorized {
-                        self.fetchRecentPhotos()
-                    }
+                    completion(newStatus == .authorized || newStatus == .limited)
                 }
             }
         default:
-            break
+            completion(false)
         }
     }
-    
-    private func fetchFlower() {
-        // 임시 데이터 생성
-        self.detail = SelectedFlowerModel(
-            name: "프리지아",
-            meaning: "영원한 사랑",
-            imageName: "flower"
-        )
-    }
-    
-    private func fetchRecentPhotos() {
-        Task {
-            let fetchOptions = PHFetchOptions()
-            fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-            fetchOptions.fetchLimit = 20
-            
-            let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
-            
-            let images = await withTaskGroup(of: UIImage?.self, returning: [UIImage].self) { group in
-                var collectedImages: [UIImage] = []
-                
-                for index in 0..<fetchResult.count {
-                    let asset = fetchResult.object(at: index)
-                    group.addTask {
-                        return await self.fetchImage(for: asset, size: CGSize(width: 100, height: 100))
-                    }
-                }
-                
-                for await image in group {
-                    if let image = image {
-                        collectedImages.append(image)
-                    }
-                }
-                
-                return collectedImages
-            }
-            
-            self.recentImages = images
-        }
-    }
-    
-    private func fetchImage(for asset: PHAsset, size: CGSize) async -> UIImage? {
-        let imageManager = PHImageManager.default()
+
+    /// 주어진 PHAsset으로 UIImage를 비동기적으로 호출  (캐싱 적용).
+    public func fetchImage(for asset: PHAsset, size: CGSize) async -> UIImage? {
         let options = PHImageRequestOptions()
         options.deliveryMode = .highQualityFormat
-        options.isSynchronous = false
+        options.isNetworkAccessAllowed = true
         
         return await withCheckedContinuation { continuation in
-            imageManager.requestImage(for: asset, targetSize: size, contentMode: .aspectFill, options: options) { image, _ in
+            cachingImageManager.requestImage(for: asset,
+                                         targetSize: size,
+                                         contentMode: .aspectFill,
+                                         options: options) { image, _ in
                 continuation.resume(returning: image)
             }
         }
