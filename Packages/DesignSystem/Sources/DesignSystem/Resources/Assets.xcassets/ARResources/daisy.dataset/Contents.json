@@ -1,0 +1,13 @@
+{
+  "data" : [
+    {
+      "filename" : "daisy_low_poly.usdz",
+      "idiom" : "universal",
+      "universal-type-identifier" : "com.pixar.universal-scene-description-mobile"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

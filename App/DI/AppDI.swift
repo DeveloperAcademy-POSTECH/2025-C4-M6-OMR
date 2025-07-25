@@ -4,80 +4,49 @@
 //
 //  Created by eunsong on 7/15/25.
 //
+
 import Dependencies
 import Foundation
 import SwiftData
-import Domain
-import Data
+import Domain   // DI 키 & 프로토콜
+import Data     // DefaultRecordRepository 등 구현체
 import Core
 import Features
+import SwiftUI  // View 확장
 
 public struct AppDI {
-    internal static let modelContext = ModelContext(AppModelContainer.shared)
-    internal static let localRecordDS = LocalRecordDataSource(container: AppModelContainer.shared)
-    internal static let remoteRecordDS = RemoteRecordDatasource()
-    internal static let userLocalDS = UserLocalDatasource(modelContext: modelContext)
-    internal static let userRepo = DefaultUserRepository(local: userLocalDS)
-    internal static let markerLocalDS = MarkerLocalDatasource(modelContext: modelContext)
-    internal static let markerRepo = DefaultMarkerRepository(local: markerLocalDS)
+    // SwiftData 모델 컨테이너 & DataSource
+    internal static let modelContext     = ModelContext(AppModelContainer.shared)
+    internal static let localRecordDS    = LocalRecordDataSource(container: AppModelContainer.shared)
+    internal static let remoteRecordDS   = RemoteRecordDatasource()
+    internal static let userLocalDS      = UserLocalDatasource(modelContext: modelContext)
+    internal static let markerLocalDS    = MarkerLocalDatasource(modelContext: modelContext)
 
-    public static func registerDependencies() {
-        // Register all application-level dependencies here
-    }
+    // Repository 구현체 라이브값
+    public static let recordRepositoryLiveValue: RecordRepository = DefaultRecordRepository(
+        local:                  localRecordDS,
+        remote:                 remoteRecordDS,
+        currentUserIDProvider:  { UUID() }
+    )
+    public static let userRepositoryLiveValue: UserRepository = DefaultUserRepository(
+        local: userLocalDS
+    )
+    public static let markerRepositoryLiveValue: MarkerRepository = DefaultMarkerRepository(
+        local: markerLocalDS
+    )
 }
 
-// MARK: - RecordUseCase DI
+// MARK: - SwiftUI View Extension for DI
 
-private enum FetchPublicRecordsUseCaseKey: DependencyKey {
-    static var liveValue: FetchPublicRecordsUseCase {
-        let recordRepo  = DefaultRecordRepository(local: AppDI.localRecordDS, remote: AppDI.remoteRecordDS) {
-            return UUID()
+extension View {
+    /// 앱 전체 의존성을 이 뷰 컨텍스트에 주입합니다.
+    func injectAppDependencies() -> some View {
+        withDependencies {
+            $0.recordRepository = AppDI.recordRepositoryLiveValue
+            $0.userRepository   = AppDI.userRepositoryLiveValue
+            $0.markerRepository = AppDI.markerRepositoryLiveValue
+        } operation: {
+            self
         }
-        return FetchPublicRecordsUseCase(
-            recordRepository: recordRepo,
-            userRepository: AppDI.userRepo,
-            markerRepository: AppDI.markerRepo
-        )
-    }
-}
-
-private enum FetchMyRecordsUseCaseKey: DependencyKey {
-    static var liveValue: FetchMyRecordsUseCase {
-        let recordRepo  = DefaultRecordRepository(local: AppDI.localRecordDS, remote: AppDI.remoteRecordDS) {
-            return UUID()
-        }
-        return FetchMyRecordsUseCase(
-            recordRepository: recordRepo,
-            userRepository: AppDI.userRepo,
-            markerRepository: AppDI.markerRepo
-        )
-    }
-}
-
-private enum FetchRecordDetailUseCaseKey: DependencyKey {
-    static var liveValue: FetchRecordDetailUseCase {
-        let recordRepo  = DefaultRecordRepository(local: AppDI.localRecordDS, remote: AppDI.remoteRecordDS) {
-            return UUID()
-        }
-        return FetchRecordDetailUseCase(
-            recordRepository: recordRepo,
-            userRepository: AppDI.userRepo,
-            markerRepository: AppDI.markerRepo
-        )
-    }
-}
-
-extension DependencyValues {
-    var fetchPublicRecordsUseCase: FetchPublicRecordsUseCase {
-        get { self[FetchPublicRecordsUseCaseKey.self] }
-        set { self[FetchPublicRecordsUseCaseKey.self] = newValue }
-    }
-    var fetchMyRecordsUseCase: FetchMyRecordsUseCase {
-        get { self[FetchMyRecordsUseCaseKey.self] }
-        set { self[FetchMyRecordsUseCaseKey.self] = newValue }
-    }
-    var fetchRecordDetailUseCase: FetchRecordDetailUseCase {
-        get { self[FetchRecordDetailUseCaseKey.self] }
-        set { self[FetchRecordDetailUseCaseKey.self] = newValue }
     }
 }

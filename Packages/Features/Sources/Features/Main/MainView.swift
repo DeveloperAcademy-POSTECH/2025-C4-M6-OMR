@@ -7,7 +7,6 @@ struct MainView: View {
     @EnvironmentObject private var nav: NavigationViewModel
     
     // MARK: - ViewModels
-    @StateObject private var locationManager = LocationManager()
     @StateObject private var viewModel = MainViewModel()
     @StateObject private var myRecordViewModel = MyRecordBottomSheetViewModel()
     
@@ -37,14 +36,9 @@ struct MainView: View {
                         .onEnded(handleSheetDrag)
                 )
         }
-        
-        
-        .onReceive(locationManager.$currentLocation.compactMap { $0 }) { location in
-            handleLocationUpdate(location)
-        }
         .fullScreenCover(isPresented: $isFullScreen) {
             MyRecordFullScreenModalView(isPresented: $isFullScreen, viewModel: myRecordViewModel)
-                .environmentObject(locationManager)
+                .environmentObject(viewModel.locationManager)
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color.blue)
@@ -79,7 +73,9 @@ extension MainView {
             }
             
             ARButton(action: {
-                nav.push(.arCamera)
+                if let location = viewModel.currentLocation {
+                    nav.push(.arCamera(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude))
+                }
             })
             
             Button("디자인 시스템 예제 보기") {
@@ -94,7 +90,7 @@ extension MainView {
         HStack {
             Image(systemName: "paperplane.fill")
                 .foregroundColor(.blue)
-            Text(locationManager.currentAddress)
+            Text(viewModel.currentAddress)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.blue)
         }
@@ -107,24 +103,13 @@ extension MainView {
     private func handleSheetDrag(_ value: DragGesture.Value) {
         if value.translation.height < -100 {
             isFullScreen = true
-            sheetPosition = .half
+            // Removed sheetPosition = .half to prevent conflict with fullScreenCover
         } else if value.translation.height > 100 {
             sheetPosition = .half
         }
     }
-    
-    private func handleLocationUpdate(_ location: CLLocation) {
-        guard let prev = previousLocation else {
-            previousLocation = location
-            return
-        }
-        
-        let distance = location.distance(from: prev)
-        if distance < updateThresholdMeters { return }
-        
-        previousLocation = location
-        
-        let center = Location(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
-        viewModel.loadNearbyMotesMock(center: center, radius: 1000)
-    }
+}
+
+#Preview{
+    MainView()
 }
