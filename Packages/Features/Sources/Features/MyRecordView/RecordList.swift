@@ -9,21 +9,29 @@ import SwiftUI
 
 struct RecordList: View {
     let records: [MyRecordModel]
-    
+    let onRecordTap: (UUID) -> Void
+
     var body: some View {
         ScrollView {
-            LazyVStack() {
-                ForEach(records, id: \.id) { record in
-                    RecordCard(record: record)
+            LazyVStack {
+                ForEach(records) { record in
+                    Button(action: {
+                        print("✅ Tapped Record:")
+                         print("ID: \(record.id)")
+                         print("Title: \(record.title)")
+                         print("Date: \(record.formattedDate)")
+                         print("Flower: \(record.flowerImageName)")
+                         
+                         onRecordTap(record.id)
+                        onRecordTap(record.id)
+                    }) {
+                        RecordCard(record: record)
+                            .padding(.vertical, 8)
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
             }
-            .padding(.horizontal, 20)
         }
     }
 }
 
-#Preview {
-    RecordList(
-        records: MyRecordModel.createMock()
-    )
-}
