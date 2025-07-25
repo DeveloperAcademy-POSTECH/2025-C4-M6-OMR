@@ -49,7 +49,19 @@ struct MainView: View {
                 viewModel.loadNearbyMotesMock(center: center, radius: 1000)
             }
         }
-        
+    }
+}
+
+// MARK: - Subviews
+
+extension MainView {
+    private var backgroundGradient: some View {
+        LinearGradient(
+            gradient: Gradient(colors: [DesignSystem.Color.Prime4, DesignSystem.Color.Prime3]),
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .ignoresSafeArea()
     }
     
     private var content: some View {
@@ -81,7 +93,7 @@ struct MainView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [DesignSystem.Color.background1, DesignSystem.Color.background2]),
+                gradient: Gradient(colors: [DesignSystem.Color.Prime4, DesignSystem.Color.Prime3]),
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -117,4 +129,8 @@ extension MainView {
         let center = Location(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
         viewModel.loadNearbyMotesMock(center: center, radius: 1000)
     }
+}
+
+#Preview {
+    MainView()
 }
