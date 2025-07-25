@@ -2,66 +2,54 @@ import SwiftUI
 import CoreLocation
 import DesignSystem
 
+// MARK: - MainView
+
 struct MainView: View {
-    // MARK: - Environment
     @EnvironmentObject private var nav: NavigationViewModel
-    
-    // MARK: - ViewModels
     @StateObject private var locationManager = LocationManager()
     @StateObject private var viewModel = MainViewModel()
-    @StateObject private var myRecordViewModel = MyRecordBottomSheetViewModel()
     
-    // MARK: - States
+    @State private var sheetDetent: Detent = .low
+    @State private var isSheetVisible = true
     @State private var previousLocation: CLLocation? = nil
-    @State private var sheetPosition: SheetPosition = .half
-    @GestureState private var dragOffset: CGSize = .zero
-    @State private var isFullScreen = false
-    
     private let updateThresholdMeters: Double = 20.0
     
     var body: some View {
-        ZStack(alignment: .bottom) {
-            backgroundGradient
+        GeometryReader { geometry in
+            let detentOffsets = (
+                large: Detent.large.offset(in: geometry),
+                low: Detent.low.offset(in: geometry)
+            )
             
-            content
-            
-            // Bottom Sheet
-            MyRecordBottomSheet(selectedPosition: $sheetPosition, viewModel: myRecordViewModel)
-                .offset(y: sheetPosition.yOffset + dragOffset.height)
-                .animation(.easeInOut, value: sheetPosition)
-                .gesture(
-                    DragGesture()
-                        .updating($dragOffset) { value, state, _ in
-                            state = value.translation
-                        }
-                        .onEnded(handleSheetDrag)
-                )
+            ZStack(alignment: .top) {
+                content
+                
+                if isSheetVisible {
+                    CustomModalView(
+                        sheetDetent: $sheetDetent,
+                        isSheetVisible: $isSheetVisible,
+                        totalCount: $viewModel.totalCount,
+                        detentOffsets: detentOffsets,
+                        bottomSafeArea: geometry.safeAreaInsets.bottom
+                    )
+                    .frame(height: geometry.size.height)
+                    .transition(.move(edge: .bottom))
+                }
+            }
+            .animation(.snappy(duration: 0.35, extraBounce: 0.08), value: sheetDetent)
+            .onReceive(locationManager.$currentLocation.compactMap { $0 }) { location in
+                // 최초 위치 업데이트 시 한 번만 호출
+                guard previousLocation == nil else {
+                    handleLocationUpdate(location)
+                    return
+                }
+                
+                previousLocation = location
+                let center = Location(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
+                viewModel.loadNearbyMotesMock(center: center, radius: 1000)
+            }
         }
         
-        
-        .onReceive(locationManager.$currentLocation.compactMap { $0 }) { location in
-            handleLocationUpdate(location)
-        }
-        .fullScreenCover(isPresented: $isFullScreen) {
-            MyRecordFullScreenModalView(isPresented: $isFullScreen, viewModel: myRecordViewModel)
-                .environmentObject(locationManager)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.blue)
-        }
-    }
-}
-
-// MARK: - Subviews
-
-extension MainView {
-    private var backgroundGradient: some View {
-        LinearGradient(
-            gradient: Gradient(colors: [DesignSystem.Color.background1, DesignSystem.Color.background2]),
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
     }
     
     private var content: some View {
@@ -72,7 +60,9 @@ extension MainView {
             if viewModel.isLoading {
                 ProgressView()
             } else {
-                Text(viewModel.motes.isEmpty ? "주변에 과거에 기록한 꽃이 없어요" : "주변에 과거에 기록한 꽃이 있어요")
+                Text("\(viewModel.totalCount)")
+                Text("\(viewModel.nearbyCount)")
+                Text(viewModel.nearbyCount == 0 ? "주변에 과거에 기록한 꽃이 없어요" : "주변에 과거에 기록한 꽃이 있어요")
                     .font(.custom("Pretendard", size: 18).weight(.semibold))
                     .foregroundColor(.black)
                     .padding()
@@ -88,6 +78,14 @@ extension MainView {
             
             Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(
+            LinearGradient(
+                gradient: Gradient(colors: [DesignSystem.Color.background1, DesignSystem.Color.background2]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
     }
     
     private var currentAddressView: some View {
@@ -104,14 +102,6 @@ extension MainView {
 // MARK: - Helpers
 
 extension MainView {
-    private func handleSheetDrag(_ value: DragGesture.Value) {
-        if value.translation.height < -100 {
-            isFullScreen = true
-            sheetPosition = .half
-        } else if value.translation.height > 100 {
-            sheetPosition = .half
-        }
-    }
     
     private func handleLocationUpdate(_ location: CLLocation) {
         guard let prev = previousLocation else {
