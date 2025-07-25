@@ -14,8 +14,11 @@ public struct RecordSaveSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: RecordSaveSheetViewModel
     
-    public init(viewModel: RecordSaveSheetViewModel) {
+    let onSave: (Record) -> Void
+    
+    public init(viewModel: RecordSaveSheetViewModel, onSave: @escaping (Record) -> Void) {
         _viewModel = StateObject(wrappedValue: viewModel)
+        self.onSave = onSave
     }
     
     public var body: some View {
@@ -34,10 +37,12 @@ public struct RecordSaveSheetView: View {
             PhotoSelectionView(viewModel: viewModel)
                 .padding(.bottom, 20)
             
-            SaveButtonView(isDisabled: viewModel.isSaveButtonDisabled) {
-                viewModel.saveImages()
-            }
-            
+            SaveButtonView(
+                isDisabled: viewModel.isSaveButtonDisabled,
+                viewModel: viewModel,
+                onSave: onSave,
+                dismiss: { dismiss() }
+            )
             Spacer()
         }
         .padding(.horizontal, 20)
@@ -115,10 +120,19 @@ private struct SelectedFlowerCardView: View {
 
 private struct SaveButtonView: View {
     let isDisabled: Bool
-    let action: () -> Void
+    let viewModel: RecordSaveSheetViewModel
+    let onSave: (Record) -> Void
+    let dismiss: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            Task {
+                if let newRecord = await viewModel.saveImages() {
+                    onSave(newRecord)
+                    dismiss()
+                }
+            }
+        }) {
             Text("저장")
                 .font(.headline.bold())
                 .foregroundColor(isDisabled ? Color(red: 0.56, green: 0.56, blue: 0.56) : Color.white)

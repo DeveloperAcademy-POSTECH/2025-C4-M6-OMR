@@ -11,12 +11,36 @@ import Domain
 import PhotosUI
 import Photos
 
-struct SelectedFlowerModel {
-    let id = UUID()
-    let name: String
-    let meaning: String
-    let imageName: String
+// MARK: - Models
+
+public struct Record {
+    public let id: UUID
+    public let flower: SelectedFlowerModel
+    public let imageFileNames: [String]
+
+    public init(id: UUID = UUID(), flower: SelectedFlowerModel, imageFileNames: [String]) {
+        self.id = id
+        self.flower = flower
+        self.imageFileNames = imageFileNames
+    }
 }
+
+public struct SelectedFlowerModel {
+    public let id: UUID
+    public let name: String
+    public let meaning: String
+    public let imageName: String
+    
+    public init(id: UUID = UUID(), name: String, meaning: String, imageName: String) {
+        self.id = id
+        self.name = name
+        self.meaning = meaning
+        self.imageName = imageName
+    }
+}
+
+
+// MARK: - ViewModel
 
 @MainActor
 public final class RecordSaveSheetViewModel: ObservableObject {
@@ -25,9 +49,7 @@ public final class RecordSaveSheetViewModel: ObservableObject {
     
     @Published var detail: SelectedFlowerModel?
     
-    // RecentPhotosView를 위한 20개의 에셋 배열
     @Published var recentPhotoAssets: [PHAsset] = []
-    // CustomAlbumView를 위한 전체 사진 목록
     @Published var allPhotoAssetsResult: PHFetchResult<PHAsset>?
     
     @Published var selectedAssets: [PHAsset] = []
@@ -49,11 +71,12 @@ public final class RecordSaveSheetViewModel: ObservableObject {
     
     public init() {
         fetchFlower()
-        fetchInitialRecentAssets() // 앱 시작 시 최근 에셋 20개 우선 호출
+        fetchInitialRecentAssets()
     }
     
     // MARK: - User Actions
     
+    /// 커스텀 앨범에서 '완료'를 눌렀을 때 호출
     func finalizeAssetSelection() {
         Task {
             self.isLoading = true
@@ -69,6 +92,7 @@ public final class RecordSaveSheetViewModel: ObservableObject {
         }
     }
     
+    /// 최종 선택된 사진 그리드에서 이미지 삭제
     func removeSelectedImage(_ image: UIImage) {
         if let index = selectedImages.firstIndex(of: image) {
             selectedImages.remove(at: index)
@@ -78,6 +102,7 @@ public final class RecordSaveSheetViewModel: ObservableObject {
         }
     }
     
+    /// 커스텀 앨범에서 사진 선택/해제
     func toggleAssetSelection(_ asset: PHAsset) {
         if let index = selectedAssets.firstIndex(of: asset) {
             selectedAssets.remove(at: index)
@@ -86,20 +111,33 @@ public final class RecordSaveSheetViewModel: ObservableObject {
         }
     }
     
-    func saveImages() {
-        guard !selectedAssets.isEmpty else { return }
-        Task {
-            var imagesToSave: [UIImage] = []
-            for asset in selectedAssets {
-                if let image = await fetchImage(for: asset, size: PHImageManagerMaximumSize) {
-                    imagesToSave.append(image)
-                }
+    /// 최종 저장 버튼 로직 (async/await 버전)
+    func saveImages() async -> Record? {
+        guard !selectedAssets.isEmpty, let flowerDetail = detail else { return nil }
+        
+        self.isLoading = true
+        
+        var imagesToSave: [UIImage] = []
+        for asset in selectedAssets {
+            if let image = await fetchImage(for: asset, size: PHImageManagerMaximumSize) {
+                imagesToSave.append(image)
             }
-            // TODO: imagesToSave 배열을 사용하여 실제 저장 UseCase에 전달
-            print("\(imagesToSave.count)개의 이미지가 저장 준비 완료")
         }
+        
+        var savedFileNames: [String] = []
+        for image in imagesToSave {
+            // FileStorageManager가 actor이므로 await 키워드 필요
+            if let fileName = await FileStoreManager.shared.saveImage(image) {
+                savedFileNames.append(fileName)
+            }
+        }
+        
+        let newRecord = Record(flower: flowerDetail, imageFileNames: savedFileNames)
+        self.isLoading = false
+        return newRecord
     }
     
+    /// 선택된 모든 에셋 초기화
     func clearSelectedAssets() {
         selectedAssets.removeAll()
         didSelectFromLibrary = false
@@ -111,7 +149,7 @@ public final class RecordSaveSheetViewModel: ObservableObject {
         self.detail = SelectedFlowerModel(name: "프리지아", meaning: "영원한 사랑", imageName: "flower")
     }
     
-    /// RecentPhotosView를  위한 최근 사진 20개 우선 호출
+    /// RecentPhotosView를 위해 최근 에셋 20개만 불러옵니다.
     func fetchInitialRecentAssets() {
         isLoading = true
         checkPermission { [weak self] hasPermission in
@@ -137,9 +175,8 @@ public final class RecordSaveSheetViewModel: ObservableObject {
         }
     }
     
-    /// CustomAlbumView를 위해 전체 사진 목록(PHFetchResult) 준비
     func prepareForAllPhotos() {
-        guard allPhotoAssetsResult == nil else { return } // 이미 로드했다면 다시 로드하지 않음
+        guard allPhotoAssetsResult == nil else { return } // 이미 로드했으면 다시 재로드 X
 
         checkPermission { [weak self] hasPermission in
             guard let self = self, hasPermission else { return }
@@ -150,6 +187,7 @@ public final class RecordSaveSheetViewModel: ObservableObject {
         }
     }
     
+    /// 권한을 확인하고 요청하는 공통 헬퍼 메서드
     private func checkPermission(completion: @escaping (Bool) -> Void) {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         self.authorizationStatus = status
@@ -164,12 +202,12 @@ public final class RecordSaveSheetViewModel: ObservableObject {
                     completion(newStatus == .authorized || newStatus == .limited)
                 }
             }
-        default:
+        default: // .denied, .restricted
             completion(false)
         }
     }
 
-    /// 주어진 PHAsset으로 UIImage를 비동기적으로 호출  (캐싱 적용).
+    /// 주어진 PHAsset으로 UIImage를 비동기적으로 불러옵니다 (캐싱 적용).
     public func fetchImage(for asset: PHAsset, size: CGSize) async -> UIImage? {
         let options = PHImageRequestOptions()
         options.deliveryMode = .highQualityFormat

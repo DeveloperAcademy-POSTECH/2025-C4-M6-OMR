@@ -19,11 +19,12 @@ public struct SwiftUIView: View {
             }
         }
         .sheet(isPresented: $isShowingSave) {
-            RecordSaveSheetView(viewModel: RecordSaveSheetViewModel())
+            RecordSaveSheetView(
+                viewModel: RecordSaveSheetViewModel(),
+                onSave: { newRecord in
+                    print("✅ Record saved in temporary view: \(newRecord)")
+                }
+            )
         }
     }
-}
-
-#Preview {
-    SwiftUIView()
 }
