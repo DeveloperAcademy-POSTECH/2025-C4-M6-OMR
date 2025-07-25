@@ -16,7 +16,7 @@ struct ARButton: View {
     var body: some View {
         Button(action: action) {
             ZStack {
-                DesignSystemAssets.image(named: "homeflower")
+                DesignSystemAssets.image(named: "homeFlower")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 364, height: 364)

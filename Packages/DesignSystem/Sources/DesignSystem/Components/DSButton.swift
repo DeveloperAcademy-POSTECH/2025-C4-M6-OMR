@@ -152,6 +152,51 @@ struct ARCancelButton: View {
             .cornerRadius(171)
             .shadow(color: .black.opacity(0.1), radius: 10, x:0, y:0)
         }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+struct MyLocationButton: View {
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action){
+            Image(systemName: "location")
+                .foregroundColor(DesignSystem.Color.Prime)
+                .font(.system(size: 18))
+                .multilineTextAlignment(.center)
+                .frame(width: 38, height: 38)
+                .background(DesignSystem.Color.Gray_01.opacity(0.7))
+                .cornerRadius(8)
+                .shadow(color: .black.opacity(0.18), radius: 5, x: 0, y: 0)
+            
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+
+
+struct HomeButton: View {
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action){
+            DesignSystemAssets.image(named: "buttonFlower")
+                .scaledToFit()
+                .frame(width: 36, height: 36, alignment: .center)
+                .background(
+                    EllipticalGradient(
+                        stops: [
+                            Gradient.Stop(color: Color(red: 0.96, green: 0.98, blue: 1), location: 0.00),
+                            Gradient.Stop(color: Color(red: 0.86, green: 0.92, blue: 1), location: 1.00),
+                        ],
+                        center: UnitPoint(x: 0.5, y:0.5)
+                    )
+                )
+                .clipShape(Circle())
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
@@ -179,6 +224,14 @@ struct CustomButtonView: View {
             HStack {
                 ARCancelButton(){
                     print("tapped5")
+                }
+            }
+            HStack {
+                MyLocationButton() {
+                    print("tapped6")
+                }
+                HomeButton() {
+                    print("tapped7")
                 }
             }
         }
