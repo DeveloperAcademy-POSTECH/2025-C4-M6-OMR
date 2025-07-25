@@ -11,7 +11,7 @@ public enum AppRoute: Hashable {
     // 메인탭(홈)
     case home                 // MainView 기본
     // 지도
-    case map(latitude: Double, longitude: Double)
+    case map
     // AR 카메라
     case arCamera
     // 기록 상세

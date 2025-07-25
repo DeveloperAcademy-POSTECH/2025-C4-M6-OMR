@@ -41,9 +41,17 @@ struct MockDataProvider {
 
         let baseDate = Date()
 
+        // 고정 UUID 선언
+        let id1 = UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
+        let id2 = UUID(uuidString: "22222222-2222-2222-2222-222222222222")!
+        let id3 = UUID(uuidString: "33333333-3333-3333-3333-333333333333")!
+        let id4 = UUID(uuidString: "44444444-4444-4444-4444-444444444444")!
+        let id5 = UUID(uuidString: "55555555-5555-5555-5555-555555555555")!
+        let id6 = UUID(uuidString: "66666666-6666-6666-6666-666666666666")!
+
         return [
-            // 기존 포항 북구 양덕동
             Mote(
+                id: id1,
                 userId: UUID(),
                 title: "첫 번째 기록",
                 images: ["img1.jpg", "img2.jpg"],
@@ -55,6 +63,7 @@ struct MockDataProvider {
                 isPublic: true
             ),
             Mote(
+                id: id2,
                 userId: UUID(),
                 title: "두 번째 기록",
                 images: ["img3.jpg"],
@@ -65,9 +74,8 @@ struct MockDataProvider {
                 flower: flower2,
                 isPublic: false
             ),
-
-            // 포스텍 청암로 77 근처 오브제
             Mote(
+                id: id3,
                 userId: UUID(),
                 title: "포스텍 정문 앞 장미",
                 images: ["rose1.jpg"],
@@ -79,6 +87,7 @@ struct MockDataProvider {
                 isPublic: true
             ),
             Mote(
+                id: id4,
                 userId: UUID(),
                 title: "수국이 피어난 과학관 뒤",
                 images: ["hydrangea1.jpg"],
@@ -90,6 +99,7 @@ struct MockDataProvider {
                 isPublic: true
             ),
             Mote(
+                id: id5,
                 userId: UUID(),
                 title: "백합이 있는 중앙도서관 옆",
                 images: ["lily1.jpg"],
@@ -101,6 +111,7 @@ struct MockDataProvider {
                 isPublic: false
             ),
             Mote(
+                id: id6,
                 userId: UUID(),
                 title: "햇살 가득한 학생회관 앞 해바라기",
                 images: ["sunflower1.jpg"],
@@ -113,5 +124,5 @@ struct MockDataProvider {
             )
         ]
     }
-
 }
+

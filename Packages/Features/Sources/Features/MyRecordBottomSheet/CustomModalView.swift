@@ -132,6 +132,7 @@ struct CustomModalView: View {
                                 if let location = locationManager.currentLocation {
                                     CurrentLocationMapView(location: location.coordinate) {
                                         print("지도 눌림 – 맵뷰로 이동")
+                                        nav.push(.map)
                                     }
                                 }
                                 
