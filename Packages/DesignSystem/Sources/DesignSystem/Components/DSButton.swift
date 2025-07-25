@@ -65,6 +65,36 @@ struct ARCloseButton: View {
     }
 }
 
+struct ARConfirmationButton: View {
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text("완료")
+                .font(Font.custom("Pretendard", size: 20).weight(.medium))
+                .multilineTextAlignment(.center)
+                .foregroundColor(.white)
+                .frame(width: 68, height: 68)
+                .background(
+                  EllipticalGradient(
+                    stops: [
+                      Gradient.Stop(color: Color(red: 0.31, green: 0.85, blue: 0.43).opacity(0.1), location: 0.00),
+                      Gradient.Stop(color: Color(red: 0.31, green: 0.85, blue: 0.43).opacity(0.4), location: 0.78),
+                      Gradient.Stop(color: Color(red: 0.31, green: 0.85, blue: 0.43).opacity(0.6), location: 1.00),
+                    ],
+                    center: UnitPoint(x: 0.5, y: 0.5)
+                  )
+                )
+                .clipShape(Circle())
+                .shadow(color: .black.opacity(0.1), radius: 10)
+            
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+
+
 struct CustomButtonView: View {
     var body: some View {
         VStack {
@@ -73,6 +103,9 @@ struct CustomButtonView: View {
             }
             ARCloseButton(){
                 print("tapped2")
+            }
+            ARConfirmationButton(){
+                print("tapped3")
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
