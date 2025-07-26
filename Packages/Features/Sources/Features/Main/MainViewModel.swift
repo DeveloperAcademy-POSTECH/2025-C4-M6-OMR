@@ -10,7 +10,8 @@ public final class MainViewModel: ObservableObject {
     @Published public var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published public var currentLocation: CLLocation? = nil
     @Published public var currentAddress: String = ""
-    @Published public var motes: [MainMote] = []
+    @Published public var totalCount: Int = 0
+    @Published public var nearbyCount: Int = 0
     @Published public var isLoading: Bool = false
     @Published public var errorMessage: String?
 
@@ -31,45 +32,47 @@ public final class MainViewModel: ObservableObject {
         self.currentLocation = location
     }
 
-    public func loadNearbyMotesMock(radius: Double) {
-        guard let center = currentLocation else {
-            errorMessage = "No location available"
-            return
-        }
+    public func loadNearbyMotesMock(center: CLLocation, radius: Double) {
         isLoading = true
         errorMessage = nil
 
         Task {
             let allMotes = MockDataProvider.mockObjects()
-            let filtered = allMotes.filter { mote in
+            self.totalCount = allMotes.count
+            
+            // 🌸 전체 꽃 이름 출력
+            print("🌸 전체 꽃 목록:")
+            for mote in allMotes {
+                print("- \(mote.title)")
+            }
+
+            let nearby = allMotes.filter { mote in
                 let distance = haversineDistance(
                     lat1: center.coordinate.latitude,
                     lon1: center.coordinate.longitude,
                     lat2: mote.latitude,
                     lon2: mote.longitude
                 )
-                print("mote: \(mote.title), distance: \(distance) meters")
                 return distance <= radius
             }
 
-            self.motes = filtered.map {
-                MainMote(id: $0.id, latitude: $0.latitude, longitude: $0.longitude)
-            }
-
+            self.nearbyCount = nearby.count
             self.isLoading = false
+            
+            // ✅ 전체 개수 출력
+            print("🌸 전체 꽃 개수: \(self.totalCount)")
+            print("🌸 근처 꽃 개수: \(self.nearbyCount)")
         }
     }
-    
-    
-    
+
     // Haversine 거리 계산 (미터 단위)
     private func haversineDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double) -> Double {
         let R = 6371000.0 // 지구 반지름 (m)
         let dLat = (lat2 - lat1) * .pi / 180
         let dLon = (lon2 - lon1) * .pi / 180
-        let a = sin(dLat/2) * sin(dLat/2) +
-        cos(lat1 * .pi / 180) * cos(lat2 * .pi / 180) *
-        sin(dLon/2) * sin(dLon/2)
+        let a = sin(dLat / 2) * sin(dLat / 2) +
+            cos(lat1 * .pi / 180) * cos(lat2 * .pi / 180) *
+            sin(dLon / 2) * sin(dLon / 2)
         let c = 2 * atan2(sqrt(a), sqrt(1 - a))
         return R * c
     }
@@ -79,15 +82,17 @@ public final class MainViewModel: ObservableObject {
         locationManager.$authorizationStatus
             .receive(on: DispatchQueue.main)
             .assign(to: &$authorizationStatus)
+        
         locationManager.$currentLocation
             .receive(on: DispatchQueue.main)
-//            .removeDuplicates(by: { $0.coordinate.latitude == $1.coordinate.latitude && $0.coordinate.longitude == $1.coordinate.longitude })
             .sink { [weak self] location in
                 guard let self = self else { return }
                 self.currentLocation = location
                 print("MainViewModel received currentLocation: \(location?.coordinate.longitude)")
                 // Automatically load motes when location updates
-                self.loadNearbyMotesMock(radius: 1000)
+                if let location = location {
+                    self.loadNearbyMotesMock(center: location, radius: 1000)
+                }
             }
             .store(in: &cancellables)
     }

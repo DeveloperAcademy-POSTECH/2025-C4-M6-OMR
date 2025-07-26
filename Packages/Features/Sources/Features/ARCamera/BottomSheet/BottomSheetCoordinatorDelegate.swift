@@ -10,7 +10,6 @@ import SwiftUI
 @MainActor
 protocol BottomSheetCoordinatorDelegate: AnyObject {
     func didSelectFlower(_ flower: FlowerModel)
-    func didSaveRecord(title: String, description: String)
 }
 
 // MARK: - SwiftUI ViewModifier for Bottom Sheets
@@ -44,7 +43,7 @@ struct BottomSheetCoordinatorModifier: ViewModifier {
         case .saveSheet:
             if let viewModel = coordinator.saveSheetViewModel {
                 RecordSaveSheetView(viewModel: viewModel)
-                    .presentationDetents([.medium, .large])
+                    .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
             }
         }

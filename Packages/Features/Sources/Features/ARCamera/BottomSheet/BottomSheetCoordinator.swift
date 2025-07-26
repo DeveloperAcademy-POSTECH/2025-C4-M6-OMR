@@ -77,17 +77,22 @@ class BottomSheetCoordinator: ObservableObject {
         print("📱 RecordDetail 시트 설정 완료")
     }
 
-    func showSaveSheet(flower: ARFlower) {
-        print("📱 showSaveSheet 호출됨: \(flower.name)")
-        flowerForSave = flower
-        //        saveSheetViewModel = RecordSaveSheetViewModel(
-        //            flower: flower,
-        //            onSave: { [weak self] title, description in
-        //                self?.handleSaveRecord(title: title, description: description)
-        //            }
-        //        )
-        activeSheet = .saveSheet
-        print("📱 SaveSheet 설정 완료")
+    func showSaveSheet(
+        info: RecordSaveSheetInfo,
+        onSave: @escaping (FinalRecordData) -> Void
+    ) {
+        print("📱 showSaveSheet 호출됨: \(info.flower.name)")
+
+        let viewModel = RecordSaveSheetViewModel(
+            info: info,
+            onSave: { [weak self] finalRecord in
+                onSave(finalRecord)
+                self?.dismissSheet()
+            }
+        )
+        self.saveSheetViewModel = viewModel
+        self.activeSheet = .saveSheet
+        print("📱 SaveSheet 설정 ���료")
     }
 
     func dismissSheet() {
@@ -108,12 +113,6 @@ class BottomSheetCoordinator: ObservableObject {
 
         dismissSheet()
         print("🌻 시트 해제 완료")
-    }
-
-    private func handleSaveRecord(title: String, description: String) {
-        print("💾 handleSaveRecord 호출됨: \(title)")
-        delegate?.didSaveRecord(title: title, description: description)
-        dismissSheet()
     }
 
     private func clearSheetData() {

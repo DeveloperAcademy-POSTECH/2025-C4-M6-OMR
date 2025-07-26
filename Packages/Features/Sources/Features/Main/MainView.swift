@@ -1,47 +1,58 @@
-import SwiftUI
 import CoreLocation
 import DesignSystem
+import SwiftUI
+
+// MARK: - MainView
 
 struct MainView: View {
-    // MARK: - Environment
     @EnvironmentObject private var nav: NavigationViewModel
-    
-    // MARK: - ViewModels
+
+    // MARK: - ViewModels (HEAD의 LocationManager 관리 방식 유지)
     @StateObject private var viewModel = MainViewModel()
-    @StateObject private var myRecordViewModel = MyRecordBottomSheetViewModel()
-    
-    // MARK: - States
+
+    @State private var sheetDetent: Detent = .low
+    @State private var isSheetVisible = true
     @State private var previousLocation: CLLocation? = nil
-    @State private var sheetPosition: SheetPosition = .half
-    @GestureState private var dragOffset: CGSize = .zero
-    @State private var isFullScreen = false
-    
     private let updateThresholdMeters: Double = 20.0
-    
+
     var body: some View {
-        ZStack(alignment: .bottom) {
-            backgroundGradient
-            
-            content
-            
-            // Bottom Sheet
-            MyRecordBottomSheet(selectedPosition: $sheetPosition, viewModel: myRecordViewModel)
-                .offset(y: sheetPosition.yOffset + dragOffset.height)
-                .animation(.easeInOut, value: sheetPosition)
-                .gesture(
-                    DragGesture()
-                        .updating($dragOffset) { value, state, _ in
-                            state = value.translation
-                        }
-                        .onEnded(handleSheetDrag)
-                )
-        }
-        .fullScreenCover(isPresented: $isFullScreen) {
-            MyRecordFullScreenModalView(isPresented: $isFullScreen, viewModel: myRecordViewModel)
-                .environmentObject(viewModel.locationManager)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.blue)
+        GeometryReader { geometry in
+            let detentOffsets = (
+                large: Detent.large.offset(in: geometry),
+                low: Detent.low.offset(in: geometry)
+            )
+
+            ZStack(alignment: .top) {
+                content
+
+                if isSheetVisible {
+                    CustomModalView(
+                        sheetDetent: $sheetDetent,
+                        isSheetVisible: $isSheetVisible,
+                        totalCount: $viewModel.totalCount,
+                        detentOffsets: detentOffsets,
+                        bottomSafeArea: geometry.safeAreaInsets.bottom
+                    )
+                    .frame(height: geometry.size.height)
+                    .transition(.move(edge: .bottom))
+                }
+            }
+            .animation(
+                .snappy(duration: 0.35, extraBounce: 0.08),
+                value: sheetDetent
+            )
+            .onReceive(
+                viewModel.locationManager.$currentLocation.compactMap { $0 }
+            ) { location in
+                // 최초 위치 업데이트 시 한 번만 호출
+                guard previousLocation == nil else {
+                    handleLocationUpdate(location)
+                    return
+                }
+
+                previousLocation = location
+                viewModel.loadNearbyMotesMock(center: location, radius: 1000)
+            }
         }
     }
 }
@@ -51,41 +62,63 @@ struct MainView: View {
 extension MainView {
     private var backgroundGradient: some View {
         LinearGradient(
-            gradient: Gradient(colors: [DesignSystem.Color.background1, DesignSystem.Color.background2]),
+            gradient: Gradient(colors: [
+                DesignSystem.Color.Prime4, DesignSystem.Color.Prime3,
+            ]),
             startPoint: .top,
             endPoint: .bottom
         )
         .ignoresSafeArea()
     }
-    
+
     private var content: some View {
         VStack(spacing: 16) {
             currentAddressView
                 .padding(.top, 100)
-            
+
             if viewModel.isLoading {
                 ProgressView()
             } else {
-                Text(viewModel.motes.isEmpty ? "주변에 과거에 기록한 꽃이 없어요" : "주변에 과거에 기록한 꽃이 있어요")
-                    .font(.custom("Pretendard", size: 18).weight(.semibold))
-                    .foregroundColor(.black)
-                    .padding()
+                Text("\(viewModel.totalCount)")
+                Text("\(viewModel.nearbyCount)")
+                Text(
+                    viewModel.nearbyCount == 0
+                        ? "주변에 과거에 기록한 꽃이 없어요" : "주변에 과거에 기록한 꽃이 있어요"
+                )
+                .font(.custom("Pretendard", size: 18).weight(.semibold))
+                .foregroundColor(.black)
+                .padding()
             }
-            
+
             ARButton(action: {
                 if let location = viewModel.currentLocation {
-                    nav.push(.arCamera(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude))
+                    nav.push(
+                        .arCamera(
+                            latitude: location.coordinate.latitude,
+                            longitude: location.coordinate.longitude
+                        )
+                    )
                 }
             })
-            
+
             Button("디자인 시스템 예제 보기") {
                 nav.push(.designSystemExample)
             }
-            
+
             Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    DesignSystem.Color.Prime4, DesignSystem.Color.Prime3,
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
     }
-    
+
     private var currentAddressView: some View {
         HStack {
             Image(systemName: "paperplane.fill")
@@ -100,16 +133,22 @@ extension MainView {
 // MARK: - Helpers
 
 extension MainView {
-    private func handleSheetDrag(_ value: DragGesture.Value) {
-        if value.translation.height < -100 {
-            isFullScreen = true
-            // Removed sheetPosition = .half to prevent conflict with fullScreenCover
-        } else if value.translation.height > 100 {
-            sheetPosition = .half
+
+    private func handleLocationUpdate(_ location: CLLocation) {
+        guard let prev = previousLocation else {
+            previousLocation = location
+            return
         }
+
+        let distance = location.distance(from: prev)
+        if distance < updateThresholdMeters { return }
+
+        previousLocation = location
+
+        viewModel.loadNearbyMotesMock(center: location, radius: 1000)
     }
 }
 
-#Preview{
+#Preview {
     MainView()
 }
