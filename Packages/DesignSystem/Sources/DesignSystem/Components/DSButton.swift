@@ -231,7 +231,7 @@ struct CustomButtonView: View {
                     print("tapped6")
                 }
                 HomeButton() {
-                    print("tapped7")
+                    print("I changed something")
                 }
             }
         }
