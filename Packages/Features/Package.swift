@@ -25,6 +25,9 @@ let package = Package(
                 .product(name: "Domain", package: "Domain"),
                 .product(name: "Core", package: "Core"),
                 .product(name: "DesignSystem", package: "DesignSystem")
+            ],
+            resources: [
+                .copy("ARCamera/Resources")
             ]
         ),
         .testTarget(

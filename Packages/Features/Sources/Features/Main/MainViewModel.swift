@@ -2,22 +2,37 @@ import Combine
 import Dependencies
 import Domain
 import Foundation
+import CoreLocation
 
 @MainActor
 public final class MainViewModel: ObservableObject {
     // MARK: - State
+    @Published public var authorizationStatus: CLAuthorizationStatus = .notDetermined
+    @Published public var currentLocation: CLLocation? = nil
+    @Published public var currentAddress: String = ""
     @Published public var totalCount: Int = 0
     @Published public var nearbyCount: Int = 0
     @Published public var isLoading: Bool = false
     @Published public var errorMessage: String?
 
+    // MARK: - Private
+    let locationManager = LocationManager()
+    private var cancellables = Set<AnyCancellable>()
+
     // MARK: - Dependencies
     @Dependency(\.fetchMyRecordsUseCase) private var fetchMyRecordsUseCase
 
-    public init() {}
-
+    public init() {
+        setupLocationSubscriptions()
+        setupAddressGeocoding()
+    }
+    
     // MARK: - Public Methods
-    public func loadNearbyMotesMock(center: Location, radius: Double) {
+    public func updateLocation(_ location: CLLocation) {
+        self.currentLocation = location
+    }
+
+    public func loadNearbyMotesMock(center: CLLocation, radius: Double) {
         isLoading = true
         errorMessage = nil
 
@@ -33,8 +48,8 @@ public final class MainViewModel: ObservableObject {
 
             let nearby = allMotes.filter { mote in
                 let distance = haversineDistance(
-                    lat1: center.latitude,
-                    lon1: center.longitude,
+                    lat1: center.coordinate.latitude,
+                    lon1: center.coordinate.longitude,
                     lat2: mote.latitude,
                     lon2: mote.longitude
                 )
@@ -50,7 +65,6 @@ public final class MainViewModel: ObservableObject {
         }
     }
 
-
     // Haversine 거리 계산 (미터 단위)
     private func haversineDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double) -> Double {
         let R = 6371000.0 // 지구 반지름 (m)
@@ -61,5 +75,35 @@ public final class MainViewModel: ObservableObject {
             sin(dLon / 2) * sin(dLon / 2)
         let c = 2 * atan2(sqrt(a), sqrt(1 - a))
         return R * c
+    }
+    
+    // MARK: - Subscription Setup
+    private func setupLocationSubscriptions() {
+        locationManager.$authorizationStatus
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$authorizationStatus)
+        
+        locationManager.$currentLocation
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] location in
+                guard let self = self else { return }
+                self.currentLocation = location
+                print("MainViewModel received currentLocation: \(location?.coordinate.longitude)")
+                // Automatically load motes when location updates
+                if let location = location {
+                    self.loadNearbyMotesMock(center: location, radius: 1000)
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    private func setupAddressGeocoding() {
+        locationManager.$currentAddress
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] address in
+                self?.currentAddress = address
+                print("MainViewModel received currentAddress: \(address)")
+            }
+            .store(in: &cancellables)
     }
 }

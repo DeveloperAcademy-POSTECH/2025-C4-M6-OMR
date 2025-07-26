@@ -79,18 +79,17 @@ struct ARConfirmationButton: View {
                 .foregroundColor(.white)
                 .frame(width: 68, height: 68)
                 .background(
-                  EllipticalGradient(
-                    stops: [
-                      Gradient.Stop(color: Color(red: 0.31, green: 0.85, blue: 0.43).opacity(0.1), location: 0.00),
-                      Gradient.Stop(color: Color(red: 0.31, green: 0.85, blue: 0.43).opacity(0.4), location: 0.78),
-                      Gradient.Stop(color: Color(red: 0.31, green: 0.85, blue: 0.43).opacity(0.6), location: 1.00),
-                    ],
-                    center: UnitPoint(x: 0.5, y: 0.5)
-                  )
+                    EllipticalGradient(
+                        stops: [
+                            Gradient.Stop(color: Color(red: 0.31, green: 0.85, blue: 0.43).opacity(0.1), location: 0.00),
+                            Gradient.Stop(color: Color(red: 0.31, green: 0.85, blue: 0.43).opacity(0.4), location: 0.78),
+                            Gradient.Stop(color: Color(red: 0.31, green: 0.85, blue: 0.43).opacity(0.6), location: 1.00),
+                        ],
+                        center: UnitPoint(x: 0.5, y: 0.5)
+                    )
                 )
                 .clipShape(Circle())
                 .shadow(color: .black.opacity(0.1), radius: 10)
-            
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -115,7 +114,6 @@ struct ARFlowerButton: View {
                 )
                 .clipShape(Circle())
                 .shadow(color: .black.opacity(0.1), radius: 10)
-            
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -126,14 +124,13 @@ struct ARCancelButton: View {
     
     var body: some View {
         Button(action: action) {
-            HStack (alignment: .center, spacing: 6){
+            HStack(alignment: .center, spacing: 6) {
                 Image(systemName: "xmark")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white)
                 Text("꽃 심기 취소")
-                    .font(Font.custom("Pretendard", size:14).weight(.medium))
+                    .font(Font.custom("Pretendard", size: 14).weight(.medium))
                     .foregroundColor(.white)
-
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
@@ -150,7 +147,7 @@ struct ARCancelButton: View {
                 )
             )
             .cornerRadius(171)
-            .shadow(color: .black.opacity(0.1), radius: 10, x:0, y:0)
+            .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 0)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -160,7 +157,7 @@ struct MyLocationButton: View {
     let action: () -> Void
     
     var body: some View {
-        Button(action: action){
+        Button(action: action) {
             Image(systemName: "location")
                 .foregroundColor(DesignSystem.Color.Prime)
                 .font(.system(size: 18))
@@ -169,19 +166,16 @@ struct MyLocationButton: View {
                 .background(DesignSystem.Color.Gray_01.opacity(0.7))
                 .cornerRadius(8)
                 .shadow(color: .black.opacity(0.18), radius: 5, x: 0, y: 0)
-            
         }
         .buttonStyle(PlainButtonStyle())
     }
 }
 
-
-
 struct HomeButton: View {
     let action: () -> Void
     
     var body: some View {
-        Button(action: action){
+        Button(action: action) {
             DesignSystemAssets.image(named: "buttonFlower")
                 .scaledToFit()
                 .frame(width: 36, height: 36, alignment: .center)
@@ -191,7 +185,7 @@ struct HomeButton: View {
                             Gradient.Stop(color: Color(red: 0.96, green: 0.98, blue: 1), location: 0.00),
                             Gradient.Stop(color: Color(red: 0.86, green: 0.92, blue: 1), location: 1.00),
                         ],
-                        center: UnitPoint(x: 0.5, y:0.5)
+                        center: UnitPoint(x: 0.5, y: 0.5)
                     )
                 )
                 .clipShape(Circle())
@@ -200,29 +194,27 @@ struct HomeButton: View {
     }
 }
 
-
 struct CustomButtonView: View {
     var body: some View {
-        
         VStack {
             HStack {
-                ARPlusButton(){
+                ARPlusButton() {
                     print("tapped")
                 }
-                ARCloseButton(){
+                ARCloseButton() {
                     print("tapped2")
                 }
             }
             HStack {
-                ARConfirmationButton(){
+                ARConfirmationButton() {
                     print("tapped3")
                 }
-                ARFlowerButton(){
+                ARFlowerButton() {
                     print("tapped4")
                 }
             }
             HStack {
-                ARCancelButton(){
+                ARCancelButton() {
                     print("tapped5")
                 }
             }
@@ -239,9 +231,6 @@ struct CustomButtonView: View {
         .background(DesignSystem.Color.Gray_04)
     }
 }
-
-
-
 
 #Preview {
     CustomButtonView()

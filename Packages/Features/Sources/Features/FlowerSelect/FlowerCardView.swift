@@ -9,23 +9,23 @@ import SwiftUI
 import DesignSystem
 
 struct FlowerCardView: View {
-    let marker: FlowerModel
+    let flower: FlowerModel
     let isSelected: Bool
     
     var body: some View {
         VStack(spacing: 8) {
-            DesignSystemAssets.image(named: marker.objectImageName)
+            DesignSystemAssets.image(named: flower.objectImageName)
                 .resizable()
                 .scaledToFit()
                 .frame(height: 70)
             
-            Text(marker.name)
+            Text(flower.name)
                 .font(
                     Font.custom("Pretendard", size: 14)
                         .weight(.medium)
                 )
                 .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
-            Text(marker.floriography)
+            Text(flower.floriography)
                 .font(Font.custom("Pretendard", size: 12))
                 .multilineTextAlignment(.center)
                 .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))

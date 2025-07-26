@@ -14,39 +14,43 @@ public struct RecordSaveSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: RecordSaveSheetViewModel
     
-    let onSave: (Record) -> Void
-    
-    public init(viewModel: RecordSaveSheetViewModel, onSave: @escaping (Record) -> Void) {
+    public init(viewModel: RecordSaveSheetViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
-        self.onSave = onSave
     }
     
     public var body: some View {
         VStack(spacing: 0) {
             RecordSaveHeaderView { dismiss() }
             
-            if let detail = viewModel.detail {
-                SelectedFlowerCardView(
-                    flowerName: detail.name,
-                    flowerMeaning: detail.meaning,
-                    flowerImageName: detail.imageName
-                )
-                .padding(.bottom, 30)
+            ScrollView {
+                VStack(spacing: 0) {
+                    SelectedFlowerCardView(
+                        flowerName: viewModel.flowerName,
+                        flowerMeaning: viewModel.flowerMeaning,
+                        flowerImageName: viewModel.flowerImageName
+                    )
+                    .padding(.bottom, 30)
+                    
+                    RecordFormView(
+                        title: $viewModel.title,
+                        description: $viewModel.description
+                    )
+                    .padding(.bottom, 20)
+                    
+                    PhotoSelectionView(viewModel: viewModel)
+                        .padding(.bottom, 20)
+                }
             }
-            
-            PhotoSelectionView(viewModel: viewModel)
-                .padding(.bottom, 20)
             
             SaveButtonView(
                 isDisabled: viewModel.isSaveButtonDisabled,
                 viewModel: viewModel,
-                onSave: onSave,
                 dismiss: { dismiss() }
             )
             Spacer()
         }
         .padding(.horizontal, 20)
-        .presentationDetents([.fraction(0.8)])
+        .presentationDetents([.large])
         .interactiveDismissDisabled(true)
         .presentationDragIndicator(.hidden)
     }
@@ -77,7 +81,7 @@ private struct RecordSaveHeaderView: View {
             Text("꽃 심기 완료!")
                 .font(DesignSystem.Font.custom(size: 18, weight: .bold))
             
-            Text("함께 기억할 사진을 저장해주세요.")
+            Text("함께 기억할 사진과 글을 저장해주세요.")
                 .font(DesignSystem.Font.custom(size: 18, weight: .bold))
         }
         .padding(.top, 20)
@@ -118,20 +122,48 @@ private struct SelectedFlowerCardView: View {
     }
 }
 
+private struct RecordFormView: View {
+    @Binding var title: String
+    @Binding var description: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("제목")
+                    .font(DesignSystem.Font.custom(size: 16, weight: .semibold))
+                
+                TextField("기록의 제목을 입력해주세요", text: $title)
+                    .font(DesignSystem.Font.custom(size: 15, weight: .regular))
+                    .padding(12)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text("내용")
+                    .font(DesignSystem.Font.custom(size: 16, weight: .semibold))
+                
+                TextEditor(text: $description)
+                    .font(DesignSystem.Font.custom(size: 15, weight: .regular))
+                    .frame(height: 100)
+                    .padding(8)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+            }
+        }
+    }
+}
+
+
 private struct SaveButtonView: View {
     let isDisabled: Bool
     let viewModel: RecordSaveSheetViewModel
-    let onSave: (Record) -> Void
     let dismiss: () -> Void
 
     var body: some View {
         Button(action: {
-            Task {
-                if let newRecord = await viewModel.saveImages() {
-                    onSave(newRecord)
-                    dismiss()
-                }
-            }
+            viewModel.save()
+            dismiss()
         }) {
             Text("저장")
                 .font(.headline.bold())

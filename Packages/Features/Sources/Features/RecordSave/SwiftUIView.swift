@@ -51,18 +51,24 @@ public struct SwiftUIView: View {
                 }
             }
             .sheet(isPresented: $isShowingSaveSheet) {
-                RecordSaveSheetView(
-                    viewModel: RecordSaveSheetViewModel(),
-                    onSave: { newRecord in
-                        savedRecords.append(newRecord)
+                let viewModel = RecordSaveSheetViewModel(
+                    info: RecordSaveSheetInfo(
+                        flower: ARFlower(name: "Test Flower", modelName: "test", floriography: "Test", thumbnail: "test"),
+                        location: .init(),
+                        address: "Test Address"
+                    ),
+                    onSave: { finalRecord in
+                        // 여기서는 실제 저장을 하지 않으므로 비워둡니다.
+                        // 필요하다면 savedRecords에 추가하는 로직을 구현할 수 있습니다.
                     }
                 )
+                RecordSaveSheetView(viewModel: viewModel)
             }
-            .sheet(item: $selectedRecord) { record in
-                RecordDetailBottomSheet(
-                    viewModel: RecordDetailViewModel(record: record)
-                )
-            }
+//            .sheet(item: $selectedRecord) { record in
+//                RecordDetailBottomSheet(
+//                    viewModel: RecordDetailViewModel(record: record)
+//                )
+//            }
         }
     }
 }

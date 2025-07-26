@@ -6,6 +6,7 @@
 //
 import Dependencies
 import SwiftUI
+import CoreLocation
 
 public struct NavigationHostView: View {
     @StateObject private var nav = NavigationViewModel()
@@ -20,6 +21,9 @@ public struct NavigationHostView: View {
                     switch route {
                     case .home:
                         MainView()
+                    case .arCamera(let latitude, let longitude):
+                        let location = CLLocation(latitude: latitude, longitude: longitude)
+                        ARCameraView(location: location)
                     // TODO: 나머지 route 처리
 //                    case .designSystemExample:
 //                        DesignSystemExampleView()
@@ -36,8 +40,7 @@ public struct NavigationHostView: View {
 //                    case .map(let lat, let lon):
 //                        MapView(latitude: lat, longitude: lon)
 //
-//                    case .arCamera:
-//                        ARCameraView()
+
 //
 //                    case .detail(let moteId):
 //                        DetailRecordView(moteId: moteId)
