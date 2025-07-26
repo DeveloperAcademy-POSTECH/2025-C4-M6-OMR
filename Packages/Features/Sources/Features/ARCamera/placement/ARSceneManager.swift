@@ -93,13 +93,25 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     ) {
         guard let arView = arView else { return }
         
-        // 기존 마커들 중 더 이상 필요 없는 것들 제거
+        // 1. Remove markers that are no longer in the current record set.
         removeObsoleteMarkers(currentRecords: records)
         
-        // 새로운 레코드들에 대해 마커 생성
+        // 2. Add new markers for records that are not yet in the scene.
         for record in records {
             if recordMarkers[record.id] == nil {
-                createMarkerForRecord(record, userLocation: userLocation, userHeading: userHeading, transformUseCase: transformUseCase, arView: arView)
+                // Calculate the world position once and create the marker.
+                let recordCoordinate = CLLocationCoordinate2D(
+                    latitude: record.coordinate.latitude,
+                    longitude: record.coordinate.longitude
+                )
+                
+                let arPosition = transformUseCase.transform(
+                    userCoordinate: userLocation.coordinate,
+                    userHeading: userHeading,
+                    targetCoordinate: recordCoordinate
+                )
+                
+                createMarkerForRecord(record, at: arPosition, arView: arView)
             }
         }
     }
@@ -109,7 +121,8 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         
         for (recordId, marker) in recordMarkers {
             if !currentRecordIds.contains(recordId) {
-                marker.removeFromParent()
+                // Remove the anchor from the scene, not just the marker from the anchor
+                marker.parent?.removeFromParent()
                 recordMarkers.removeValue(forKey: recordId)
             }
         }
@@ -117,29 +130,17 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     
     private func createMarkerForRecord(
         _ record: ARRecordModel,
-        userLocation: CLLocation,
-        userHeading: CLHeading,
-        transformUseCase: TransformCoordinateUseCase,
+        at position: SIMD3<Float>,
         arView: ARView
     ) {
-        let recordCoordinate = CLLocationCoordinate2D(
-            latitude: record.coordinate.latitude,
-            longitude: record.coordinate.longitude
-        )
-        
-        let arPosition = transformUseCase.transform(
-            userCoordinate: userLocation.coordinate,
-            userHeading: userHeading,
-            targetCoordinate: recordCoordinate
-        )
-        
         let marker = ARMarker(record: record)
-        marker.transform.translation = arPosition
         
-        let anchor = AnchorEntity(world: marker.transform.matrix)
+        // Create a world-tracking anchor directly at the specified world-space position
+        // for better stability.
+        let anchor = AnchorEntity(world: position)
         anchor.addChild(marker)
-        arView.scene.addAnchor(anchor)
         
+        arView.scene.addAnchor(anchor)
         recordMarkers[record.id] = marker
     }
     
