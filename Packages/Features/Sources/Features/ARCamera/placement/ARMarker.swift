@@ -11,16 +11,11 @@ class ARMarker: Entity, HasCollision {
         self.record = record
         super.init()
         
-        setupCollision()
         loadModel()
     }
     
     required init() {
         fatalError("init() has not been implemented")
-    }
-    
-    private func setupCollision() {
-        generateCollisionShapes(recursive: true)
     }
     
     private func loadModel() {
@@ -33,20 +28,24 @@ class ARMarker: Entity, HasCollision {
                     }
                 },
                 receiveValue: { [weak self] modelEntity in
-                    if let modelComponent = modelEntity.components[ModelComponent.self] {
-                        self?.components.set(modelComponent)
-                    }
+                    guard let self = self else { return }
+                    // Add the loaded model as a child to preserve its hierarchy
+                    // and ensure collision shapes are generated correctly.
+                    self.addChild(modelEntity)
+                    self.generateCollisionShapes(recursive: true)
                 }
             )
             .store(in: &cancellables)
     }
     
     private func setupFallbackModel() {
-        let fallbackModel = ModelComponent(
+        let fallbackModel = ModelEntity(
             mesh: .generateSphere(radius: 0.15),
             materials: [SimpleMaterial(color: .blue, isMetallic: false)]
         )
-        components.set(fallbackModel)
+        // Add the fallback model as a child.
+        self.addChild(fallbackModel)
+        self.generateCollisionShapes(recursive: true)
     }
 }
 
