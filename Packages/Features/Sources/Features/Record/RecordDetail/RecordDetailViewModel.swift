@@ -49,15 +49,42 @@ public final class RecordDetailViewModel: ObservableObject {
         return false
     }
     
-    // MARK: - Initialization
-    public init() {
-        // 기본 초기화 시에는 임시 데이터 세팅하거나 안 할 수 있음
+    public convenience init(record: Record) {
+        self.init() // 기존 init 호출
+        
+        // Task를 이용해 파일 경로로부터 이미지를 비동기적으로 불러옵니다.
+        Task {
+            var loadedImages: [UIImage] = []
+            for fileName in record.imageFileNames {
+                if let image = await FileStoreManager.shared.loadImage(fileName: fileName) {
+                    loadedImages.append(image)
+                }
+            }
+            
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy년 M월 d일"
+
+            // 불러온 이미지와 Record의 정보로 UI 모델을 생성합니다.
+            let detailModel = RecordDetailUIModel(
+                title: record.flower.name, // 제목은 우선 꽃 이름으로 설정
+                flowerName: record.flower.name,
+                flowerMeaning: record.flower.meaning,
+                location: "위치 정보 미정", // 위치 정보는 추후 추가
+                date: dateFormatter.string(from: Date()),
+                images: loadedImages
+            )
+
+            // @Published 프로퍼티를 업데이트하여 View에 반영합니다.
+            self.detail = detailModel
+            // 수정 기능을 위해 원본도 함께 저장해 둡니다.
+            self.originalDetail = detailModel
+        }
     }
-    
+  
     public init(id: UUID) {
            fetchRecordDetails(id: id)
        }
-    
+  
     // MARK: - Methods
     
     /// id 기반으로 RecordDetailUIModel 생성 및 detail 세팅
