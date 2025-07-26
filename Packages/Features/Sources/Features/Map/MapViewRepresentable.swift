@@ -106,7 +106,7 @@ struct MapViewRepresentable: UIViewRepresentable {
 
         private func createClusterView(for mapView: MKMapView, cluster: MKClusterAnnotation) -> MKAnnotationView {
             let identifier = "customClusterView"
-            var clusterView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) ?? MKAnnotationView(annotation: cluster, reuseIdentifier: identifier)
+            let clusterView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) ?? MKAnnotationView(annotation: cluster, reuseIdentifier: identifier)
             clusterView.annotation = cluster
             clusterView.canShowCallout = false
             clusterView.frame.size = CGSize(width: 44, height: 44)
@@ -124,7 +124,7 @@ struct MapViewRepresentable: UIViewRepresentable {
 
         private func createCustomPinView(for mapView: MKMapView, annotation: MKAnnotation) -> MKAnnotationView? {
             let identifier = "customPin"
-            var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) ?? MKAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+            let annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) ?? MKAnnotationView(annotation: annotation, reuseIdentifier: identifier)
             annotationView.annotation = annotation
             annotationView.canShowCallout = false
             annotationView.clusteringIdentifier = "customPinCluster"
