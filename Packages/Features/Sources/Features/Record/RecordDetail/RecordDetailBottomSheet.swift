@@ -18,6 +18,7 @@ public struct RecordDetailBottomSheet: View {
     }
     
     // MapView에서 데이터 주입을 위해 사용
+    // MyRecordView에서 데이터 주입을 위해
     public init(viewModel: RecordDetailViewModel) {
         _viewModel = StateObject(wrappedValue: viewModel)
     }

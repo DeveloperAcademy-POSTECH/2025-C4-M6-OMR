@@ -37,7 +37,7 @@ public struct MapView: View {
             viewModel.fetchMapObjects()
         }
         .sheet(item: $viewModel.selectObjectDetail) { summary in
-            RecordDetailBottomSheet(viewModel: RecordDetailViewModel(summary: summary))
+            RecordDetailBottomSheet(viewModel: RecordDetailViewModel(id: summary.id))
         }
     }
 }

@@ -54,10 +54,9 @@ public final class RecordDetailViewModel: ObservableObject {
         // 기본 초기화 시에는 임시 데이터 세팅하거나 안 할 수 있음
     }
     
-    convenience init(summary: ObjectSummary) {
-        self.init()
-        fetchRecordDetails(id: summary.id)
-    }
+    public init(id: UUID) {
+           fetchRecordDetails(id: id)
+       }
     
     // MARK: - Methods
     
