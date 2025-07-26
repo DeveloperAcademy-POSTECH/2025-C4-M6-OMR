@@ -8,8 +8,6 @@ import SwiftUI
 public final class RecordSaveSheetViewModel: ObservableObject {
 
     // MARK: - Properties
-    @Published var title: String = ""
-    @Published var description: String = ""
     @Published var flowerName: String
     @Published var flowerMeaning: String
     @Published var flowerImageName: String
@@ -29,7 +27,7 @@ public final class RecordSaveSheetViewModel: ObservableObject {
     private let onSave: (FinalRecordData) -> Void
 
     public var isSaveButtonDisabled: Bool {
-        return title.isEmpty || description.isEmpty || selectedImages.isEmpty
+        return selectedAssets.isEmpty
     }
 
     let maxImageCount = 4
@@ -55,9 +53,8 @@ public final class RecordSaveSheetViewModel: ObservableObject {
         Task {
             let finalImages = await fetchSelectedImages()
             let finalData = FinalRecordData(
-                title: title,
-                description: description,
-                images: finalImages
+                images: finalImages,
+                description: ""
             )
             onSave(finalData)
             isLoading = false

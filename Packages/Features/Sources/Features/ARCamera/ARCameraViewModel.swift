@@ -212,8 +212,6 @@ class ARCameraViewModel: NSObject, ObservableObject {
                 // Domain Record로 변환
                 let domainRecord = RecordMapper.toDomainRecord(
                     from: placement,
-                    title: finalRecord.title,
-                    description: finalRecord.description,
                     userLocation: location,
                     images: finalRecord.images
                 )

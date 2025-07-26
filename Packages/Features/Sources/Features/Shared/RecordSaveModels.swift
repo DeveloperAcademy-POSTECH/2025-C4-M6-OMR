@@ -8,7 +8,6 @@ public struct RecordSaveSheetInfo {
 }
 
 public struct FinalRecordData {
-    let title: String
-    let description: String
     let images: [UIImage]
+    let description: String
 }

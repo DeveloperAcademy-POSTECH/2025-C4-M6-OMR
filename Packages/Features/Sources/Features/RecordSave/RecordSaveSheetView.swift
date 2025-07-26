@@ -22,24 +22,16 @@ public struct RecordSaveSheetView: View {
         VStack(spacing: 0) {
             RecordSaveHeaderView { dismiss() }
             
-            ScrollView {
-                VStack(spacing: 0) {
-                    SelectedFlowerCardView(
-                        flowerName: viewModel.flowerName,
-                        flowerMeaning: viewModel.flowerMeaning,
-                        flowerImageName: viewModel.flowerImageName
-                    )
-                    .padding(.bottom, 30)
-                    
-                    RecordFormView(
-                        title: $viewModel.title,
-                        description: $viewModel.description
-                    )
+            VStack(spacing: 0) {
+                SelectedFlowerCardView(
+                    flowerName: viewModel.flowerName,
+                    flowerMeaning: viewModel.flowerMeaning,
+                    flowerImageName: viewModel.flowerImageName
+                )
+                .padding(.bottom, 30)
+                
+                PhotoSelectionView(viewModel: viewModel)
                     .padding(.bottom, 20)
-                    
-                    PhotoSelectionView(viewModel: viewModel)
-                        .padding(.bottom, 20)
-                }
             }
             
             SaveButtonView(
@@ -50,7 +42,7 @@ public struct RecordSaveSheetView: View {
             Spacer()
         }
         .padding(.horizontal, 20)
-        .presentationDetents([.large])
+        .presentationDetents([.fraction(0.8)])
         .interactiveDismissDisabled(true)
         .presentationDragIndicator(.hidden)
     }
@@ -122,44 +114,11 @@ private struct SelectedFlowerCardView: View {
     }
 }
 
-private struct RecordFormView: View {
-    @Binding var title: String
-    @Binding var description: String
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("제목")
-                    .font(DesignSystem.Font.custom(size: 16, weight: .semibold))
-                
-                TextField("기록의 제목을 입력해주세요", text: $title)
-                    .font(DesignSystem.Font.custom(size: 15, weight: .regular))
-                    .padding(12)
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(8)
-            }
-            
-            VStack(alignment: .leading, spacing: 8) {
-                Text("내용")
-                    .font(DesignSystem.Font.custom(size: 16, weight: .semibold))
-                
-                TextEditor(text: $description)
-                    .font(DesignSystem.Font.custom(size: 15, weight: .regular))
-                    .frame(height: 100)
-                    .padding(8)
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(8)
-            }
-        }
-    }
-}
-
-
 private struct SaveButtonView: View {
     let isDisabled: Bool
     let viewModel: RecordSaveSheetViewModel
     let dismiss: () -> Void
-
+    
     var body: some View {
         Button(action: {
             viewModel.save()
@@ -177,5 +136,5 @@ private struct SaveButtonView: View {
         .padding(.top, 30)
     }
 }
-        
+
 
