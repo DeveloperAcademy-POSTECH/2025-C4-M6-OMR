@@ -1,3 +1,4 @@
+import DesignSystem
 //
 //  ARBottomBarView.swift
 //  Features
@@ -25,53 +26,21 @@ struct ARBottomBarView: View {
     }
 
     private var normalModeButton: some View {
-        Button(action: onSwitchToPlacement) {
-            Image(systemName: "plus")
-                .font(.largeTitle)
-                .foregroundColor(.black)
-                .padding(20)
-                .background(Color.white)
-                .clipShape(Circle())
-                .shadow(radius: 10)
-        }
+        ARPlusButton(action: onSwitchToPlacement)
     }
 
     private var placementModeButtons: some View {
         HStack(spacing: 30) {
-            Button(action: onCancelPlacement) {
-                Image(systemName: "arrow.triangle.2.circlepath")
-                    .font(.title)
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(Color.black.opacity(0.5))
-                    .clipShape(Circle())
-            }
+            ARFlowerButton(action: onCancelPlacement)
 
-            Button(
-                action: isPlacementConfirmed
-                    ? onRepositionPlacement : onConfirmPlacement
-            ) {
-                Image(
-                    systemName: isPlacementConfirmed
-                        ? "arrow.uturn.backward" : "checkmark"
-                )
-                .font(.largeTitle)
-                .foregroundColor(.black)
-                .padding(20)
-                .background(Color.white)
-                .clipShape(Circle())
-                .shadow(radius: 10)
+            if isPlacementConfirmed {
+                ARBackWardButton(action: onRepositionPlacement)
+            } else {
+                ARCheckButton(action: onConfirmPlacement)
             }
 
             if isPlacementConfirmed {
-                Button(action: onSave) {
-                    Image(systemName: "square.and.arrow.down")
-                        .font(.title)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.accentColor)
-                        .clipShape(Circle())
-                }
+                ARConfirmationButton(action: onSave)
             } else {
                 Circle().fill(Color.clear).frame(width: 60, height: 60)
             }

@@ -7,15 +7,31 @@
 
 import SwiftUI
 
-struct ARButton: View {
-    let systemName: String
-    let width: CGFloat
-    let height: CGFloat
-    let iconSize: CGFloat
-    let iconWeight: Font.Weight
-    let action: () -> Void
-    
-    var body: some View {
+public struct ARButton: View {
+    public let systemName: String
+    public let width: CGFloat
+    public let height: CGFloat
+    public let iconSize: CGFloat
+    public let iconWeight: Font.Weight
+    public let action: () -> Void
+
+    public init(
+        systemName: String,
+        width: CGFloat,
+        height: CGFloat,
+        iconSize: CGFloat,
+        iconWeight: Font.Weight,
+        action: @escaping () -> Void
+    ) {
+        self.systemName = systemName
+        self.width = width
+        self.height = height
+        self.iconSize = iconSize
+        self.iconWeight = iconWeight
+        self.action = action
+    }
+
+    public var body: some View {
         Button(action: action) {
             Image(systemName: systemName)
                 .foregroundColor(.white)
@@ -24,9 +40,18 @@ struct ARButton: View {
                 .background(
                     EllipticalGradient(
                         stops: [
-                            Gradient.Stop(color: .white.opacity(0.1), location: 0.00),
-                            Gradient.Stop(color: .white.opacity(0.4), location: 0.78),
-                            Gradient.Stop(color: .white.opacity(0.6), location: 1.00),
+                            Gradient.Stop(
+                                color: .white.opacity(0.1),
+                                location: 0.00
+                            ),
+                            Gradient.Stop(
+                                color: .white.opacity(0.4),
+                                location: 0.78
+                            ),
+                            Gradient.Stop(
+                                color: .white.opacity(0.6),
+                                location: 1.00
+                            ),
                         ],
                         center: UnitPoint(x: 0.5, y: 0.5)
                     )
@@ -38,40 +63,58 @@ struct ARButton: View {
     }
 }
 
-struct ARPlusButton: View {
-    let action: () -> Void
-    
-    var body: some View {
-        ARButton(
-            systemName: "plus",
-            width: 84,
-            height: 84,
-            iconSize: 34,
-            iconWeight: .regular,
-            action: action
-        )
-    }
+@MainActor
+public func ARBackWardButton(action: @escaping () -> Void) -> some View {
+    ARButton(
+        systemName: "arrow.uturn.backward",
+        width: 84,
+        height: 84,
+        iconSize: 34,
+        iconWeight: .regular,
+        action: action
+    )
 }
 
-struct ARCloseButton: View {
-    let action: () -> Void
-    
-    var body: some View {
-        ARButton(
-            systemName: "xmark",
-            width: 36,
-            height: 36,
-            iconSize: 16,
-            iconWeight: .medium,
-            action: action
-        )
-    }
+
+@MainActor
+public func ARCheckButton(action: @escaping () -> Void) -> some View {
+    ARButton(
+        systemName: "checkmark",
+        width: 84,
+        height: 84,
+        iconSize: 34,
+        iconWeight: .regular,
+        action: action
+    )
 }
 
-struct ARConfirmationButton: View {
-    let action: () -> Void
-    
-    var body: some View {
+@MainActor
+public func ARPlusButton(action: @escaping () -> Void) -> some View {
+    ARButton(
+        systemName: "plus",
+        width: 84,
+        height: 84,
+        iconSize: 34,
+        iconWeight: .regular,
+        action: action
+    )
+}
+
+@MainActor
+public func ARCloseButton(action: @escaping () -> Void) -> some View {
+    ARButton(
+        systemName: "xmark",
+        width: 36,
+        height: 36,
+        iconSize: 16,
+        iconWeight: .medium,
+        action: action
+    )
+}
+
+@MainActor
+public func ARConfirmationButton(action: @escaping () -> Void) -> some View {
+    Button(action: action) {
         Button(action: action) {
             Text("완료")
                 .font(Font.custom("Pretendard", size: 20).weight(.medium))
@@ -81,9 +124,21 @@ struct ARConfirmationButton: View {
                 .background(
                     EllipticalGradient(
                         stops: [
-                            Gradient.Stop(color: Color(red: 0.31, green: 0.85, blue: 0.43).opacity(0.1), location: 0.00),
-                            Gradient.Stop(color: Color(red: 0.31, green: 0.85, blue: 0.43).opacity(0.4), location: 0.78),
-                            Gradient.Stop(color: Color(red: 0.31, green: 0.85, blue: 0.43).opacity(0.6), location: 1.00),
+                            Gradient.Stop(
+                                color: Color(red: 0.31, green: 0.85, blue: 0.43)
+                                    .opacity(0.1),
+                                location: 0.00
+                            ),
+                            Gradient.Stop(
+                                color: Color(red: 0.31, green: 0.85, blue: 0.43)
+                                    .opacity(0.4),
+                                location: 0.78
+                            ),
+                            Gradient.Stop(
+                                color: Color(red: 0.31, green: 0.85, blue: 0.43)
+                                    .opacity(0.6),
+                                location: 1.00
+                            ),
                         ],
                         center: UnitPoint(x: 0.5, y: 0.5)
                     )
@@ -95,67 +150,80 @@ struct ARConfirmationButton: View {
     }
 }
 
-struct ARFlowerButton: View {
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            DesignSystemAssets.image(named: "piumFlower")
-                .frame(width: 68, height: 68)
-                .background(
-                    EllipticalGradient(
-                        stops: [
-                            Gradient.Stop(color: .white.opacity(0.1), location: 0.00),
-                            Gradient.Stop(color: .white.opacity(0.4), location: 0.78),
-                            Gradient.Stop(color: .white.opacity(0.6), location: 1.00),
-                        ],
-                        center: UnitPoint(x: 0.5, y: 0.5)
-                    )
-                )
-                .clipShape(Circle())
-                .shadow(color: .black.opacity(0.1), radius: 10)
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
-struct ARCancelButton: View {
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(alignment: .center, spacing: 6) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
-                Text("꽃 심기 취소")
-                    .font(Font.custom("Pretendard", size: 14).weight(.medium))
-                    .foregroundColor(.white)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .frame(height: 36, alignment: .center)
+@MainActor
+public func ARFlowerButton(action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+        DesignSystemAssets.image(named: "piumFlower")
+            .frame(width: 68, height: 68)
             .background(
-                LinearGradient(
+                EllipticalGradient(
                     stops: [
-                        Gradient.Stop(color: .white.opacity(0.42), location: 0.00),
-                        Gradient.Stop(color: .white.opacity(0.2), location: 0.48),
-                        Gradient.Stop(color: .white.opacity(0.39), location: 1.00),
+                        Gradient.Stop(
+                            color: .white.opacity(0.1),
+                            location: 0.00
+                        ),
+                        Gradient.Stop(
+                            color: .white.opacity(0.4),
+                            location: 0.78
+                        ),
+                        Gradient.Stop(
+                            color: .white.opacity(0.6),
+                            location: 1.00
+                        ),
                     ],
-                    startPoint: UnitPoint(x: 1.13, y: 0.46),
-                    endPoint: UnitPoint(x: 0, y: 0.5)
+                    center: UnitPoint(x: 0.5, y: 0.5)
                 )
             )
-            .cornerRadius(171)
-            .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 0)
-        }
-        .buttonStyle(PlainButtonStyle())
+            .clipShape(Circle())
+            .shadow(color: .black.opacity(0.1), radius: 10)
     }
+    .buttonStyle(PlainButtonStyle())
+
+}
+
+@MainActor
+public func ARCancelButton(action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+        HStack(alignment: .center, spacing: 6) {
+            Image(systemName: "xmark")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.white)
+            Text("꽃 심기 취소")
+                .font(Font.custom("Pretendard", size: 14).weight(.medium))
+                .foregroundColor(.white)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(height: 36, alignment: .center)
+        .background(
+            LinearGradient(
+                stops: [
+                    Gradient.Stop(
+                        color: .white.opacity(0.42),
+                        location: 0.00
+                    ),
+                    Gradient.Stop(
+                        color: .white.opacity(0.2),
+                        location: 0.48
+                    ),
+                    Gradient.Stop(
+                        color: .white.opacity(0.39),
+                        location: 1.00
+                    ),
+                ],
+                startPoint: UnitPoint(x: 1.13, y: 0.46),
+                endPoint: UnitPoint(x: 0, y: 0.5)
+            )
+        )
+        .cornerRadius(171)
+        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 0)
+    }
+    .buttonStyle(PlainButtonStyle())
 }
 
 struct MyLocationButton: View {
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             Image(systemName: "location")
@@ -173,7 +241,7 @@ struct MyLocationButton: View {
 
 struct HomeButton: View {
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             DesignSystemAssets.image(named: "buttonFlower")
@@ -182,8 +250,14 @@ struct HomeButton: View {
                 .background(
                     EllipticalGradient(
                         stops: [
-                            Gradient.Stop(color: Color(red: 0.96, green: 0.98, blue: 1), location: 0.00),
-                            Gradient.Stop(color: Color(red: 0.86, green: 0.92, blue: 1), location: 1.00),
+                            Gradient.Stop(
+                                color: Color(red: 0.96, green: 0.98, blue: 1),
+                                location: 0.00
+                            ),
+                            Gradient.Stop(
+                                color: Color(red: 0.86, green: 0.92, blue: 1),
+                                location: 1.00
+                            ),
                         ],
                         center: UnitPoint(x: 0.5, y: 0.5)
                     )
@@ -198,31 +272,31 @@ struct CustomButtonView: View {
     var body: some View {
         VStack {
             HStack {
-                ARPlusButton() {
+                ARPlusButton {
                     print("tapped")
                 }
-                ARCloseButton() {
+                ARCloseButton {
                     print("tapped2")
                 }
             }
             HStack {
-                ARConfirmationButton() {
+                ARConfirmationButton {
                     print("tapped3")
                 }
-                ARFlowerButton() {
+                ARFlowerButton {
                     print("tapped4")
                 }
             }
             HStack {
-                ARCancelButton() {
+                ARCancelButton {
                     print("tapped5")
                 }
             }
             HStack {
-                MyLocationButton() {
+                MyLocationButton {
                     print("tapped6")
                 }
-                HomeButton() {
+                HomeButton {
                     print("I changed something")
                 }
             }
