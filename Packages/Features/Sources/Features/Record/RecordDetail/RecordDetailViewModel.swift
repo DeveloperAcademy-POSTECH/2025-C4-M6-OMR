@@ -23,7 +23,6 @@ struct RecordDetailUIModel {
 public final class RecordDetailViewModel: ObservableObject {
     
     // MARK: - Published Properties
-    
     @Published var detail: RecordDetailUIModel?
     @Published var isEditing: Bool = false
     
@@ -31,18 +30,15 @@ public final class RecordDetailViewModel: ObservableObject {
     private var originalDetail: RecordDetailUIModel?
     
     // MARK: - Computed Properties
-    
     public var isSaveButtonDisabled: Bool {
         guard let detail = detail, let originalDetail = originalDetail else {
             return true
         }
         
-        // 사진이 하나도 없으면 비활성화
         if detail.images.isEmpty {
             return true
         }
         
-        // 원본과 현재 상태가 동일하면 (변경사항이 없으면) 비활성화
         let isTitleChanged = detail.title != originalDetail.title
         let areImagesChanged = detail.images != originalDetail.images
         
@@ -51,12 +47,6 @@ public final class RecordDetailViewModel: ObservableObject {
         }
         
         return false
-    }
-    
-    // MARK: - Initialization
-    
-    public init() {
-        fetchRecordDetails()
     }
     
     public convenience init(record: Record) {
@@ -90,31 +80,37 @@ public final class RecordDetailViewModel: ObservableObject {
             self.originalDetail = detailModel
         }
     }
-    
+  
+    public init(id: UUID) {
+           fetchRecordDetails(id: id)
+       }
+  
     // MARK: - Methods
     
-    func fetchRecordDetails() {
-        // ---  UseCase를 호출하고 Entity를 매핑하는 코드로 대체 ---
+    /// id 기반으로 RecordDetailUIModel 생성 및 detail 세팅
+    func fetchRecordDetails(id: UUID) {
+        let motes = MockDataProvider.mockObjects()
         
-        // 임시 데이터 생성
-        let location = "포항공과대학교"
-        let title = "\(location)에서"
-        let dummyPhotos = ["photo.artframe", "camera.fill", "tree.fill"]
-        let images = dummyPhotos.compactMap { UIImage(systemName: $0) }
-        
+        guard let mote = motes.first(where: { $0.id == id }) else {
+            print("❌ 해당 ID의 Mote를 찾을 수 없습니다.")
+            return
+        }
+
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy년 M월 d일"
-        
-        let mockDetail = RecordDetailUIModel(
-            title: title,
-            flowerName: "프리지아",
-            flowerMeaning: "영원한 사랑",
-            location: location,
-            date: dateFormatter.string(from: Date()),
+
+        let images: [UIImage] = mote.images.compactMap {
+            UIImage(named: $0) ?? UIImage(systemName: "photo")
+        }
+
+        self.detail = RecordDetailUIModel(
+            title: mote.title,
+            flowerName: mote.flower.name,
+            flowerMeaning: mote.flower.floriography,
+            location: mote.address,
+            date: dateFormatter.string(from: mote.createdAt),
             images: images
         )
-        
-        self.detail = mockDetail
     }
     
     // MARK: - User Actions
@@ -159,10 +155,3 @@ public final class RecordDetailViewModel: ObservableObject {
     }
 }
 
-
-public extension RecordDetailViewModel {
-    convenience init(summary: ObjectSummary) {
-        self.init()
-        // TODO: summary 객체로부터 실제 데이터를 받아와 프로퍼티를 채우는 로직 구현
-    }
-}

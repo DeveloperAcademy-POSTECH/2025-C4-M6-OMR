@@ -12,32 +12,30 @@ struct RecordCard: View {
     let record: MyRecordModel
     
     var body: some View {
-        HStack(spacing: 18) {
-            ZStack {
-             /*   Circle()
-                    .fill(Color.green.opacity(0.1))
-                    .frame(width: 66, height: 66)*/
-
-                DesignSystemAssets.image(named: record.flowerImageName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 66, height: 66)
-            }
+        HStack(spacing: 16) {
+            DesignSystemAssets.image(named: record.flowerImageName)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 50, height: 50)
+                .clipped()
+                .cornerRadius(8)
             
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(record.title)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.body)
                     .foregroundColor(.primary)
                     .lineLimit(1)
                 
                 Text(record.formattedDate)
-                    .font(.system(size: 14))
+                    .font(.caption)
                     .foregroundColor(.secondary)
             }
             
             Spacer()
         }
-        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 4)
+        
     }
 }
 

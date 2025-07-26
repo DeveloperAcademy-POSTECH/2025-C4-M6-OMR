@@ -23,6 +23,13 @@ public struct NavigationHostView: View {
                     // TODO: 나머지 route 처리
 //                    case .designSystemExample:
 //                        DesignSystemExampleView()
+                    
+                    case .map:
+                        MapView()
+                        
+                    case .myRecord:
+                        MyRecordView()
+                            .navigationBarBackButtonHidden(true)
                     default:
                         Text("Not Found")
 
