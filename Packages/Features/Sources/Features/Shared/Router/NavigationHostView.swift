@@ -1,3 +1,4 @@
+import CoreLocation
 //
 //  NavigationHostView.swift
 //  Features
@@ -6,59 +7,49 @@
 //
 import Dependencies
 import SwiftUI
-import CoreLocation
 
 public struct NavigationHostView: View {
     @StateObject private var nav = NavigationViewModel()
-    
+
     public init() {}
-    
+
     // 각 화면 ViewModel은 DI로 내부에서 생성
     public var body: some View {
         NavigationStack(path: $nav.path) {
             MainView()  // 첫 화면
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {
-                    case .home:
-                        MainView()
+
                     case .arCamera(let latitude, let longitude):
-                        let location = CLLocation(latitude: latitude, longitude: longitude)
-                        ARCameraView(location: location)
-                    // TODO: 나머지 route 처리
-//                    case .designSystemExample:
-//                        DesignSystemExampleView()
-                    
+                        let location = CLLocation(
+                            latitude: latitude,
+                            longitude: longitude
+                        )
+                        ToolbarHiddenWrapper(
+                            content:
+                                ARCameraView(location: location)
+                        )
+
                     case .map:
-                        MapView()
-                        
+                        ToolbarHiddenWrapper(
+                            content:
+                                MapView()
+                        )
+
                     case .myRecord:
-                        MyRecordView()
-                            .navigationBarBackButtonHidden(true)
+                        ToolbarHiddenWrapper(
+                            content:
+                                MyRecordView()
+                        )
+
+                    case .home:
+                        ToolbarHiddenWrapper(
+                            content:
+                                MainView()
+                        )
+
                     default:
                         Text("Not Found")
-
-//                    case .map(let lat, let lon):
-//                        MapView(latitude: lat, longitude: lon)
-//
-
-//
-//                    case .detail(let moteId):
-//                        DetailRecordView(moteId: moteId)
-//
-//                    case .recordStart:
-//                        RecordView()
-//
-//                    case .recordSelectSong:
-//                        SongSearchView()
-//
-//                    case .recordCompose(let songId):
-//                        RecordComposeView(songId: songId)
-//
-//                    case .recordOverview(let tempId):
-//                        RecordOverviewView(tempId: tempId)
-//
-//                    case .recordComplete(let moteId):
-//                        RecordCompleteView(moteId: moteId)
                     }
                 }
         }

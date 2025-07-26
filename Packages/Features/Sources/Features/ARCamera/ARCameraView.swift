@@ -2,6 +2,7 @@ import ARKit
 import CoreLocation
 import RealityKit
 import SwiftUI
+import DesignSystem
 
 public struct ARCameraView: View {
     @StateObject private var viewModel: ARCameraViewModel
@@ -18,6 +19,7 @@ public struct ARCameraView: View {
 
     public var body: some View {
         ZStack {
+            
             if permissionsManager.status == .granted {
                 arContentView
                     .onAppear { viewModel.startARSession() }
