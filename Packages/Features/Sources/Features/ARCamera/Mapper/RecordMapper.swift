@@ -30,8 +30,6 @@ enum RecordMapper {
 
     static func toDomainRecord(
         from placementData: ARPlacementData,
-        title: String,
-        description: String,
         userLocation: CLLocation,
         images: [UIImage]
     ) -> Domain.Record {
@@ -44,12 +42,11 @@ enum RecordMapper {
             id: UUID(),
             authorID: UUID(),  // TODO: Replace with actual author ID
             markerTypeID: placementData.flower.id,
-            title: title,
             coordinate: Domain.Coordinate(
                 latitude: placementData.position.latitude,
                 longitude: placementData.position.longitude
             ),
-            address: Domain.Address(fullAddress: description),
+            address: Domain.Address(fullAddress: ""),
             date: placementData.placedAt,
             photos: photoURLs.map { Domain.Photo(url: $0) },
             isPublic: true  // TODO: Replace with actual visibility if needed

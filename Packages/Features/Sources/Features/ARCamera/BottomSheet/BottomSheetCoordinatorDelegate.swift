@@ -30,21 +30,15 @@ struct BottomSheetCoordinatorModifier: ViewModifier {
             FlowerSelectionBottomSheet(
                 viewModel: coordinator.flowerSelectionViewModel
             )
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
 
         case .recordDetail:
             if let viewModel = coordinator.recordDetailViewModel {
                 RecordDetailBottomSheet(viewModel: viewModel)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
             }
 
         case .saveSheet:
             if let viewModel = coordinator.saveSheetViewModel {
                 RecordSaveSheetView(viewModel: viewModel)
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.visible)
             }
         }
     }
