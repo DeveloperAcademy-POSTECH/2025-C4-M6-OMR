@@ -35,19 +35,23 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
     // MARK: - Methods
     
     // 지도에 표시할 오브젝트 데이터를 가져옴
+    
     func fetchMapObjects() {
+        // MockDataProvider에서 Mote 배열 받아오기
+        let mockMotes = MockDataProvider.mockObjects()
         
-        // TODO: UseCase를 통해 실제 데이터 가져오기
-        
-        self.objectSummaries = (1...15).map { i in
+        // Mote를 ObjectSummary로 매핑
+        self.objectSummaries = mockMotes.map { mote in
             ObjectSummary(
-                id: UUID(),
-                title: "오브젝트 \(i)",
-                latitude: 37.5665 + Double.random(in: -0.05...0.05),
-                longitude: 126.9780 + Double.random(in: -0.05...0.05)
+                id: mote.id, // 또는 mote 자체의 id가 있다면 그것 사용
+                title: mote.title,
+                latitude: mote.latitude,
+                longitude: mote.longitude,
+                flowerImage: mote.flower.objetImage
             )
         }
     }
+    
     
     // 지도에서 핀(Annotation)이 탭되었을 때 호출
     func objectPinTapped(id: UUID) {
@@ -55,6 +59,13 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
             
             if let TappedObject = objectSummaries.first(where: { $0.id == id }) {
                 self.selectObjectDetail = TappedObject
+                
+                // 선택된 객체 정보 출력
+                print("🎯 선택된 오브제:")
+                print("🆔 ID: \(TappedObject.id)")
+                print("📍 위치: (\(TappedObject.latitude), \(TappedObject.longitude))")
+                print("📝 제목: \(TappedObject.title)")
+                print("꽃 이미지: \(TappedObject.flowerImage)")
                 
                 // 선택된 객체의 위치로 카메라 이동
                 self.cameraPosition = CLLocationCoordinate2D(
@@ -73,11 +84,13 @@ public struct ObjectSummary: Identifiable {
     public let title: String
     public let latitude: Double
     public let longitude: Double
+    public let flowerImage: String
     
-    public init(id: UUID, title: String, latitude: Double, longitude: Double) {
+    public init(id: UUID, title: String, latitude: Double, longitude: Double,flowerImage: String) {
         self.id = id
         self.title = title
         self.latitude = latitude
         self.longitude = longitude
+        self.flowerImage = flowerImage
     }
 }
