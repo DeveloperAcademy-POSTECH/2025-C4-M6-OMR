@@ -16,12 +16,15 @@ class ARCameraViewModel: NSObject, ObservableObject {
     @Published var isPlacementConfirmed: Bool = false
     @Published var isLoadingRecords: Bool = false
     @Published var isSavingRecord: Bool = false
+    @Published var isFocused: Bool = false
 
     // MARK: - Coordinators
     let bottomSheetCoordinator = BottomSheetCoordinator()
 
+    // MARK: - Public Properties
+    let arSceneManager = ARSceneManager()
+
     // MARK: - Private Properties
-    private let arSceneManager = ARSceneManager()
     private let locationManager = CLLocationManager()
     private let transformUseCase = TransformCoordinateUseCase()
     private let location: CLLocation
@@ -54,17 +57,30 @@ class ARCameraViewModel: NSObject, ObservableObject {
         arSceneManager.onPlacementStateChanged = { [weak self] status in
             self?.handlePlacementStateChanged(status)
         }
+
+        arSceneManager.onFocusStateChanged = { [weak self] isFocused in
+            self?.isFocused = isFocused
+        }
     }
 
     // MARK: - Public Methods
     func setupARView(_ arView: ARView) {
-        arSceneManager.setupARView(arView)
+        arSceneManager.setup(arView: arView)
         locationManager.delegate = self
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingHeading()
     }
 
     func startARSession() {
+        print("🚀 AR 세션 시작")
+
+        // 위치 서비스 시작
+        locationManager.delegate = self
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.startUpdatingHeading()
+        locationManager.startUpdatingLocation()
+
+        // 데이터 로드 및 배치
         Task {
             await fetchAndPlaceRecords()
         }
@@ -265,7 +281,15 @@ class ARCameraViewModel: NSObject, ObservableObject {
     }
 
     private func updateSceneWithRecords() {
-        guard let userHeading = locationManager.heading else { return }
+        guard let userHeading = locationManager.heading else {
+            print("❌ 사용자 방향 정보 없음")
+            return
+        }
+
+        print("🧭 사용자 위치: \(location.coordinate)")
+        print("🧭 사용자 방향: \(userHeading.trueHeading)")
+        print("📊 업데이트할 레코드 수: \(allRecords.count)")
+
         arSceneManager.updateSceneWithRecords(
             records: allRecords,
             userLocation: location,
@@ -276,22 +300,34 @@ class ARCameraViewModel: NSObject, ObservableObject {
 
     // MARK: - Mock Data Generation
     private func makeMockDomainRecords() -> [Domain.Record] {
-        let titles = ["행복했던 강아지와의 산책", "맛있는 점심", "개발 공부"]
+        print("📊 Mock 데이터 생성 시작")
 
-        return titles.map { title in
-            let randomCoordinate = generateRandomCoordinate(
-                center: self.location.coordinate,
-                radiusInMeters: 5.0  // 5미터 반경으로 축소
+        let titles = ["행복했던 강아지와의 산책", "맛있는 점심", "개발 공부"]
+        let distances: [Double] = [5.0, 8.0, 12.0]  // 5m, 8m, 12m
+        let bearings: [Double] = [0.0, 120.0, 240.0]  // 북쪽, 남동쪽, 남서쪽
+
+        var records: [Domain.Record] = []
+
+        for i in 0..<titles.count {
+            let title = titles[i]
+            let distance = distances[i]
+            let bearing = bearings[i]
+
+            // TransformUseCase를 사용하여 유효한 좌표 생성
+            let targetCoordinate = transformUseCase.generateValidTestCoordinate(
+                from: self.location.coordinate,
+                distance: distance,
+                bearing: bearing
             )
 
-            return Domain.Record(
+            let record = Domain.Record(
                 id: UUID(),
                 authorID: UUID(),
                 markerTypeID: UUID(),
                 title: title,
                 coordinate: Domain.Coordinate(
-                    latitude: randomCoordinate.latitude,
-                    longitude: randomCoordinate.longitude
+                    latitude: targetCoordinate.latitude,
+                    longitude: targetCoordinate.longitude
                 ),
                 address: Domain.Address(fullAddress: "포항공과대학교"),
                 date: Date().addingTimeInterval(
@@ -300,7 +336,12 @@ class ARCameraViewModel: NSObject, ObservableObject {
                 photos: [],
                 isPublic: true
             )
+
+            print("📍 Mock 레코드 생성: \(title) at \(targetCoordinate)")
+            records.append(record)
         }
+
+        return records
     }
 
     private func generateRandomCoordinate(
@@ -329,6 +370,10 @@ extension ARCameraViewModel: BottomSheetCoordinatorDelegate {
     func didSelectFlower(_ flower: FlowerModel) {
         print(" didSelectFlower 호출됨: \(flower.name)")
         handleFlowerSelected(flower)
+    }
+
+    func didDismissBottomSheet() {
+        arSceneManager.deselectCurrentMarker()
     }
 }
 
