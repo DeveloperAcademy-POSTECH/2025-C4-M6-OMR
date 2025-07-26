@@ -22,25 +22,35 @@ public struct RecordSaveSheetView: View {
         VStack(spacing: 0) {
             RecordSaveHeaderView { dismiss() }
             
-            if let detail = viewModel.detail {
-                SelectedFlowerCardView(
-                    flowerName: detail.name,
-                    flowerMeaning: detail.meaning,
-                    flowerImageName: detail.imageName
-                )
-                .padding(.bottom, 30)
+            ScrollView {
+                VStack(spacing: 0) {
+                    SelectedFlowerCardView(
+                        flowerName: viewModel.flowerName,
+                        flowerMeaning: viewModel.flowerMeaning,
+                        flowerImageName: viewModel.flowerImageName
+                    )
+                    .padding(.bottom, 30)
+                    
+                    RecordFormView(
+                        title: $viewModel.title,
+                        description: $viewModel.description
+                    )
+                    .padding(.bottom, 20)
+                    
+                    PhotoSelectionView(viewModel: viewModel)
+                        .padding(.bottom, 20)
+                }
             }
             
-            PhotoSelectionView(viewModel: viewModel)
-                .padding(.bottom, 20)
-            
-            SaveButtonView(isDisabled: viewModel.isSaveButtonDisabled) {
-                viewModel.saveImages()
-            }
-            
+            SaveButtonView(
+                isDisabled: viewModel.isSaveButtonDisabled,
+                viewModel: viewModel,
+                dismiss: { dismiss() }
+            )
             Spacer()
         }
-        .presentationDetents([.fraction(0.8), .large])
+        .padding(.horizontal, 20)
+        .presentationDetents([.large])
         .interactiveDismissDisabled(true)
         .presentationDragIndicator(.hidden)
     }
@@ -65,14 +75,13 @@ private struct RecordSaveHeaderView: View {
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15).opacity(0.25))
                     }
-                    .padding(.trailing, 20)
                 }
             }
             
             Text("꽃 심기 완료!")
                 .font(DesignSystem.Font.custom(size: 18, weight: .bold))
             
-            Text("함께 기억할 사진을 저장해주세요.")
+            Text("함께 기억할 사진과 글을 저장해주세요.")
                 .font(DesignSystem.Font.custom(size: 18, weight: .bold))
         }
         .padding(.top, 20)
@@ -113,12 +122,49 @@ private struct SelectedFlowerCardView: View {
     }
 }
 
+private struct RecordFormView: View {
+    @Binding var title: String
+    @Binding var description: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("제목")
+                    .font(DesignSystem.Font.custom(size: 16, weight: .semibold))
+                
+                TextField("기록의 제목을 입력해주세요", text: $title)
+                    .font(DesignSystem.Font.custom(size: 15, weight: .regular))
+                    .padding(12)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text("내용")
+                    .font(DesignSystem.Font.custom(size: 16, weight: .semibold))
+                
+                TextEditor(text: $description)
+                    .font(DesignSystem.Font.custom(size: 15, weight: .regular))
+                    .frame(height: 100)
+                    .padding(8)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+            }
+        }
+    }
+}
+
+
 private struct SaveButtonView: View {
     let isDisabled: Bool
-    let action: () -> Void
+    let viewModel: RecordSaveSheetViewModel
+    let dismiss: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            viewModel.save()
+            dismiss()
+        }) {
             Text("저장")
                 .font(.headline.bold())
                 .foregroundColor(isDisabled ? Color(red: 0.56, green: 0.56, blue: 0.56) : Color.white)
@@ -129,7 +175,6 @@ private struct SaveButtonView: View {
         }
         .disabled(isDisabled)
         .padding(.top, 30)
-        .padding(.horizontal, 20)
     }
 }
         

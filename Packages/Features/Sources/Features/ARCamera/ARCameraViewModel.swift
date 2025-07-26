@@ -120,10 +120,44 @@ class ARCameraViewModel: NSObject, ObservableObject {
 
     func requestSave() {
         guard let placement = currentPlacement else { return }
-        bottomSheetCoordinator.showSaveSheet(flower: placement.flower)
+
+        // 현재 위치 정보를 가져와서 주소로 변환
+        fetchAddress(from: location) { [weak self] address in
+            guard let self else { return }
+
+            let saveSheetInfo = RecordSaveSheetInfo(
+                flower: placement.flower,
+                location: self.location,
+                address: address ?? "주소를 찾을 수 없음"
+            )
+
+            self.bottomSheetCoordinator.showSaveSheet(
+                info: saveSheetInfo,
+                onSave: { [weak self] finalRecord in
+                    self?.handleSaveRecord(
+                        placement: placement,
+                        finalRecord: finalRecord
+                    )
+                }
+            )
+        }
     }
 
     // MARK: - Private Methods
+    private func fetchAddress(
+        from location: CLLocation,
+        completion: @escaping (String?) -> Void
+    ) {
+        let geocoder = CLGeocoder()
+        geocoder.reverseGeocodeLocation(location) { placemarks, error in
+            if let error {
+                print("주소 변환 실패: \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+            completion(placemarks?.first?.name)
+        }
+    }
     private func handleRecordTapped(_ record: ARRecordModel) {
         bottomSheetCoordinator.showRecordDetail(record: record)
     }
@@ -167,12 +201,10 @@ class ARCameraViewModel: NSObject, ObservableObject {
         print("🌸 AR 배치 요청 완료")
     }
 
-    private func handleSaveRecord(title: String, description: String) {
-        guard let placement = currentPlacement else {
-            statusMessage = "저장에 필요한 정보가 부족합니다."
-            return
-        }
-
+    private func handleSaveRecord(
+        placement: ARPlacementData,
+        finalRecord: FinalRecordData
+    ) {
         isSavingRecord = true
 
         Task {
@@ -180,9 +212,10 @@ class ARCameraViewModel: NSObject, ObservableObject {
                 // Domain Record로 변환
                 let domainRecord = RecordMapper.toDomainRecord(
                     from: placement,
-                    title: title,
-                    description: description,
-                    userLocation: location
+                    title: finalRecord.title,
+                    description: finalRecord.description,
+                    userLocation: location,
+                    images: finalRecord.images
                 )
 
                 // TODO: UseCase를 통해 저장
@@ -298,11 +331,6 @@ extension ARCameraViewModel: BottomSheetCoordinatorDelegate {
     func didSelectFlower(_ flower: FlowerModel) {
         print(" didSelectFlower 호출됨: \(flower.name)")
         handleFlowerSelected(flower)
-    }
-
-    func didSaveRecord(title: String, description: String) {
-        print(" didSaveRecord 호출됨: \(title)")
-        handleSaveRecord(title: title, description: description)
     }
 }
 

@@ -1,10 +1,3 @@
-//
-//  RecordDetailViewModel.swift
-//  Features
-//
-//  Created by Henry on 7/19/25.
-//
-
 import Combine
 import Domain
 import PhotosUI
@@ -23,7 +16,6 @@ struct RecordDetailUIModel {
 public final class RecordDetailViewModel: ObservableObject {
 
     // MARK: - Published Properties
-
     @Published var detail: RecordDetailUIModel?
     @Published var isEditing: Bool = false
 
@@ -31,18 +23,15 @@ public final class RecordDetailViewModel: ObservableObject {
     private var originalDetail: RecordDetailUIModel?
 
     // MARK: - Computed Properties
-
     public var isSaveButtonDisabled: Bool {
         guard let detail = detail, let originalDetail = originalDetail else {
             return true
         }
-
-        // 사진이 하나도 없으면 비활성화
+        
         if detail.images.isEmpty {
             return true
         }
-
-        // 원본과 현재 상태가 동일하면 (변경사항이 없으면) 비활성화
+        
         let isTitleChanged = detail.title != originalDetail.title
         let areImagesChanged = detail.images != originalDetail.images
 
@@ -52,13 +41,49 @@ public final class RecordDetailViewModel: ObservableObject {
 
         return false
     }
-
+    
     // MARK: - Initialization
-
+    
     public init() {
-        fetchRecordDetails()
+        // 기본 초기화 - 추후 필요시 기본 동작 추가
     }
-
+    
+//    public convenience init(record: Record) {
+//        self.init() // 기존 init 호출
+//        
+//        // Task를 이용해 파일 경로로부터 이미지를 비동기적으로 불러옵니다.
+//        Task {
+//            var loadedImages: [UIImage] = []
+//            for fileName in record.imageFileNames {
+//                if let image = await FileStoreManager.shared.loadImage(fileName: fileName) {
+//                    loadedImages.append(image)
+//                }
+//            }
+//            
+//            let dateFormatter = DateFormatter()
+//            dateFormatter.dateFormat = "yyyy년 M월 d일"
+//
+//            // 불러온 이미지와 Record의 정보로 UI 모델을 생성합니다.
+//            let detailModel = RecordDetailUIModel(
+//                title: record.flower.name, // 제목은 우선 꽃 이름으로 설정
+//                flowerName: record.flower.name,
+//                flowerMeaning: record.flower.meaning,
+//                location: "위치 정보 미정", // 위치 정보는 추후 추가
+//                date: dateFormatter.string(from: Date()),
+//                images: loadedImages
+//            )
+//
+//            // @Published 프로퍼티를 업데이트하여 View에 반영합니다.
+//            self.detail = detailModel
+//            // 수정 기능을 위해 원본도 함께 저장해 둡니다.
+//            self.originalDetail = detailModel
+//        }
+//    }
+    
+    public init(id: UUID) {
+        fetchRecordDetails(id: id)
+    }
+    
     // ARCamera 연동을 위한 추가 초기화
     public convenience init(arRecord: ARRecordModel) {
         self.init()
@@ -82,36 +107,41 @@ public final class RecordDetailViewModel: ObservableObject {
 
         self.setDetail(mockDetail)
     }
-
+  
     // MARK: - Methods
-
+    
     // ARCamera에서 사용할 수 있도록 detail을 설정하는 메서드
     func setDetail(_ detail: RecordDetailUIModel) {
         self.detail = detail
+        self.originalDetail = detail
     }
-
-    func fetchRecordDetails() {
-        // ---  UseCase를 호출하고 Entity를 매핑하는 코드로 대체 ---
-
-        // 임시 데이터 생성
-        let location = "포항공과대학교"
-        let title = "\(location)에서"
-        let dummyPhotos = ["photo.artframe", "camera.fill", "tree.fill"]
-        let images = dummyPhotos.compactMap { UIImage(systemName: $0) }
+    
+    /// id 기반으로 RecordDetailUIModel 생성 및 detail 세팅
+    func fetchRecordDetails(id: UUID) {
+        let motes = MockDataProvider.mockObjects()
+        
+        guard let mote = motes.first(where: { $0.id == id }) else {
+            print("❌ 해당 ID의 Mote를 찾을 수 없습니다.")
+            return
+        }
 
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy년 M월 d일"
 
-        let mockDetail = RecordDetailUIModel(
-            title: title,
-            flowerName: "프리지아",
-            flowerMeaning: "영원한 사랑",
-            location: location,
-            date: dateFormatter.string(from: Date()),
+        let images: [UIImage] = mote.images.compactMap {
+            UIImage(named: $0) ?? UIImage(systemName: "photo")
+        }
+
+        self.detail = RecordDetailUIModel(
+            title: mote.title,
+            flowerName: mote.flower.name,
+            flowerMeaning: mote.flower.floriography,
+            location: mote.address,
+            date: dateFormatter.string(from: mote.createdAt),
             images: images
         )
-
-        self.detail = mockDetail
+        
+        self.originalDetail = self.detail
     }
 
     // MARK: - User Actions
