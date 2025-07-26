@@ -1,32 +1,78 @@
 import ARKit
+import CoreLocation
 import RealityKit
 import SwiftUI
-import CoreLocation
 
 public struct ARCameraView: View {
     @StateObject private var viewModel: ARCameraViewModel
     @StateObject private var permissionsManager = PermissionsManager()
     @Environment(\.dismiss) private var dismiss
 
+    @State private var showPermissionAlert = false
+
     public init(location: CLLocation) {
-        print(">>> ARCameraView init\n \(location)")
-        _viewModel = StateObject(wrappedValue: ARCameraViewModel(location: location))
+        _viewModel = StateObject(
+            wrappedValue: ARCameraViewModel(location: location)
+        )
     }
 
     public var body: some View {
-        Group {
-            switch permissionsManager.status {
-            case .unknown:
-                PermissionRequestView(manager: permissionsManager)
-            case .denied:
-                PermissionDeniedView()
-            case .granted:
+        ZStack {
+            if permissionsManager.status == .granted {
                 arContentView
-                    .onAppear(perform: viewModel.startARSession)
+                    .onAppear { viewModel.startARSession() }
+            } else {
+                // 권한이 없을 때 보여줄 플레이스홀더
+                Color.black
+                    .ignoresSafeArea()
+                    .overlay(
+                        VStack {
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 60))
+                                .foregroundColor(.white.opacity(0.5))
+                            Text("카메라 준비 중...")
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                    )
             }
         }
         .onAppear {
-            permissionsManager.check()
+            checkAndRequestPermissions()
+        }
+        .alert("카메라 접근 권한 필요", isPresented: $showPermissionAlert) {
+            Button("설정") {
+                openSettings()
+            }
+            Button("취소", role: .cancel) {
+                dismiss()
+            }
+        } message: {
+            Text("AR 경험을 위해 카메라 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.")
+        }
+        .bottomSheetCoordinator(coordinator: viewModel.bottomSheetCoordinator)
+    }
+
+    private func checkAndRequestPermissions() {
+        permissionsManager.check()
+
+        switch permissionsManager.status {
+        case .unknown:
+            Task {
+                await permissionsManager.request()
+                if permissionsManager.status == .denied {
+                    showPermissionAlert = true
+                }
+            }
+        case .denied:
+            showPermissionAlert = true
+        case .granted:
+            break
+        }
+    }
+
+    private func openSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
         }
     }
 
@@ -36,117 +82,25 @@ public struct ARCameraView: View {
                 .edgesIgnoringSafeArea(.all)
 
             VStack {
-                topBarView
+                ARTopBarView(onClose: { dismiss() })
                 Spacer()
-                statusMessageView
-                bottomBarView
+                ARStatusView(message: viewModel.statusMessage)
+                ARBottomBarView(
+                    mode: viewModel.cameraMode,
+                    isPlacementConfirmed: viewModel.isPlacementConfirmed,
+                    onSwitchToPlacement: viewModel.switchToPlacementMode,
+                    onCancelPlacement: viewModel.cancelPlacement,
+                    onConfirmPlacement: viewModel.confirmPlacement,
+                    onRepositionPlacement: viewModel.repositionPlacement,
+                    onSave: viewModel.requestSave
+                )
             }
             .padding()
-        }
-        .sheet(isPresented: $viewModel.viewData.isShowingRecordDetailSheet) {
-            if let record = viewModel.viewData.selectedRecord {
-                // TODO: 실제 Record 객체를 전달하도록 수정 필요
-//                 RecordDetailBottomSheet(viewModel: .init(summary: summary))
-            }
-        }
-        .sheet(isPresented: $viewModel.viewData.isShowingFlowerSelectionSheet) {
-            FlowerSelectionBottomSheet(viewModel: viewModel.flowerSelectionViewModel)
-        }
-        .sheet(isPresented: $viewModel.viewData.isShowingSaveSheet) {
-            if let flower = viewModel.viewData.selectedFlower {
-                // TODO: 실제 Flower 객체를 전달하도록 수정 필요
-//                 RecordSaveSheetView(viewModel: .init(flower: flower))
-            }
-        }
-    }
-
-    private var topBarView: some View {
-        HStack {
-            Spacer()
-            Button(action: { dismiss() }) {
-                Image(systemName: "xmark")
-                    .font(.title2)
-                    .foregroundColor(.white)
-                    .padding(12)
-                    .background(Color.black.opacity(0.5))
-                    .clipShape(Circle())
-            }
-        }
-    }
-
-    private var statusMessageView: some View {
-        Text(viewModel.viewData.statusMessage)
-            .padding(12)
-            .background(Color.black.opacity(0.6))
-            .foregroundColor(.white)
-            .cornerRadius(10)
-            .padding(.bottom, 20)
-            .animation(.easeInOut, value: viewModel.viewData.statusMessage)
-    }
-
-    @ViewBuilder
-    private var bottomBarView: some View {
-        switch viewModel.viewData.cameraMode {
-        case .normal:
-            Button(action: viewModel.switchToPlacementMode) {
-                Image(systemName: "plus")
-                    .font(.largeTitle)
-                    .foregroundColor(.black)
-                    .padding(20)
-                    .background(Color.white)
-                    .clipShape(Circle())
-                    .shadow(radius: 10)
-            }
-        case .placement:
-            HStack(spacing: 30) {
-                Button(action: viewModel.cancelPlacement) {
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                        .font(.title)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.black.opacity(0.5))
-                        .clipShape(Circle())
-                }
-
-                Button(action: {
-                    if viewModel.viewData.isPlacementConfirmed {
-                        viewModel.repositionPlacement()
-                    } else {
-                        viewModel.confirmPlacement()
-                    }
-                }) {
-                    Image(
-                        systemName: viewModel.viewData.isPlacementConfirmed
-                            ? "arrow.uturn.backward" : "checkmark"
-                    )
-                    .font(.largeTitle)
-                    .foregroundColor(.black)
-                    .padding(20)
-                    .background(Color.white)
-                    .clipShape(Circle())
-                    .shadow(radius: 10)
-                }
-
-                if viewModel.viewData.isPlacementConfirmed {
-                    Button(action: {
-                        viewModel.viewData.isShowingSaveSheet = true
-                    }) {
-                        Image(systemName: "square.and.arrow.down")
-                            .font(.title)
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(Color.accentColor)
-                            .clipShape(Circle())
-                    }
-                } else {
-                    // A transparent circle to maintain layout
-                    Circle().fill(Color.clear).frame(width: 60, height: 60)
-                }
-            }
         }
     }
 }
 
+// MARK: - ARViewContainer
 struct ARViewContainer: UIViewRepresentable {
     @ObservedObject var viewModel: ARCameraViewModel
 
@@ -161,5 +115,7 @@ struct ARViewContainer: UIViewRepresentable {
         return arView
     }
 
-    func updateUIView(_ uiView: ARView, context: Context) {}
+    func updateUIView(_ uiView: ARView, context: Context) {
+        // ARView 업데이트가 필요한 경우 여기에 로직 추가
+    }
 }

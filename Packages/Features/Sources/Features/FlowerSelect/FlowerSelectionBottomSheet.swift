@@ -5,8 +5,8 @@
 //  Created by Woody on 7/23/25.
 //
 
-import SwiftUI
 import DesignSystem
+import SwiftUI
 
 struct FlowerSelectionBottomSheet: View {
     @StateObject var viewModel: FlowerSelectionViewModel
@@ -21,8 +21,8 @@ struct FlowerSelectionBottomSheet: View {
 }
 
 // MARK: - Subviews
-private extension FlowerSelectionBottomSheet {
-    var titleView: some View {
+extension FlowerSelectionBottomSheet {
+    fileprivate var titleView: some View {
         Text("꽃 선택")
             .font(DesignSystem.Font.Title1.semibold)
             .multilineTextAlignment(.center)
@@ -31,14 +31,16 @@ private extension FlowerSelectionBottomSheet {
             .padding(.bottom, 12)
     }
 
-    var flowerListView: some View {
+    fileprivate var flowerListView: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 ForEach(viewModel.flowers, id: \.id) { flower in
                     SelectableFlowerCard(
                         flower: flower,
                         isSelected: viewModel.selectedFlower?.id == flower.id,
-                        action: { viewModel.selectFlower(flower) }
+                        onSelect: {
+                            viewModel.selectFlower(flower)
+                        }
                     )
                 }
             }
@@ -51,13 +53,13 @@ private extension FlowerSelectionBottomSheet {
 private struct SelectableFlowerCard: View {
     let flower: FlowerModel
     let isSelected: Bool
-    let action: () -> Void
+    let onSelect: () -> Void
 
     var body: some View {
         FlowerCardView(
             flower: flower,
             isSelected: isSelected
         )
-        .onTapGesture(perform: action)
+        .onTapGesture(perform: onSelect)
     }
 }
