@@ -163,10 +163,10 @@ public class ARCameraViewModel: NSObject, ObservableObject {
 
             self.bottomSheetCoordinator.showSaveSheet(
                 info: saveSheetInfo,
-                onSave: { [weak self] finalRecord in
+                onSave: { [weak self] payload in
                     self?.handleSaveRecord(
                         placement: placement,
-                        finalRecord: finalRecord
+                        payload: payload
                     )
                 },
                 onCancel: { [weak self] in
@@ -236,7 +236,7 @@ public class ARCameraViewModel: NSObject, ObservableObject {
 
     private func handleSaveRecord(
         placement: ARPlacementData,
-        finalRecord: FinalRecordData
+        payload: FinalRecordPayload
     ) {
         isSavingRecord = true
 
@@ -246,7 +246,7 @@ public class ARCameraViewModel: NSObject, ObservableObject {
                 let domainRecord = RecordMapper.toDomainRecord(
                     from: placement,
                     userLocation: location,
-                    images: finalRecord.images
+                    payload: payload
                 )
 
                 try await saveRecordUseCase(domainRecord)

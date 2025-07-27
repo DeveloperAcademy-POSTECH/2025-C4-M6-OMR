@@ -31,11 +31,11 @@ enum RecordMapper {
     static func toDomainRecord(
         from placementData: ARPlacementData,
         userLocation: CLLocation,
-        images: [UIImage]
+        payload: FinalRecordPayload
     ) -> Domain.Record {
         // TODO: 이미지 저장 및 URL 변환 로직 필요
-        let photoURLs = images.compactMap { _ in
-            URL(string: "https://example.com/photo.jpg")  //TODO: image url 로 교체
+        let photoURLs = payload.imageFileNames.compactMap { image in
+            URL(string: image)
         }
 
         return Domain.Record(
@@ -46,7 +46,7 @@ enum RecordMapper {
                 latitude: placementData.position.latitude,
                 longitude: placementData.position.longitude
             ),
-            address: Domain.Address(fullAddress: ""),
+            address: Domain.Address(fullAddress: payload.description),
             date: placementData.placedAt,
             photos: photoURLs.map { Domain.Photo(url: $0) },
             isPublic: true  // TODO: Replace with actual visibility if needed

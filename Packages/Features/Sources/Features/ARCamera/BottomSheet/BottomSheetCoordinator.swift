@@ -86,22 +86,22 @@ public class BottomSheetCoordinator: ObservableObject {
 
     func showSaveSheet(
         info: RecordSaveSheetInfo,
-        onSave: @escaping (FinalRecordData) -> Void,
+        onSave: @escaping (FinalRecordPayload) -> Void,
         onCancel: @escaping () -> Void
     ) {
         print("📱 showSaveSheet 호출됨: \(info.flower.name)")
 
         let viewModel = RecordSaveSheetViewModel(
             info: info,
-            onSave: { [weak self] finalRecord in
-                onSave(finalRecord)
+            onSave: { [weak self] payload in
+                onSave(payload)
                 self?.dismissSheet()
             }
         )
         self.saveSheetViewModel = viewModel
         self.onCancelPlacement = onCancel
         self.activeSheet = .saveSheet
-        print("📱 SaveSheet 설정 ���료")
+        print("📱 SaveSheet 설정 완료")
     }
 
     func dismissSheet() {
