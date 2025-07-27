@@ -42,6 +42,9 @@ public struct RecordDetailBottomSheet: View {
                 .padding(.top, 34)
                 .frame(minHeight: geometry.size.height)
             }
+            .onTapGesture {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            }
         }
         .presentationDetents([.fraction(0.45), .large], selection: $currentDetent)
         .presentationDragIndicator(.visible)

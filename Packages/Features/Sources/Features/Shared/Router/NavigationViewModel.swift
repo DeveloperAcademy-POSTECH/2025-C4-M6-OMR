@@ -14,6 +14,10 @@ public final class NavigationViewModel: ObservableObject {
     public func push(_ route: AppRoute) {
         path.append(route)
     }
+    
+    public func pop() {
+        path.removeLast()
+    }
 
     public func reset() { path = .init() }
 

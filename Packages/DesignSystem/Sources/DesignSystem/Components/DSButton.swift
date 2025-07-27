@@ -221,10 +221,14 @@ public func ARCancelButton(action: @escaping () -> Void) -> some View {
     .buttonStyle(PlainButtonStyle())
 }
 
-struct MyLocationButton: View {
+public struct MyLocationButton: View {
     let action: () -> Void
+    
+    public init(action: @escaping () -> Void) {
+        self.action = action
+    }
 
-    var body: some View {
+    public var body: some View {
         Button(action: action) {
             Image(systemName: "location")
                 .foregroundColor(DesignSystem.Color.Prime)
