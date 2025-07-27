@@ -13,14 +13,25 @@ import DesignSystem
 public struct RecordSaveSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: RecordSaveSheetViewModel
+    private let onCancelPlacement: () -> Void
     
-    public init(viewModel: RecordSaveSheetViewModel) {
+    public init(
+        viewModel: RecordSaveSheetViewModel,
+        onCancelPlacement: @escaping () -> Void
+    ) {
         _viewModel = StateObject(wrappedValue: viewModel)
+        self.onCancelPlacement = onCancelPlacement
     }
     
     public var body: some View {
         VStack(spacing: 0) {
-            RecordSaveHeaderView { dismiss() }
+            RecordSaveHeaderView(
+                onRequestCancel: { },
+                onConfirmCancel: {
+                    onCancelPlacement()
+                    dismiss()
+                }
+            )
             
             VStack(spacing: 0) {
                 SelectedFlowerCardView(
@@ -51,13 +62,18 @@ public struct RecordSaveSheetView: View {
 // MARK: - Subviews
 
 private struct RecordSaveHeaderView: View {
-    let onClose: () -> Void
+    let onRequestCancel: () -> Void
+    let onConfirmCancel: () -> Void
+    @State private var showCancelAlert = false
     
     var body: some View {
         VStack(spacing: 8) {
             HStack {
                 Spacer()
-                Button(action: onClose) {
+                Button(action: {
+                    showCancelAlert = true
+                    onRequestCancel()
+                }) {
                     ZStack {
                         Circle()
                             .fill(Color(red: 0.45, green: 0.51, blue: 0.59).opacity(0.16))
@@ -67,6 +83,18 @@ private struct RecordSaveHeaderView: View {
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15).opacity(0.25))
                     }
+                }
+                .alert(
+                    "꽃 심기를 그만두실래요?",
+                    isPresented: $showCancelAlert
+                ) {
+                    Button("그만둘래요", role: .destructive) {
+                        onConfirmCancel()
+                    }
+                    Button("계속할래요", role: .cancel) {
+                    }
+                } message: {
+                    Text("방금 배치한 꽃은 사라지게 됩니다")
                 }
             }
             

@@ -38,7 +38,12 @@ struct BottomSheetCoordinatorModifier: ViewModifier {
 
         case .saveSheet:
             if let viewModel = coordinator.saveSheetViewModel {
-                RecordSaveSheetView(viewModel: viewModel)
+                RecordSaveSheetView(
+                    viewModel: viewModel,
+                    onCancelPlacement: {
+                        coordinator.cancelPlacement()
+                    }
+                )
             }
         }
     }
