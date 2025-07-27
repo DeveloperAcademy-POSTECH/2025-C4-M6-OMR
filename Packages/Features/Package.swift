@@ -16,7 +16,8 @@ let package = Package(
     dependencies: [
         .package(path: "../Domain"),
         .package(path: "../Core"),
-        .package(path: "../DesignSystem")
+        .package(path: "../DesignSystem"),
+        .package(url: "https://github.com/airbnb/lottie-ios.git", from: "4.3.0")
     ],
     targets: [
         .target(
@@ -24,7 +25,8 @@ let package = Package(
             dependencies: [
                 .product(name: "Domain", package: "Domain"),
                 .product(name: "Core", package: "Core"),
-                .product(name: "DesignSystem", package: "DesignSystem")
+                .product(name: "DesignSystem", package: "DesignSystem"),
+                .product(name: "Lottie", package: "lottie-ios")
             ],
             resources: [
                 .copy("ARCamera/Resources")

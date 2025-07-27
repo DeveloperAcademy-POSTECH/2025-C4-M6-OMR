@@ -1,6 +1,7 @@
 import CoreLocation
 import DesignSystem
 import SwiftUI
+import Lottie
 
 // MARK: - MainView
 
