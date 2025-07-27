@@ -1,52 +1,71 @@
-//
-//  AppDI.swift
-//  MoteApp
-//
-//  Created by eunsong on 7/15/25.
-//
-
+import Core
+import Data
 import Dependencies
+import Domain
+import Features
 import Foundation
 import SwiftData
-import Domain   // DI 키 & 프로토콜
-import Data     // DefaultRecordRepository 등 구현체
-import Core
-import Features
-import SwiftUI  // View 확장
+import SwiftUI
 
 public struct AppDI {
-    // SwiftData 모델 컨테이너 & DataSource
-    internal static let modelContext     = ModelContext(AppModelContainer.shared)
-    internal static let localRecordDS    = LocalRecordDataSource(container: AppModelContainer.shared)
-    internal static let remoteRecordDS   = RemoteRecordDatasource()
-    internal static let userLocalDS      = UserLocalDatasource(modelContext: modelContext)
-    internal static let markerLocalDS    = MarkerLocalDatasource(modelContext: modelContext)
+    // MARK: - SwiftData & DataSource Setup
 
-    // Repository 구현체 라이브값
-    public static let recordRepositoryLiveValue: RecordRepository = DefaultRecordRepository(
-        local:                  localRecordDS,
-        remote:                 remoteRecordDS,
-        currentUserIDProvider:  { UUID() }
+    internal static let modelContext = ModelContext(AppModelContainer.shared)
+    internal static let localRecordDS = LocalRecordDataSource(
+        container: AppModelContainer.shared
     )
-    public static let userRepositoryLiveValue: UserRepository = DefaultUserRepository(
+    internal static let remoteRecordDS = RemoteRecordDatasource()
+    internal static let userLocalDS = UserLocalDatasource(
+        modelContext: modelContext
+    )
+    internal static let markerLocalDS = MarkerLocalDatasource(
+        modelContext: modelContext
+    )
+
+    // MARK: - Repository Live Values
+
+    public static let recordRepository: RecordRepository =
+        DefaultRecordRepository(
+            local: localRecordDS,
+            remote: remoteRecordDS,
+            currentUserIDProvider: { try await getCurrentUserID() }
+        )
+
+    public static let userRepository: UserRepository = DefaultUserRepository(
         local: userLocalDS
     )
-    public static let markerRepositoryLiveValue: MarkerRepository = DefaultMarkerRepository(
-        local: markerLocalDS
-    )
-}
 
-// MARK: - SwiftUI View Extension for DI
+    public static let markerRepository: MarkerRepository =
+        DefaultMarkerRepository(
+            local: markerLocalDS
+        )
 
-extension View {
-    /// 앱 전체 의존성을 이 뷰 컨텍스트에 주입합니다.
-    func injectAppDependencies() -> some View {
+    // MARK: - Helper Methods
+
+    private static func getCurrentUserID() async throws -> UUID {
+        UUID(uuidString: "00000000-0000-0000-0000-000000000000") ?? UUID()
+    }
+
+    // MARK: - Setup Method
+
+    public static func setup() {
+        // 1. Configure Features module dependencies
+        Task { @MainActor in
+            let featuresDeps = FeaturesDependencies(
+                recordRepository: recordRepository,
+                userRepository: userRepository,
+                markerRepository: markerRepository
+            )
+            FeaturesDependencies.configure(with: featuresDeps)
+        }
+
+        // 2. Register global swift-dependencies (for non-navigation contexts)
         withDependencies {
-            $0.recordRepository = AppDI.recordRepositoryLiveValue
-            $0.userRepository   = AppDI.userRepositoryLiveValue
-            $0.markerRepository = AppDI.markerRepositoryLiveValue
+            $0.recordRepository = recordRepository
+            $0.userRepository = userRepository
+            $0.markerRepository = markerRepository
         } operation: {
-            self
+            // Empty - just setting up
         }
     }
 }

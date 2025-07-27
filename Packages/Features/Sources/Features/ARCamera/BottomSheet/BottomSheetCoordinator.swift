@@ -9,7 +9,7 @@ import Combine
 import SwiftUI
 
 @MainActor
-class BottomSheetCoordinator: ObservableObject {
+public class BottomSheetCoordinator: ObservableObject {
 
     // MARK: - Published Properties
     @Published var activeSheet: BottomSheetType?

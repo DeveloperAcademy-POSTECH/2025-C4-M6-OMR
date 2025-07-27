@@ -34,8 +34,8 @@ enum RecordMapper {
         images: [UIImage]
     ) -> Domain.Record {
         // TODO: 이미지 저장 및 URL 변환 로직 필요
-        let photoURLs = images.compactMap { _ in
-            URL(string: "https://example.com/photo.jpg")
+        let photoURLs = images.compactMap { image in
+            URL(string: image)
         }
 
         return Domain.Record(

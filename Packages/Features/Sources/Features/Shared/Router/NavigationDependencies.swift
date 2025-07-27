@@ -1,3 +1,10 @@
+//
+//  NavigationDependencies.swift
+//  Features
+//
+//  Created by eunsong on 7/28/25.
+//
+
 import Dependencies
 import Domain
 import SwiftUI
@@ -6,11 +13,11 @@ import SwiftUI
 // This approach passes dependencies through SwiftUI Environment
 // and applies them in navigationDestination
 
-public struct NavigationDependencies {
+public struct NavigationDependencies: @unchecked Sendable {
     public let recordRepository: RecordRepository
     public let userRepository: UserRepository
     public let markerRepository: MarkerRepository
-    
+
     public init(
         recordRepository: RecordRepository,
         userRepository: UserRepository,
@@ -34,7 +41,9 @@ extension EnvironmentValues {
 }
 
 extension View {
-    public func navigationDependencies(_ deps: NavigationDependencies) -> some View {
+    public func navigationDependencies(_ deps: NavigationDependencies)
+        -> some View
+    {
         self.environment(\.navigationDependencies, deps)
     }
 }
@@ -65,7 +74,7 @@ public struct NavigationHostViewAlt: View {
                 }
         }
     }
-    
+
     @ViewBuilder
     private func destinationView(for route: AppRoute) -> some View {
         // Same implementation as before
