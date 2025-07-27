@@ -23,7 +23,6 @@ struct RecordList: View {
                          print("Flower: \(record.flowerImageName)")
                          
                          onRecordTap(record.id)
-                        onRecordTap(record.id)
                     }) {
                         RecordCard(record: record)
                             .padding(.vertical, 8)

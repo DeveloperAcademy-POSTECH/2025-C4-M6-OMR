@@ -10,6 +10,8 @@ import SwiftUI
 struct FilteredMoteListView: View {
     let filteredMotes: [Mote]
     let currentAddress: String
+    let onRecordTap: (UUID) -> Void
+
 
     var body: some View {
         if !filteredMotes.isEmpty {
@@ -23,7 +25,12 @@ struct FilteredMoteListView: View {
                     .frame(maxWidth: .infinity, alignment: .topLeading)
 
                 ForEach(filteredMotes, id: \.id) { mote in
-                    MoteItemView(mote: mote)
+                    Button {
+                        onRecordTap(mote.id)
+                                       } label: {
+                                           MoteItemView(mote: mote)
+                                       }
+                                       .buttonStyle(.plain)
                 }
             }
             .padding(.bottom,36)
