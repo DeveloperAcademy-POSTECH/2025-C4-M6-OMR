@@ -12,9 +12,15 @@ public struct ARCameraView: View {
     @State private var showPermissionAlert = false
 
     public init(location: CLLocation) {
-        _viewModel = StateObject(
-            wrappedValue: ARCameraViewModel(location: location)
+        // 1) Coordinator 생성
+        let coordinator = BottomSheetCoordinator()
+        // 2) ViewModel 생성 시 DI
+        let viewModel = ARCameraViewModel(
+            location: location,
+            bottomSheetCoordinator: coordinator
         )
+        // 3) StateObject에 래핑
+        _viewModel = StateObject(wrappedValue: viewModel)
     }
 
     public var body: some View {

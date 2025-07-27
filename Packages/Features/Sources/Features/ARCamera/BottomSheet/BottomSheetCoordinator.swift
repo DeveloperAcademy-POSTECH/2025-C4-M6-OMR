@@ -26,9 +26,16 @@ class BottomSheetCoordinator: ObservableObject {
 
     // MARK: - Delegate
     weak var delegate: BottomSheetCoordinatorDelegate?
+    
+    var onCancelPlacement: () -> Void = {}
 
     init() {
         setupFlowerSelectionCallback()
+    }
+    
+    func cancelPlacement() {
+        onCancelPlacement()
+        dismissSheet()
     }
 
     private func setupFlowerSelectionCallback() {
@@ -79,7 +86,8 @@ class BottomSheetCoordinator: ObservableObject {
 
     func showSaveSheet(
         info: RecordSaveSheetInfo,
-        onSave: @escaping (FinalRecordData) -> Void
+        onSave: @escaping (FinalRecordData) -> Void,
+        onCancel: @escaping () -> Void
     ) {
         print("📱 showSaveSheet 호출됨: \(info.flower.name)")
 
@@ -91,6 +99,7 @@ class BottomSheetCoordinator: ObservableObject {
             }
         )
         self.saveSheetViewModel = viewModel
+        self.onCancelPlacement = onCancel
         self.activeSheet = .saveSheet
         print("📱 SaveSheet 설정 ���료")
     }
