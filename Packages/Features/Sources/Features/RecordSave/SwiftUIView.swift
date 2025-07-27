@@ -62,7 +62,12 @@ public struct SwiftUIView: View {
                         // 필요하다면 savedRecords에 추가하는 로직을 구현할 수 있습니다.
                     }
                 )
-                RecordSaveSheetView(viewModel: viewModel)
+                RecordSaveSheetView(
+                    viewModel: viewModel,
+                    onCancelPlacement: {
+                        isShowingSaveSheet = false
+                    }
+                )
             }
 //            .sheet(item: $selectedRecord) { record in
 //                RecordDetailBottomSheet(

@@ -16,6 +16,8 @@ struct FlowerSelectionBottomSheet: View {
             titleView
             flowerListView
         }
+        .presentationDetents([.fraction(0.3)])
+        .presentationDragIndicator(.visible)
         .padding(.top, 16)
     }
 }
