@@ -86,7 +86,7 @@ public struct ARCameraView: View {
 
     private var arContentView: some View {
         ZStack {
-            ARViewContainer(viewModel: viewModel)
+            ARViewContainer(sceneManager: viewModel.arSceneManager)
                 .edgesIgnoringSafeArea(.all)
 
             VStack {
@@ -109,21 +109,16 @@ public struct ARCameraView: View {
 }
 
 // MARK: - ARViewContainer
-struct ARViewContainer: UIViewRepresentable {
-    @ObservedObject var viewModel: ARCameraViewModel
+internal struct ARViewContainer: UIViewRepresentable {
+    public let sceneManager: ARSceneManager
 
-    func makeUIView(context: Context) -> ARView {
+    public func makeUIView(context: Context) -> ARView {
         let arView = ARView(frame: .zero)
-        viewModel.setupARView(arView)
-
-        let config = ARWorldTrackingConfiguration()
-        config.planeDetection = [.horizontal]
-        arView.session.run(config)
-
+        sceneManager.setup(arView: arView)
         return arView
     }
 
-    func updateUIView(_ uiView: ARView, context: Context) {
+    public func updateUIView(_ uiView: ARView, context: Context) {
         // ARView 업데이트가 필요한 경우 여기에 로직 추가
     }
 }
