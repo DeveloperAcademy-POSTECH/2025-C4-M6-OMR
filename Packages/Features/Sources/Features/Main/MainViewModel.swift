@@ -23,6 +23,7 @@ public final class MainViewModel: ObservableObject {
     public init() {
         setupAuthorizationSubscription()
         setupAddressGeocoding()
+        setupLocationBinding()
     }
 
 
@@ -30,6 +31,15 @@ public final class MainViewModel: ObservableObject {
         locationManager.requestLocationAgain()
     }
     
+    private func setupLocationBinding() {
+        locationManager.$currentLocation
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] loc in
+                self?.currentLocation = loc
+            }
+            .store(in: &cancellables)
+    }
+
 
     public func loadNearbyMotesMock(center: CLLocation, radius: Double) {
         isLoading = true

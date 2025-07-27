@@ -37,6 +37,7 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
         hasStopped = false
         manager.startUpdatingLocation()
     }
+    
 
     // MARK: - CLLocationManagerDelegate
 

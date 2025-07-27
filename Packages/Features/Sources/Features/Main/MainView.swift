@@ -88,6 +88,9 @@ extension MainView {
                         )
                     )
                 }
+                else {
+                    print("안됨")
+                }
             })
 
             Spacer()
