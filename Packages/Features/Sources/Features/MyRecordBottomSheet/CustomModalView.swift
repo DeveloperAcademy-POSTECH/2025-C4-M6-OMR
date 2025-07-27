@@ -49,6 +49,9 @@ struct CustomModalView: View {
     @State private var isDraggingUp = false      // .low -> .large 전환 중
     @State private var isDraggingDown = false    // .large -> .low 전환 중
     
+    
+    @State private var selectedRecordID: IdentifiableUUID? = nil
+
     var body: some View {
         let isLarge = (sheetDetent == .large)
         let currentOffset: CGFloat = isLarge ? detentOffsets.large : detentOffsets.low
@@ -116,7 +119,11 @@ struct CustomModalView: View {
                                 
                                 FilteredMoteListView(
                                     filteredMotes: viewModel.filteredMotes,
-                                    currentAddress: locationManager.currentAddress
+                                    currentAddress: locationManager.currentAddress,
+                                    onRecordTap: { id in
+                                        selectedRecordID = IdentifiableUUID(id: id)
+
+                                    }
                                 )
                                 
                                 VStack{}.frame(height: 20)
@@ -245,9 +252,11 @@ struct CustomModalView: View {
             viewModel.loadAllMotes()
             locationManager.requestLocationAgain()
         }
-        
-        
         .ignoresSafeArea(.all)
+        .sheet(item: $selectedRecordID) { identifiableID in
+            RecordDetailBottomSheet(viewModel: RecordDetailViewModel(id: identifiableID.id))
+        }
+
     }
     
     private var grabberArea: some View {
