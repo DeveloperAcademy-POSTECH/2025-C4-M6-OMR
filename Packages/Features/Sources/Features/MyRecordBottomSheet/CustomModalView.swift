@@ -35,7 +35,7 @@ struct CustomModalView: View {
     @Binding var totalCount: Int
     
     @StateObject private var viewModel = MyRecordBottomSheetViewModel()
-    @StateObject private var locationManager = LocationManager()
+    @ObservedObject var locationManager: LocationManager
     @EnvironmentObject private var nav: NavigationViewModel
     
     let detentOffsets: (large: CGFloat, low: CGFloat)
@@ -240,13 +240,10 @@ struct CustomModalView: View {
         
         .onReceive(locationManager.$currentLocation.compactMap { $0 }) { location in
             viewModel.filterMotesByLocation(currentLocation: location)
-            
         }
         .onAppear {
             viewModel.loadAllMotes()
-            if let current = locationManager.currentLocation {
-                viewModel.filterMotesByLocation(currentLocation: current)
-            }
+            locationManager.requestLocationAgain()
         }
         
         

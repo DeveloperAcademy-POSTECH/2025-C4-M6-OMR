@@ -7,7 +7,6 @@ import SwiftUI
 struct MainView: View {
     @EnvironmentObject private var nav: NavigationViewModel
 
-    // MARK: - ViewModels (HEAD의 LocationManager 관리 방식 유지)
     @StateObject private var viewModel = MainViewModel()
 
     @State private var sheetDetent: Detent = .low
@@ -30,6 +29,7 @@ struct MainView: View {
                         sheetDetent: $sheetDetent,
                         isSheetVisible: $isSheetVisible,
                         totalCount: $viewModel.totalCount,
+                        locationManager: viewModel.locationManager,
                         detentOffsets: detentOffsets,
                         bottomSafeArea: geometry.safeAreaInsets.bottom
                     )
@@ -41,10 +41,12 @@ struct MainView: View {
                 .snappy(duration: 0.35, extraBounce: 0.08),
                 value: sheetDetent
             )
+            .onAppear {
+                viewModel.requestCurrentLocation()
+            }
             .onReceive(
                 viewModel.locationManager.$currentLocation.compactMap { $0 }
             ) { location in
-                // 최초 위치 업데이트 시 한 번만 호출
                 guard previousLocation == nil else {
                     handleLocationUpdate(location)
                     return
@@ -60,17 +62,6 @@ struct MainView: View {
 // MARK: - Subviews
 
 extension MainView {
-    private var backgroundGradient: some View {
-        LinearGradient(
-            gradient: Gradient(colors: [
-                DesignSystem.Color.Prime4, DesignSystem.Color.Prime3,
-            ]),
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .ignoresSafeArea()
-    }
-
     private var content: some View {
         VStack(spacing: 16) {
             currentAddressView
@@ -79,8 +70,6 @@ extension MainView {
             if viewModel.isLoading {
                 ProgressView()
             } else {
-                Text("\(viewModel.totalCount)")
-                Text("\(viewModel.nearbyCount)")
                 Text(
                     viewModel.nearbyCount == 0
                         ? "주변에 과거에 기록한 꽃이 없어요" : "주변에 과거에 기록한 꽃이 있어요"
@@ -101,10 +90,6 @@ extension MainView {
                 }
             })
 
-            Button("디자인 시스템 예제 보기") {
-                nav.push(.designSystemExample)
-            }
-
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -120,20 +105,30 @@ extension MainView {
     }
 
     private var currentAddressView: some View {
-        HStack {
+        HStack(spacing: 8) {
             Image(systemName: "paperplane.fill")
                 .foregroundColor(.blue)
+
             Text(viewModel.currentAddress)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.blue)
+
+            Button(action: {
+                viewModel.requestCurrentLocation()
+            }) {
+                Image(systemName: "arrow.clockwise.circle.fill")
+                    .foregroundColor(.blue)
+            }
+            .buttonStyle(.plain)
         }
+        .padding(.horizontal)
     }
+
 }
 
 // MARK: - Helpers
 
 extension MainView {
-
     private func handleLocationUpdate(_ location: CLLocation) {
         guard let prev = previousLocation else {
             previousLocation = location
@@ -144,11 +139,6 @@ extension MainView {
         if distance < updateThresholdMeters { return }
 
         previousLocation = location
-
         viewModel.loadNearbyMotesMock(center: location, radius: 1000)
     }
-}
-
-#Preview {
-    MainView()
 }
