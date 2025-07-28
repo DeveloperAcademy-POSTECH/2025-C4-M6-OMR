@@ -24,7 +24,7 @@ public final class RecordSaveSheetViewModel: ObservableObject {
     @Published var isLoading = false
 
     private let cachingImageManager = PHCachingImageManager()
-    private let onSave: (FinalRecordData) -> Void
+    private let onSave: (FinalRecordPayload) -> Void
 
     public var isSaveButtonDisabled: Bool {
         return selectedAssets.isEmpty
@@ -35,7 +35,7 @@ public final class RecordSaveSheetViewModel: ObservableObject {
     // MARK: - Initialization
     public init(
         info: RecordSaveSheetInfo,
-        onSave: @escaping (FinalRecordData) -> Void
+        onSave: @escaping (FinalRecordPayload) -> Void
     ) {
         self.flowerName = info.flower.name
         self.flowerMeaning = info.flower.floriography
@@ -51,12 +51,21 @@ public final class RecordSaveSheetViewModel: ObservableObject {
     func save() {
         isLoading = true
         Task {
-            let finalImages = await fetchSelectedImages()
-            let finalData = FinalRecordData(
-                images: finalImages,
+            let images = await fetchSelectedImages()
+            var savedFileNames: [String] = []
+            
+            for image in images {
+                if let fileName = await FileStoreManager.shared.saveImage(image) {
+                    savedFileNames.append(fileName)
+                }
+            }
+            
+            let payload = FinalRecordPayload(
+                imageFileNames: savedFileNames,
                 description: ""
             )
-            onSave(finalData)
+            
+            onSave(payload)
             isLoading = false
         }
     }

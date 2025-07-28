@@ -30,6 +30,7 @@ public final class DefaultRecordRepository: RecordRepository {
     public func fetchMyRecords(
         in filter: LocationFilter?
     ) async throws -> [Record] {
+        print("DefaultRecordRepository \(filter?.center)")
         let currentUserID = try await currentUserIDProvider()
         let request = RecordFetchRequest(
             userId: currentUserID,
@@ -94,7 +95,7 @@ public final class DefaultRecordRepository: RecordRepository {
             markerID: record.markerTypeID
         )
         try await local.save(model: model)
-        try await remote.save(model: model)
+//        try await remote.save(model: model)
     }
 
     /// Record 업데이트

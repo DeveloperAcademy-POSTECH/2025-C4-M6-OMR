@@ -7,7 +7,7 @@
 import SwiftUI
 
 public final class NavigationViewModel: ObservableObject {
-    @Published public var path = NavigationPath()
+    @Published public var path: [AppRoute] = []
 
     public init() {}
 
@@ -20,10 +20,10 @@ public final class NavigationViewModel: ObservableObject {
         path.removeLast()
     }
 
-    public func reset() { path = .init() }
+    public func reset() { path.removeAll() }
 
     public func goHome() {
-        path = .init()
+        path.removeAll()
         path.append(AppRoute.home)
     }
 }

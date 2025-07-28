@@ -1,8 +1,10 @@
 import ARKit
 import CoreLocation
+import Dependencies
+import DesignSystem
+import Domain
 import RealityKit
 import SwiftUI
-import DesignSystem
 
 public struct ARCameraView: View {
     @StateObject private var viewModel: ARCameraViewModel
@@ -11,21 +13,20 @@ public struct ARCameraView: View {
 
     @State private var showPermissionAlert = false
 
-    public init(location: CLLocation) {
-        // 1) Coordinator 생성
+    public init(
+        location: CLLocation,
+        factory: ARCameraViewModelFactory
+    ) {
         let coordinator = BottomSheetCoordinator()
-        // 2) ViewModel 생성 시 DI
-        let viewModel = ARCameraViewModel(
+        let viewModel = factory.create(
             location: location,
             bottomSheetCoordinator: coordinator
         )
-        // 3) StateObject에 래핑
         _viewModel = StateObject(wrappedValue: viewModel)
     }
 
     public var body: some View {
         ZStack {
-            
             if permissionsManager.status == .granted {
                 arContentView
                     .onAppear { viewModel.startARSession() }
@@ -77,7 +78,6 @@ public struct ARCameraView: View {
             break
         }
     }
-
     private func openSettings() {
         if let url = URL(string: UIApplication.openSettingsURLString) {
             UIApplication.shared.open(url)

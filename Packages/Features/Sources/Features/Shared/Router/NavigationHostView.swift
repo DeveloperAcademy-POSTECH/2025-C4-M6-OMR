@@ -1,58 +1,80 @@
-import CoreLocation
 //
 //  NavigationHostView.swift
 //  Features
 //
 //  Created by eunsong on 7/15/25.
 //
+import CoreLocation
 import Dependencies
+import Domain
 import SwiftUI
 
 public struct NavigationHostView: View {
-    @StateObject private var nav = NavigationViewModel()
+    @EnvironmentObject private var nav: NavigationViewModel
 
     public init() {}
 
-    // 각 화면 ViewModel은 DI로 내부에서 생성
     public var body: some View {
         NavigationStack(path: $nav.path) {
-            MainView()  // 첫 화면
+            MainView()
                 .navigationDestination(for: AppRoute.self) { route in
-                    switch route {
-
-                    case .arCamera(let latitude, let longitude):
-                        let location = CLLocation(
-                            latitude: latitude,
-                            longitude: longitude
-                        )
-                        ToolbarHiddenWrapper(
-                            content:
-                                ARCameraView(location: location)
-                        )
-
-                    case .map:
-                        ToolbarHiddenWrapper(
-                            content:
-                                MapView()
-                        )
-
-                    case .myRecord:
-                        ToolbarHiddenWrapper(
-                            content:
-                                MyRecordView()
-                        )
-
-                    case .home:
-                        ToolbarHiddenWrapper(
-                            content:
-                                MainView()
-                        )
-
-                    default:
-                        Text("Not Found")
+                    // Wrap the destination view with dependencies
+                    withDependencies {
+                        // Use the configured dependencies from Features module
+                        $0.recordRepository =
+                            FeaturesDependencies.current.recordRepository
+                        $0.userRepository =
+                            FeaturesDependencies.current.userRepository
+                        $0.markerRepository =
+                            FeaturesDependencies.current.markerRepository
+                    } operation: {
+                        destinationView(for: route)
                     }
                 }
         }
-        .environmentObject(nav)  // 하위 View에서 @EnvironmentObject 로 사용
+    }
+
+    @ViewBuilder
+    private func destinationView(for route: AppRoute) -> some View {
+        switch route {
+        case .arCamera(let latitude, let longitude):
+            let location = CLLocation(
+                latitude: latitude,
+                longitude: longitude
+            )
+
+            // Debug logging to verify dependencies
+            let _ = print("[DI] Creating ARCameraView with dependencies")
+
+            // Verify we have the right dependencies in this context
+            @Dependency(\.recordRepository) var recordRepo
+            let _ = print("[DI] RecordRepository type: \(type(of: recordRepo))")
+
+            ToolbarHiddenWrapper(
+                content:
+                    ARCameraView(
+                        location: location,
+                        factory: LiveARCameraViewModelFactory()
+                    )
+            )
+
+        case .map:
+            ToolbarHiddenWrapper(
+                content: MapView()
+            )
+
+        case .myRecord:
+            ToolbarHiddenWrapper(
+                content: MyRecordView()
+            )
+
+        case .home:
+            ToolbarHiddenWrapper(
+                content: MainView()
+            )
+
+        default:
+            Text("Not Found")
+        }
     }
 }
