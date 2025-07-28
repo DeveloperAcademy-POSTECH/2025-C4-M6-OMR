@@ -10,17 +10,17 @@ import PhotosUI
 
 struct ImageCarouselView: View {
     @ObservedObject var viewModel: RecordDetailViewModel
+    @StateObject private var albumViewModel = CustomAlbumViewModel()
     
     let isExpanded: Bool
     let isEditing: Bool
-    
-    @State private var isPickerPresented = false
-    @State private var selectedPhotoItems: [PhotosPickerItem] = []
     
     private let fullSize: CGFloat = 342
     private let halfSize: CGFloat = 150
     private let itemSpacing: CGFloat = 12
     private let maxImageCount = 4
+    
+    @State private var isCustomAlbumPresented = false
     
     // MARK: - Body
     
@@ -90,7 +90,8 @@ struct ImageCarouselView: View {
                 
                 if isEditing && images.count < maxImageCount {
                     AddPhotoButton(size: fullSize) {
-                        isPickerPresented = true
+                        albumViewModel.clearSelectedAssets()
+                        isCustomAlbumPresented = true
                     }
                 }
             }
@@ -99,15 +100,11 @@ struct ImageCarouselView: View {
         }
         .scrollTargetBehavior(.viewAligned)
         .frame(height: fullSize)
-        .photosPicker(
-            isPresented: $isPickerPresented,
-            selection: $selectedPhotoItems,
-            maxSelectionCount: maxImageCount - images.count,
-            matching: .images
-        )
-        .onChange(of: selectedPhotoItems) { _, newItems in
-            viewModel.addImages(from: newItems)
-            selectedPhotoItems.removeAll()
+        .sheet(isPresented: $isCustomAlbumPresented) {
+            CustomAlbumView(viewModel: albumViewModel)
+        }
+        .onAppear {
+            viewModel.subscribeToAlbumEvents(CustomAlbumViewModel: albumViewModel)
         }
     }
 }

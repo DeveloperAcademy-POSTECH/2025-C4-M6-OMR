@@ -12,7 +12,7 @@ struct AlbumGridItemView: View {
     let asset: PHAsset
     let isSelected: Bool
     let selectedIndex: Int?
-    let viewModel: RecordSaveSheetViewModel
+    let viewModel: CustomAlbumViewModel
     let cellSize: CGFloat
 
     @State private var image: UIImage?

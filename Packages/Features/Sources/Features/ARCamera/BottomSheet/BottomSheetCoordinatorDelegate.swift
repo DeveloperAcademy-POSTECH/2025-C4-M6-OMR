@@ -15,14 +15,14 @@ protocol BottomSheetCoordinatorDelegate: AnyObject {
 // MARK: - SwiftUI ViewModifier for Bottom Sheets
 struct BottomSheetCoordinatorModifier: ViewModifier {
     @ObservedObject var coordinator: BottomSheetCoordinator
-
+    
     func body(content: Content) -> some View {
         content
             .sheet(item: $coordinator.activeSheet) { sheetType in
                 sheetView(for: sheetType)
             }
     }
-
+    
     @ViewBuilder
     private func sheetView(for sheetType: BottomSheetType) -> some View {
         switch sheetType {
@@ -30,12 +30,12 @@ struct BottomSheetCoordinatorModifier: ViewModifier {
             FlowerSelectionBottomSheet(
                 viewModel: coordinator.flowerSelectionViewModel
             )
-
+            
         case .recordDetail:
             if let viewModel = coordinator.recordDetailViewModel {
                 RecordDetailBottomSheet(viewModel: viewModel)
             }
-
+            
         case .saveSheet:
             if let viewModel = coordinator.saveSheetViewModel {
                 RecordSaveSheetView(
@@ -51,7 +51,7 @@ struct BottomSheetCoordinatorModifier: ViewModifier {
 
 extension View {
     func bottomSheetCoordinator(coordinator: BottomSheetCoordinator)
-        -> some View
+    -> some View
     {
         modifier(BottomSheetCoordinatorModifier(coordinator: coordinator))
     }
