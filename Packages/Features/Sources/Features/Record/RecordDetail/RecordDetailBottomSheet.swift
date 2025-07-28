@@ -217,10 +217,10 @@ public struct RecordDetailBottomSheet: View {
             Button(action: action) {
                 Text("수정 완료")
                     .font(.headline.bold())
-                    .foregroundColor(.white)
+                    .foregroundColor(isDisabled ? Color(red: 0.56, green: 0.56, blue: 0.56) : .white)
                     .frame(height: 52)
                     .frame(maxWidth: .infinity)
-                    .background(isDisabled ? Color.gray : Color(red: 0.43, green: 0.65, blue: 0.96))
+                    .background(isDisabled ? Color(red: 0.88, green: 0.9, blue: 0.93).opacity(0.39) : Color(red: 0.43, green: 0.65, blue: 0.96))
                     .cornerRadius(12)
             }
             .disabled(isDisabled)
