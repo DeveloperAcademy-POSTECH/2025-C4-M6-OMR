@@ -239,8 +239,13 @@ public func MyLocationButton(action: @escaping () -> Void) -> some View {
 }
 
 @MainActor
+<<<<<<< HEAD
 
 public func HomeButton(action: @escaping () -> Void) -> some View {
+=======
+public func HomeButton(action: @escaping () -> Void) -> some View {
+
+>>>>>>> origin/design/97-designsystem
         Button(action: action) {
             DesignSystemAssets.image(named: "buttonFlower")
                 .scaledToFit()
