@@ -73,7 +73,7 @@ extension MainView {
             } else {
                 Text(
                     viewModel.nearbyCount == 0
-                        ? "주변에 과거에 기록한 꽃이 없어요" : "주변에 과거에 기록한 꽃이 있어요"
+                        ? "꽃을 눌러 새로운 기록을 남겨보세요" : "주변에 과거에 기록한 꽃이 있어요"
                 )
                 .font(DesignSystem.Font.Title2.semibold)
                 .foregroundColor(DesignSystem.Color.Gray_black)

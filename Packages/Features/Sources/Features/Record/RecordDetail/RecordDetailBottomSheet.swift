@@ -201,7 +201,7 @@ public struct RecordDetailBottomSheet: View {
         
         var body: some View {
             Menu {
-                Button("기록 수정", action: onEdit)
+                Button("수정", action: onEdit)
                 Button(role: .destructive, action: onDelete) {
                     Text("삭제")
                 }

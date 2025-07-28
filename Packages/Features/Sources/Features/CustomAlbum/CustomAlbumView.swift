@@ -60,7 +60,7 @@ struct CustomAlbumView: View {
         .onAppear {
             viewModel.prepareForAllPhotos()
         }
-        .alert("최대 \(viewModel.maxImageCount)장까지 기록할 수 있어요", isPresented: $showLimitAlert) {
+        .alert("최대 \(viewModel.maxImageCount)장까지 선택할 수 있어요", isPresented: $showLimitAlert) {
             Button("확인", role: .cancel) { }
         }
     }
