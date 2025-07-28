@@ -34,18 +34,7 @@ class ARPlacementState: ObservableObject {
         self.status = .placing
     }
     
-    func updatePosition(transform: float4x4, in arView: ARView) {
-        guard let entity = entity else { return }
-        
-        if let anchor = temporaryAnchor {
-            anchor.transform.matrix = transform
-        } else {
-            let newAnchor = AnchorEntity(world: transform)
-            newAnchor.addChild(entity)
-            arView.scene.addAnchor(newAnchor)
-            self.temporaryAnchor = newAnchor
-        }
-    }
+    // updatePosition 함수 제거됨 - preview flower 표시 기능 제거
     
     func confirm() {
         guard canConfirm else { return }
