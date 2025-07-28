@@ -104,7 +104,7 @@ struct ImageCarouselView: View {
             CustomAlbumView(viewModel: albumViewModel)
         }
         .onAppear {
-            viewModel.subscribeToAlbumEvents(CustomAlbumViewModel: albumViewModel)
+            viewModel.subscribeToAlbumEvents(albumViewModel: albumViewModel)
         }
     }
 }

@@ -90,7 +90,11 @@ public struct ARCameraView: View {
                 .edgesIgnoringSafeArea(.all)
 
             VStack {
-                ARTopBarView(onClose: { dismiss() })
+                ARTopBarView(
+                    onClose: { dismiss() },
+                    onCancelPlacement: viewModel.cancelPlacement,
+                    mode: viewModel.cameraMode
+                )
                 Spacer()
                 ARStatusView(message: viewModel.statusMessage)
                 ARBottomBarView(

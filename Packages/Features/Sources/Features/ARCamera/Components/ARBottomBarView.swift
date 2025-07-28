@@ -31,7 +31,7 @@ struct ARBottomBarView: View {
 
     private var placementModeButtons: some View {
         HStack(spacing: 30) {
-            ARFlowerButton(action: onCancelPlacement)
+            ARFlowerButton(action: onSwitchToPlacement)
 
             if isPlacementConfirmed {
                 ARBackWardButton(action: onRepositionPlacement)
