@@ -11,6 +11,13 @@ import Domain
 
 public struct RecordDetailBottomSheet: View {
     @StateObject private var viewModel: RecordDetailViewModel
+    
+    // 1) 포커스 상태 열거형
+    private enum Field { case title }
+    
+    // 2) 부모 레벨 @FocusState
+    @FocusState private var focusedField: Field?
+    
     @State private var currentDetent: PresentationDetent = .fraction(0.45)
     
     private var isExpanded: Bool {
@@ -43,15 +50,24 @@ public struct RecordDetailBottomSheet: View {
                 .frame(minHeight: geometry.size.height)
             }
             .onTapGesture {
-                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                focusedField = nil
             }
         }
         .presentationDetents([.fraction(0.45), .large], selection: $currentDetent)
         .presentationDragIndicator(.visible)
         .ignoresSafeArea(.keyboard, edges: .bottom)
+        .onChange(of: viewModel.isEditing) { _, isNowEditing in
+            if isNowEditing {
+                DispatchQueue.main.async {
+                    focusedField = .title
+                }
+            } else {
+                focusedField = nil
+            }
+        }
         .onChange(of: currentDetent) { _, newDetent in
             guard newDetent != .large, viewModel.isEditing else { return }
-                viewModel.saveButtonTapped()
+            viewModel.saveButtonTapped()
         }
     }
     
@@ -75,6 +91,7 @@ public struct RecordDetailBottomSheet: View {
                     isEditing: viewModel.isEditing,
                     date: detail.date
                 )
+                .focused($focusedField, equals: .title)
             }
             .padding(.horizontal, 20)
         }
@@ -138,83 +155,73 @@ public struct RecordDetailBottomSheet: View {
         let isEditing: Bool
         let date: String
         
-        @FocusState private var isTitleFieldFocused: Bool
-        
         var body: some View {
-            VStack(spacing: 4) {
-                HStack(spacing: 0) {
+            VStack(spacing:4) {
+                HStack(spacing:0) {
                     if isEditing {
-                        ZStack(alignment: .center) {
+                        ZStack(alignment:.center) {
                             if title.isEmpty {
                                 Text(originalTitle)
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15).opacity(0.5))
+                                    .font(.system(size:20, weight:.semibold))
+                                    .foregroundColor(.gray.opacity(0.5))
                             }
                             TextField("", text: $title)
-                                .font(.system(size: 20, weight: .semibold))
+                                .font(.system(size:20, weight:.semibold))
                                 .multilineTextAlignment(.center)
-                                .focused($isTitleFieldFocused)
                         }
                     } else {
                         Text(title)
-                            .font(.system(size: 20, weight: .semibold))
+                            .font(.system(size:20, weight:.semibold))
                     }
                 }
-                .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
+                .foregroundColor(Color(red:0.1, green:0.12, blue:0.15))
                 
                 Text(date)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Color(red: 0.57, green: 0.63, blue: 0.71))
+                    .font(.system(size:14, weight:.semibold))
+                    .foregroundColor(Color(red:0.57, green:0.63, blue:0.71))
             }
-            .onChange(of: isEditing) { _, isNowEditing in
-                if isNowEditing {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        isTitleFieldFocused = true
-                    }
+        }
+    }
+    
+    private struct EditButtonView: View {
+        let onEdit: () -> Void
+        let onDelete: () -> Void
+        
+        var body: some View {
+            Menu {
+                Button("기록 수정", action: onEdit)
+                Button(role: .destructive, action: onDelete) {
+                    Text("삭제")
                 }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 14, weight: .semibold))
+                    .frame(width: 32, height: 32)
+                    .background(Color(red: 0.45, green: 0.51, blue: 0.59).opacity(0.16))
+                    .foregroundColor(Color(red: 0.45, green: 0.51, blue: 0.59))
+                    .cornerRadius(99)
             }
         }
     }
-}
-
-private struct EditButtonView: View {
-    let onEdit: () -> Void
-    let onDelete: () -> Void
-
-    var body: some View {
-        Menu {
-            Button("기록 수정", action: onEdit)
-            Button(role: .destructive, action: onDelete) {
-                Text("삭제")
+    
+    private struct SaveButtonView: View {
+        let isDisabled: Bool
+        let action: () -> Void
+        
+        var body: some View {
+            Button(action: action) {
+                Text("수정 완료")
+                    .font(.headline.bold())
+                    .foregroundColor(.white)
+                    .frame(height: 52)
+                    .frame(maxWidth: .infinity)
+                    .background(isDisabled ? Color.gray : Color(red: 0.43, green: 0.65, blue: 0.96))
+                    .cornerRadius(12)
             }
-        } label: {
-            Image(systemName: "ellipsis")
-                .font(.system(size: 14, weight: .semibold))
-                .frame(width: 32, height: 32)
-                .background(Color(red: 0.45, green: 0.51, blue: 0.59).opacity(0.16))
-                .foregroundColor(Color(red: 0.45, green: 0.51, blue: 0.59))
-                .cornerRadius(99)
+            .disabled(isDisabled)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 20)
         }
-    }
-}
-
-private struct SaveButtonView: View {
-    let isDisabled: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text("수정 완료")
-                .font(.headline.bold())
-                .foregroundColor(.white)
-                .frame(height: 52)
-                .frame(maxWidth: .infinity)
-                .background(isDisabled ? Color.gray : Color(red: 0.43, green: 0.65, blue: 0.96))
-                .cornerRadius(12)
-        }
-        .disabled(isDisabled)
-        .padding(.horizontal, 20)
-        .padding(.bottom, 20)
     }
 }
 

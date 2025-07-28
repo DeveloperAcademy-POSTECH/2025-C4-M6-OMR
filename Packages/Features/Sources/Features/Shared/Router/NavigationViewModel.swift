@@ -16,6 +16,7 @@ public final class NavigationViewModel: ObservableObject {
     }
     
     public func pop() {
+        guard !path.isEmpty else { return }
         path.removeLast()
     }
 
