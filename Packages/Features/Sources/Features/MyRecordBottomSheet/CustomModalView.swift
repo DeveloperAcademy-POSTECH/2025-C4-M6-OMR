@@ -67,10 +67,17 @@ struct CustomModalView: View {
                             .font(DesignSystem.Font.Title1.semibold)
                             .padding(.bottom, 8)
                         
-                        Text("\(totalCount)개의 꽃")
-                            .font(DesignSystem.Font.Title3.semibold)
-                            .foregroundColor(DesignSystem.Color.Gray_03)
-                        
+                        if(totalCount == 0) {
+                            Text("기록한 꽃이 없습니다")
+                                .font(DesignSystem.Font.Title3.semibold)
+                                .foregroundColor(DesignSystem.Color.Gray_03)
+                        } else {
+                            Text("\(totalCount)개의 꽃")
+                                .font(DesignSystem.Font.Title3.semibold)
+                                .foregroundColor(DesignSystem.Color.Gray_03)
+                        }
+                            
+                            
                         Spacer(minLength: 40)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
