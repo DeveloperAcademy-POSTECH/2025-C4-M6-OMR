@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Photos
+import DesignSystem
 
 struct AlbumGridItemView: View {
     let asset: PHAsset
@@ -34,7 +35,7 @@ struct AlbumGridItemView: View {
                     .resizable()
                     .scaledToFill()
             } else {
-                Color.gray.opacity(0.3)
+                DesignSystem.Color.Gray_Button
             }
         }
         .frame(width: cellSize, height: cellSize)
@@ -62,7 +63,7 @@ struct AlbumGridItemView: View {
                     .font(.caption.bold())
                     .foregroundColor(.white)
                     .frame(width: 20, height: 20)
-                    .background(Circle().fill(Color(red: 0.43, green: 0.65, blue: 0.96)))
+                    .background(Circle().fill(DesignSystem.Color.Prime)
                     .padding(4)
             }
         }

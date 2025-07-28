@@ -76,7 +76,7 @@ extension MainView {
                         ? "주변에 과거에 기록한 꽃이 없어요" : "주변에 과거에 기록한 꽃이 있어요"
                 )
                 .font(.custom("Pretendard", size: 18).weight(.semibold))
-                .foregroundColor(.black)
+                .foregroundColor(DesignSystem.Color.Gray_black)
                 .padding()
             }
 
@@ -111,17 +111,17 @@ extension MainView {
     private var currentAddressView: some View {
         HStack(spacing: 8) {
             Image(systemName: "paperplane.fill")
-                .foregroundColor(.blue)
+                .foregroundColor(DesignSystem.Color.Prime)
 
             Text(viewModel.currentAddress)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.blue)
+                .foregroundColor(DesignSystem.Color.Prime)
 
             Button(action: {
                 viewModel.requestCurrentLocation()
             }) {
                 Image(systemName: "arrow.clockwise.circle.fill")
-                    .foregroundColor(.blue)
+                    .foregroundColor(DesignSystem.Color.Prime)
             }
             .buttonStyle(.plain)
         }

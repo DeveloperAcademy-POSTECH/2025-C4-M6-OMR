@@ -8,6 +8,7 @@
 import SwiftUI
 import MapKit
 import CoreLocation
+import DesignSystem
 
 // MARK: - Detent Enum
 
@@ -74,7 +75,7 @@ struct CustomModalView: View {
                                 Font.custom("Pretendard", size: 16)
                                     .weight(.semibold)
                             )
-                            .foregroundColor(Color(red: 0.41, green: 0.49, blue: 0.6).opacity(0.72))
+                            .foregroundColor(DesignSystem.Color.Gray_03)
                         
                         Spacer(minLength: 40)
                     }
@@ -103,7 +104,7 @@ struct CustomModalView: View {
                                         Font.custom("Pretendard", size: 26)
                                             .weight(.bold)
                                     )
-                                    .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.14))
+                                    .foregroundColor(DesignSystem.Color.Gray_black)
                                     .frame(maxWidth: .infinity, alignment: .topLeading)
                                 
                                 
@@ -134,7 +135,7 @@ struct CustomModalView: View {
                                         Font.custom("Pretendard", size: 18)
                                             .weight(.bold)
                                     )
-                                    .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
+                                    .foregroundColor(DesignSystem.Color.Gray_black)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 
                                 if let location = locationManager.currentLocation {

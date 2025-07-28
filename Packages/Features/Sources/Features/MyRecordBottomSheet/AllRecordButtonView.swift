@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import DesignSystem
 
 struct AllRecordButtonView: View {
     let totalCount: Int
@@ -19,7 +20,7 @@ struct AllRecordButtonView: View {
                         Font.custom("Pretendard", size: 16)
                             .weight(.medium)
                     )
-                    .foregroundColor(Color(red: 0.2, green: 0.24, blue: 0.3))
+                    .foregroundColor(DesignSystem.Color.Gray_01)
                     .opacity(0.6)
 
                 Spacer()
@@ -29,20 +30,20 @@ struct AllRecordButtonView: View {
                         Font.custom("Pretendard", size: 16)
                             .weight(.bold)
                     )
-                    .foregroundColor(Color(red: 0.43, green: 0.65, blue: 0.96))
+                    .foregroundColor(DesignSystem.Color.Prime2)
 
                 Image(systemName: "chevron.right")
                     .font(
                         Font.custom("Pretendard", size: 14)
                             .weight(.semibold)
                     )
-                    .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
+                    .foregroundColor(DesignSystem.Color.Gray_black)
                     .opacity(0.15)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity)
-            .background(Color(red: 0.94, green: 0.96, blue: 1))
+            .background(DesignSystem.Color.Gray_01)
             .cornerRadius(16)
         }
         .padding(.bottom, 36)
