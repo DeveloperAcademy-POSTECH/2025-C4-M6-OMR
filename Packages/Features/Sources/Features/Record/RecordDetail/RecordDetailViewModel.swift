@@ -153,15 +153,6 @@ public final class RecordDetailViewModel: ObservableObject {
         originalDetail = detail
         isEditing = true
     }
-    
-    func subscribeToAlbumEvents(CustomAlbumViewModel: CustomAlbumViewModel) {
-        CustomAlbumViewModel.selectionDidFinishPublisher
-            .sink { [weak self] selectedAssets in
-                // 앨범에서 선택 완료 신호를 받으면, 이미지 추가 로직 실행
-                self?.addImages(from: selectedAssets, using: CustomAlbumViewModel)
-            }
-            .store(in: &cancellables)
-    }
 
     func saveButtonTapped() {
         if detail?.title.isEmpty == true {

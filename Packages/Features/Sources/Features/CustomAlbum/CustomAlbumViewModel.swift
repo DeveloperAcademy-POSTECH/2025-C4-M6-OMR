@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  CustomAlbumViewModel.swift
 //  Features
 //
 //  Created by Henry on 7/28/25.
