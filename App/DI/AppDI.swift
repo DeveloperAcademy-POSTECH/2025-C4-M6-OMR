@@ -21,6 +21,7 @@ public struct AppDI {
     internal static let markerLocalDS = MarkerLocalDatasource(
         modelContext: modelContext
     )
+    internal static let markderDefaultDS = DefaultMarkerDataSource()
 
     // MARK: - Repository Live Values
 
@@ -37,7 +38,8 @@ public struct AppDI {
 
     public static let markerRepository: MarkerRepository =
         DefaultMarkerRepository(
-            local: markerLocalDS
+            local: markerLocalDS,
+            defaultDataSource: markderDefaultDS
         )
 
     // MARK: - Helper Methods

@@ -14,9 +14,18 @@ enum MarkerMapper {
             id: domain.id,
             name: domain.name,
             floriography: domain.floriography,
-            emotionTypeRaw: domain.emotionType.rawValue,
             thumbnailImageName: domain.thumbnailImageName,
             objectImageName: domain.objectImageName
+        )
+    }
+    
+    static func toEntity(defaultData: RawMarkerData) -> MarkerEntity {
+        .init(
+            id: defaultData.id,
+            name: defaultData.name,
+            floriography: defaultData.floriography,
+            thumbnailImageName: defaultData.thumbnailImageName,
+            objectImageName: defaultData.objectImageName
         )
     }
 
@@ -25,7 +34,6 @@ enum MarkerMapper {
             id: entity.id,
             name: entity.name,
             floriography: entity.floriography,
-            emotionType: EmotionType(rawValue: entity.emotionTypeRaw) ?? .all,
             thumbnailImageName: entity.thumbnailImageName,
             objectImageName: entity.objectImageName
         )

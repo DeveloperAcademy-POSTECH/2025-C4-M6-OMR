@@ -20,4 +20,15 @@ public struct MarkerLocalDatasource: Sendable {
         let descriptor = FetchDescriptor<MarkerEntity>(predicate: #Predicate { $0.id == id })
         return try modelContext.fetch(descriptor).first
     }
+    public func fetchAll() async throws -> [MarkerEntity] {
+        let descriptor = FetchDescriptor<MarkerEntity>()
+        return try modelContext.fetch(descriptor)
+    }
+
+    public func saveAll(_ entities: [MarkerEntity]) async throws {
+        for entity in entities {
+            modelContext.insert(entity)
+        }
+        try modelContext.save()
+    }
 }

@@ -23,6 +23,12 @@ public struct FetchMyRecordsUseCaseKey: DependencyKey, Sendable {
     public static let liveValue = FetchMyRecordsUseCase()
 }
 
+public struct SaveRecordUseCaseKey: DependencyKey, Sendable {
+    public static let liveValue = SaveRecordUseCase()
+}
+
+///---
+
 public struct FetchPublicRecordsUseCaseKey: DependencyKey, Sendable {
     public static var liveValue: FetchPublicRecordsUseCase {
         @Dependency(\.recordRepository) var recordRepository
@@ -49,9 +55,6 @@ public struct FetchRecordDetailUseCaseKey: DependencyKey, Sendable {
     }
 }
 
-public struct SaveRecordUseCaseKey: DependencyKey, Sendable {
-    public static let liveValue = SaveRecordUseCase()
-}
 
 public struct DeleteRecordUseCaseKey: DependencyKey, Sendable {
     public static var liveValue: DeleteRecordUseCase {
@@ -147,6 +150,10 @@ private struct UnimplementedRecordRepository: RecordRepository {
 
 private struct UnimplementedUserRepository: UserRepository {
     func fetch(by id: UUID) async throws -> User {
+        throw UnimplementedError()
+    }
+    
+    func getOrCreateDefaultUser() async throws -> User {
         throw UnimplementedError()
     }
 }

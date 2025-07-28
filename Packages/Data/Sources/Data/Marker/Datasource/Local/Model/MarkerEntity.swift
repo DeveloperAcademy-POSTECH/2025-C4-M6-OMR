@@ -13,7 +13,6 @@ public final class MarkerEntity {
     @Attribute(.unique) public var id: UUID
     public var name: String
     public var floriography: String
-    public var emotionTypeRaw: String
     public var thumbnailImageName: String
     public var objectImageName: String
 
@@ -24,14 +23,12 @@ public final class MarkerEntity {
         id: UUID = .init(),
         name: String,
         floriography: String,
-        emotionTypeRaw: String,
         thumbnailImageName: String,
         objectImageName: String
     ) {
         self.id = id
         self.name = name
         self.floriography = floriography
-        self.emotionTypeRaw = emotionTypeRaw
         self.thumbnailImageName = thumbnailImageName
         self.objectImageName = objectImageName
         self.records = []

@@ -59,7 +59,13 @@ public actor LocalRecordDataSource: Sendable {
 
     /// RecordModel 저장 (신규/업데이트)
     public func save(model: RecordModel) async throws {
-        try await entityMapper.save(model: model)
+        do {
+            try await entityMapper.save(model: model)
+            print("[LocalRecordDataSource] Record saved successfully: \(model.id)")
+        } catch {
+            print("[LocalRecordDataSource] Failed to save record: \(model.id), error: \(error)")
+            throw error
+        }
     }
 
     /// RecordEntity 삭제
