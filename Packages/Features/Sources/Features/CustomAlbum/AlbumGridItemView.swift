@@ -16,6 +16,16 @@ struct AlbumGridItemView: View {
     let cellSize: CGFloat
 
     @State private var image: UIImage?
+    
+    init(asset: PHAsset, isSelected: Bool, selectedIndex: Int?, viewModel: CustomAlbumViewModel, cellSize: CGFloat) {
+        self.asset = asset
+        self.isSelected = isSelected
+        self.selectedIndex = selectedIndex
+        self.viewModel = viewModel
+        self.cellSize = cellSize
+        // State 변수를 ViewModel의 캐시 값으로 초기화합니다.
+        _image = State(initialValue: viewModel.getCachedImage(for: asset))
+    }
 
     var body: some View {
         ZStack {
@@ -32,10 +42,11 @@ struct AlbumGridItemView: View {
         .contentShape(Rectangle())
         .overlay(selectionOverlay)
         .onAppear {
-            Task {
-                // thumbnailSize를 cellSize에 맞춰 요청하여 화질 최적화
-                let thumbnailSize = CGSize(width: cellSize * UIScreen.main.scale, height: cellSize * UIScreen.main.scale)
-                self.image = await viewModel.fetchImage(for: asset, size: thumbnailSize)
+            if image == nil {
+                Task {
+                    let thumbnailSize = CGSize(width: cellSize * UIScreen.main.scale, height: cellSize * UIScreen.main.scale)
+                    self.image = await viewModel.fetchImage(for: asset, size: thumbnailSize)
+                }
             }
         }
 

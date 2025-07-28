@@ -21,6 +21,8 @@ public final class CustomAlbumViewModel: ObservableObject {
     @Published var isLoading = false
     
     private let cachingImageManager = PHCachingImageManager()
+    private var imageCache: [String: UIImage] = [:]
+    
     let maxImageCount = 4
     
     let selectionDidFinishPublisher = PassthroughSubject<[PHAsset], Never>()
@@ -28,6 +30,10 @@ public final class CustomAlbumViewModel: ObservableObject {
     public init() {
         fetchInitialRecentAssets()
     }
+    
+    public func getCachedImage(for asset: PHAsset) -> UIImage? {
+         return imageCache[asset.localIdentifier]
+     }
     
     func fetchInitialRecentAssets() {
         isLoading = true
@@ -79,7 +85,7 @@ public final class CustomAlbumViewModel: ObservableObject {
     }
     
     func prepareForAllPhotos() {
-        guard allPhotoAssetsResult == nil else { return }  // 이미 로드했으면 다시 재로드 X
+        guard allPhotoAssetsResult == nil else { return }
 
         checkPermission { [weak self] hasPermission in
             guard let self = self, hasPermission else { return }
@@ -96,21 +102,34 @@ public final class CustomAlbumViewModel: ObservableObject {
     }
     
     public func fetchImage(for asset: PHAsset, size: CGSize) async -> UIImage? {
-        let options = PHImageRequestOptions()
-        options.deliveryMode = .highQualityFormat
-        options.isNetworkAccessAllowed = true
-
-        return await withCheckedContinuation { continuation in
-            cachingImageManager.requestImage(
-                for: asset,
-                targetSize: size,
-                contentMode: .aspectFill,
-                options: options
-            ) { image, _ in
-                continuation.resume(returning: image)
+            // 캐시에 이미지가 있으면 즉시 반환합니다.
+            if let cachedImage = imageCache[asset.localIdentifier] {
+                return cachedImage
             }
+            
+            // 캐시에 없으면 PHCachingImageManager를 통해 이미지를 요청합니다.
+            let options = PHImageRequestOptions()
+            options.deliveryMode = .highQualityFormat
+            options.isNetworkAccessAllowed = true
+
+            let image = await withCheckedContinuation { continuation in
+                cachingImageManager.requestImage(
+                    for: asset,
+                    targetSize: size,
+                    contentMode: .aspectFill,
+                    options: options
+                ) { image, _ in
+                    continuation.resume(returning: image)
+                }
+            }
+            
+            // 로드된 이미지를 캐시에 저장합니다.
+            if let loadedImage = image {
+                imageCache[asset.localIdentifier] = loadedImage
+            }
+            
+            return image
         }
-    }
     
     private func checkPermission(completion: @escaping (Bool) -> Void) {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)

@@ -5,7 +5,7 @@ struct CustomAlbumView: View {
     @ObservedObject var viewModel: CustomAlbumViewModel
     @Environment(\.dismiss) private var dismiss
     
-    @State private var showLimitAlert = false  // ← 추가
+    @State private var showLimitAlert = false
     
     private let columns = 3
     private let spacing: CGFloat = 2
