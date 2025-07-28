@@ -38,20 +38,39 @@ public struct MapView: View {
     
     @ViewBuilder
     private var uiControls: some View {
-        VStack {
-            HStack(alignment: .top) {
-                topBar
-                
-                Spacer()
-                
-                locationButton
-                    .padding(.top, 52)
-                    .padding(.trailing, 20)
-            }
+        VStack(spacing: 0) {
+            // 상단 배경
+            LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.black.opacity(0.3),
+                            Color.black.opacity(0.15),
+                            Color.black.opacity(0.0)
+                        ]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 200)
+                    .ignoresSafeArea(edges: .top)
             
             Spacer()
         }
+        .overlay( // 오버레이로 버튼을 배치
+            VStack {
+                HStack(alignment: .top) {
+                    topBar
+
+                    Spacer()
+
+                    locationButton
+                        .padding(.top, 52)
+                        .padding(.trailing, 20)
+                }
+
+                Spacer()
+            }
+        )
     }
+
     
     @ViewBuilder
     private var topBar: some View {

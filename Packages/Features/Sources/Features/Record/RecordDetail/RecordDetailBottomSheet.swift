@@ -8,6 +8,7 @@
 import SwiftUI
 import PhotosUI
 import Domain
+import DesignSystem
 
 public struct RecordDetailBottomSheet: View {
     @StateObject private var viewModel: RecordDetailViewModel
@@ -89,7 +90,8 @@ public struct RecordDetailBottomSheet: View {
                     ),
                     originalTitle: viewModel.detail?.title ?? "",
                     isEditing: viewModel.isEditing,
-                    date: detail.date
+                    date: detail.date,
+                    location: viewModel.detail?.location ?? ""
                 )
                 .focused($focusedField, equals: .title)
             }
@@ -136,6 +138,11 @@ public struct RecordDetailBottomSheet: View {
         
         var body: some View {
             HStack(spacing: 8) {
+                DesignSystemAssets.image(named: "mainFlower")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 17, height: 17)
+                    .clipped()
                 Text(flowerName)
                     .font(.headline)
                 Text(flowerMeaning)
@@ -154,34 +161,38 @@ public struct RecordDetailBottomSheet: View {
         let originalTitle: String
         let isEditing: Bool
         let date: String
-        
+        let location: String
+
         var body: some View {
-            VStack(spacing:4) {
-                HStack(spacing:0) {
+            VStack(spacing: 4) {
+                HStack(spacing: 0) {
                     if isEditing {
-                        ZStack(alignment:.center) {
-                            if title.isEmpty {
-                                Text(originalTitle)
-                                    .font(.system(size:20, weight:.semibold))
+                        ZStack(alignment: .center) {
+                            if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                Text("\(location)에서")
+                                    .font(.system(size: 20, weight: .semibold))
                                     .foregroundColor(.gray.opacity(0.5))
                             }
+
                             TextField("", text: $title)
-                                .font(.system(size:20, weight:.semibold))
+                                .font(.system(size: 20, weight: .semibold))
                                 .multilineTextAlignment(.center)
+                                .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
                         }
                     } else {
                         Text(title)
-                            .font(.system(size:20, weight:.semibold))
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
                     }
                 }
-                .foregroundColor(Color(red:0.1, green:0.12, blue:0.15))
-                
+
                 Text(date)
-                    .font(.system(size:14, weight:.semibold))
-                    .foregroundColor(Color(red:0.57, green:0.63, blue:0.71))
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Color(red: 0.57, green: 0.63, blue: 0.71))
             }
         }
     }
+
     
     private struct EditButtonView: View {
         let onEdit: () -> Void
@@ -212,10 +223,10 @@ public struct RecordDetailBottomSheet: View {
             Button(action: action) {
                 Text("수정 완료")
                     .font(.headline.bold())
-                    .foregroundColor(.white)
+                    .foregroundColor(isDisabled ? Color(red: 0.56, green: 0.56, blue: 0.56) : .white)
                     .frame(height: 52)
                     .frame(maxWidth: .infinity)
-                    .background(isDisabled ? Color.gray : Color(red: 0.43, green: 0.65, blue: 0.96))
+                    .background(isDisabled ? Color(red: 0.88, green: 0.9, blue: 0.93).opacity(0.39) : Color(red: 0.43, green: 0.65, blue: 0.96))
                     .cornerRadius(12)
             }
             .disabled(isDisabled)
