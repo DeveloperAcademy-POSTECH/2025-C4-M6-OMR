@@ -11,6 +11,7 @@ struct ARBottomBarView: View {
     let mode: ARCameraMode
     let isPlacementConfirmed: Bool
     let onSwitchToPlacement: () -> Void
+    let onSelectFlower: () -> Void
     let onCancelPlacement: () -> Void
     let onConfirmPlacement: () -> Void
     let onRepositionPlacement: () -> Void
@@ -31,7 +32,7 @@ struct ARBottomBarView: View {
 
     private var placementModeButtons: some View {
         HStack(spacing: 30) {
-            ARFlowerButton(action: onCancelPlacement)
+            ARFlowerButton(action: onSelectFlower)
 
             if isPlacementConfirmed {
                 ARBackWardButton(action: onRepositionPlacement)
