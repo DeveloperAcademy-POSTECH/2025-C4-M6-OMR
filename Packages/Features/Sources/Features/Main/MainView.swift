@@ -75,7 +75,7 @@ extension MainView {
                     viewModel.nearbyCount == 0
                         ? "주변에 과거에 기록한 꽃이 없어요" : "주변에 과거에 기록한 꽃이 있어요"
                 )
-                .font(.custom("Pretendard", size: 18).weight(.semibold))
+                .font(DesignSystem.Font.Title2.semibold)
                 .foregroundColor(DesignSystem.Color.Gray_black)
                 .padding()
             }

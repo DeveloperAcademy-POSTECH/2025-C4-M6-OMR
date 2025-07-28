@@ -18,10 +18,7 @@ struct FilteredMoteListView: View {
         if !filteredMotes.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 Text("\(currentAddress.isEmpty ? "주소 없음" : currentAddress)에서 심은 꽃")
-                    .font(
-                        Font.custom("Pretendard", size: 18)
-                            .weight(.bold)
-                    )
+                    .font(DesignSystem.Font.Title2.bold)
                     .foregroundColor(DesignSystem.Color.Gray_black)
                     .frame(maxWidth: .infinity, alignment: .topLeading)
 

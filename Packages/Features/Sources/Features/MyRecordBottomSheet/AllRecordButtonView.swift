@@ -16,27 +16,18 @@ struct AllRecordButtonView: View {
         Button(action: onTap) {
             HStack {
                 Text("전체")
-                    .font(
-                        Font.custom("Pretendard", size: 16)
-                            .weight(.medium)
-                    )
+                    .font(DesignSystem.Font.Title3.medium)
                     .foregroundColor(DesignSystem.Color.Gray_01)
                     .opacity(0.6)
 
                 Spacer()
 
                 Text("\(totalCount)")
-                    .font(
-                        Font.custom("Pretendard", size: 16)
-                            .weight(.bold)
-                    )
+                    .font(DesignSystem.Font.Title3.bold)
                     .foregroundColor(DesignSystem.Color.Prime2)
 
                 Image(systemName: "chevron.right")
-                    .font(
-                        Font.custom("Pretendard", size: 14)
-                            .weight(.semibold)
-                    )
+                    .font(DesignSystem.Font.Headline.semibold)
                     .foregroundColor(DesignSystem.Color.Gray_black)
                     .opacity(0.15)
             }
