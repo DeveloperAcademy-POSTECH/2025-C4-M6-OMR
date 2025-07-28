@@ -20,13 +20,10 @@ struct FlowerCardView: View {
                 .frame(height: 70)
             
             Text(flower.name)
-                .font(
-                    Font.custom("Pretendard", size: 14)
-                        .weight(.medium)
-                )
+                .font(DesignSystem.Font.Headline.medium)
                 .foregroundColor(DesignSystem.Color.Gray_black)
             Text(flower.floriography)
-                .font(Font.custom("Pretendard", size: 12))
+                .font(DesignSystem.Font.Body.regular)
                 .multilineTextAlignment(.center)
                 .foregroundColor(DesignSystem.Color.Gray_black)
                 .opacity(0.8)

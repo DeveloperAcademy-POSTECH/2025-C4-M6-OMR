@@ -64,17 +64,11 @@ struct CustomModalView: View {
                 if sheetDetent == .low {
                     VStack(alignment: .leading) {
                         Text("내 꽃")
-                            .font(
-                                Font.custom("Pretendard", size: 24)
-                                    .weight(.semibold)
-                            )
+                            .font(DesignSystem.Font.Title1.semibold)
                             .padding(.bottom, 8)
                         
                         Text("\(totalCount)개의 꽃")
-                            .font(
-                                Font.custom("Pretendard", size: 16)
-                                    .weight(.semibold)
-                            )
+                            .font(DesignSystem.Font.Title3.semibold)
                             .foregroundColor(DesignSystem.Color.Gray_03)
                         
                         Spacer(minLength: 40)
@@ -100,10 +94,7 @@ struct CustomModalView: View {
                                 .frame(height: 0)
                                 
                                 Text("내 꽃")
-                                    .font(
-                                        Font.custom("Pretendard", size: 26)
-                                            .weight(.bold)
-                                    )
+                                    .font(DesignSystem.Font.NavigationTitle.bold)
                                     .foregroundColor(DesignSystem.Color.Gray_black)
                                     .frame(maxWidth: .infinity, alignment: .topLeading)
                                 
@@ -131,10 +122,7 @@ struct CustomModalView: View {
                                 
                                 //                                지도
                                 Text("지도")
-                                    .font(
-                                        Font.custom("Pretendard", size: 18)
-                                            .weight(.bold)
-                                    )
+                                    .font(DesignSystem.Font.Title2.bold)
                                     .foregroundColor(DesignSystem.Color.Gray_black)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 
