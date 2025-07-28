@@ -27,23 +27,15 @@ public final class RecordDetailViewModel: ObservableObject {
 
     // MARK: - Computed Properties
     public var isSaveButtonDisabled: Bool {
-        guard let detail = detail, let originalDetail = originalDetail else {
-            return true
-        }
-        
-        if detail.images.isEmpty {
-            return true
-        }
-        
-        let isTitleChanged = detail.title != originalDetail.title
-        let areImagesChanged = detail.images.count != originalDetail.images.count
+        // 수정 모드가 아닐 때는 항상 비활성화
+        guard isEditing else { return true }
 
-        if !isTitleChanged && !areImagesChanged {
-            return true
-        }
+        // detail이 존재하고 이미지가 하나 이상 있어야 저장 버튼 활성화
+        guard let detail = detail else { return true }
 
-        return false
+        return detail.images.isEmpty
     }
+
     
     // MARK: - Initialization
     
@@ -155,15 +147,16 @@ public final class RecordDetailViewModel: ObservableObject {
     }
 
     func saveButtonTapped() {
-        if detail?.title.isEmpty == true {
-            detail?.title = originalDetail?.title ?? ""
+        if let detail = detail,
+           detail.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            self.detail?.title = "\(detail.location)에서"
         }
 
-        // TODO: 변경된 detail 객체를 UseCase에 전달하여 저장하는 로직
+        // TODO: 변경된 detail 객체를 저장
         print("저장할 제목: \(detail?.title ?? "")")
-
         isEditing = false
     }
+
 
     func deleteButtonTapped() {
         print("삭제 버튼 탭됨")

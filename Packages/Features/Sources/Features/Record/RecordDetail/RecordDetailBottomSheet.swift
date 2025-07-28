@@ -89,7 +89,8 @@ public struct RecordDetailBottomSheet: View {
                     ),
                     originalTitle: viewModel.detail?.title ?? "",
                     isEditing: viewModel.isEditing,
-                    date: detail.date
+                    date: detail.date,
+                    location: viewModel.detail?.location ?? ""
                 )
                 .focused($focusedField, equals: .title)
             }
@@ -154,34 +155,38 @@ public struct RecordDetailBottomSheet: View {
         let originalTitle: String
         let isEditing: Bool
         let date: String
-        
+        let location: String // ✅ 추가됨
+
         var body: some View {
-            VStack(spacing:4) {
-                HStack(spacing:0) {
+            VStack(spacing: 4) {
+                HStack(spacing: 0) {
                     if isEditing {
-                        ZStack(alignment:.center) {
-                            if title.isEmpty {
-                                Text(originalTitle)
-                                    .font(.system(size:20, weight:.semibold))
+                        ZStack(alignment: .center) {
+                            if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                Text("\(location)에서")
+                                    .font(.system(size: 20, weight: .semibold))
                                     .foregroundColor(.gray.opacity(0.5))
                             }
+
                             TextField("", text: $title)
-                                .font(.system(size:20, weight:.semibold))
+                                .font(.system(size: 20, weight: .semibold))
                                 .multilineTextAlignment(.center)
+                                .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
                         }
                     } else {
                         Text(title)
-                            .font(.system(size:20, weight:.semibold))
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
                     }
                 }
-                .foregroundColor(Color(red:0.1, green:0.12, blue:0.15))
-                
+
                 Text(date)
-                    .font(.system(size:14, weight:.semibold))
-                    .foregroundColor(Color(red:0.57, green:0.63, blue:0.71))
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Color(red: 0.57, green: 0.63, blue: 0.71))
             }
         }
     }
+
     
     private struct EditButtonView: View {
         let onEdit: () -> Void
