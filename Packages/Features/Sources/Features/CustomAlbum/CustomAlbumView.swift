@@ -2,10 +2,10 @@ import SwiftUI
 import Photos
 
 struct CustomAlbumView: View {
-    @ObservedObject var viewModel: RecordSaveSheetViewModel
+    @ObservedObject var viewModel: CustomAlbumViewModel
     @Environment(\.dismiss) private var dismiss
     
-    @State private var showLimitAlert = false  // ← 추가
+    @State private var showLimitAlert = false
     
     private let columns = 3
     private let spacing: CGFloat = 2
@@ -76,7 +76,7 @@ struct CustomAlbumView: View {
                 
                 if !viewModel.selectedAssets.isEmpty {
                     Button(action: {
-                        viewModel.finalizeAssetSelection()
+                        viewModel.finalizeSelection()
                         dismiss()
                     }) {
                         Text("\(viewModel.selectedAssets.count) 선택")
