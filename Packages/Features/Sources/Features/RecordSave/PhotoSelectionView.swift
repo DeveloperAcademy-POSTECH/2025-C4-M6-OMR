@@ -66,7 +66,7 @@ public struct PhotoSelectionView: View {
                 Spacer()
             }
             .font(.system(size: 16, weight: .semibold))
-            .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
+            .foregroundColor(DesignSystem.Color.Gray_black)
             .background(.clear)
         }
         .fullScreenCover(isPresented: $showCustomAlbum) {

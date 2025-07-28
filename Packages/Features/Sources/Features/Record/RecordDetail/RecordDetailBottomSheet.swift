@@ -8,6 +8,8 @@
 import SwiftUI
 import PhotosUI
 import Domain
+import DesignSystem
+
 
 public struct RecordDetailBottomSheet: View {
     @StateObject private var viewModel: RecordDetailViewModel
@@ -140,11 +142,11 @@ public struct RecordDetailBottomSheet: View {
                     .font(.headline)
                 Text(flowerMeaning)
                     .font(.subheadline)
-                    .foregroundColor(Color(red: 0.43, green: 0.65, blue: 0.96))
+                    .foregroundColor(DesignSystem.Color.Prime2)
             }
             .padding(.all, 8)
             .frame(maxWidth: .infinity)
-            .background(Color(red: 0.9, green: 0.94, blue: 1).opacity(0.47))
+            .background(DesignSystem.Color.Prime5)
             .cornerRadius(8)
         }
     }
@@ -163,7 +165,7 @@ public struct RecordDetailBottomSheet: View {
                             if title.isEmpty {
                                 Text(originalTitle)
                                     .font(.system(size:20, weight:.semibold))
-                                    .foregroundColor(.gray.opacity(0.5))
+                                    .foregroundColor(DesignSystem.Color.Gray_black.opacity(0.5))
                             }
                             TextField("", text: $title)
                                 .font(.system(size:20, weight:.semibold))
@@ -174,11 +176,11 @@ public struct RecordDetailBottomSheet: View {
                             .font(.system(size:20, weight:.semibold))
                     }
                 }
-                .foregroundColor(Color(red:0.1, green:0.12, blue:0.15))
+                .foregroundColor(DesignSystem.Color.Gray_black)
                 
                 Text(date)
                     .font(.system(size:14, weight:.semibold))
-                    .foregroundColor(Color(red:0.57, green:0.63, blue:0.71))
+                    .foregroundColor(DesignSystem.Color.Gray_02)
             }
         }
     }
@@ -197,8 +199,8 @@ public struct RecordDetailBottomSheet: View {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 14, weight: .semibold))
                     .frame(width: 32, height: 32)
-                    .background(Color(red: 0.45, green: 0.51, blue: 0.59).opacity(0.16))
-                    .foregroundColor(Color(red: 0.45, green: 0.51, blue: 0.59))
+                    .background(DesignSystem.Color.Gray_Button)
+                    .foregroundColor(DesignSystem.Color.Gray_black.opacity(0.25))
                     .cornerRadius(99)
             }
         }
@@ -212,10 +214,10 @@ public struct RecordDetailBottomSheet: View {
             Button(action: action) {
                 Text("수정 완료")
                     .font(.headline.bold())
-                    .foregroundColor(.white)
+                    .foregroundColor(isDisabled ? DesignSystem.Color.Gray_Text2 : DesignSystem.Color.Gray_white)
                     .frame(height: 52)
                     .frame(maxWidth: .infinity)
-                    .background(isDisabled ? Color.gray : Color(red: 0.43, green: 0.65, blue: 0.96))
+                    .background(isDisabled ? DesignSystem.Color.Gray_Button2 : DesignSystem.Color.Prime2)
                     .cornerRadius(12)
             }
             .disabled(isDisabled)

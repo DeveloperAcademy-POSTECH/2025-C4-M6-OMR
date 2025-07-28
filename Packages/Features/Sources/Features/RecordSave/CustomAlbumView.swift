@@ -1,5 +1,6 @@
 import SwiftUI
 import Photos
+import DesignSystem
 
 struct CustomAlbumView: View {
     @ObservedObject var viewModel: RecordSaveSheetViewModel
@@ -84,7 +85,7 @@ struct CustomAlbumView: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
-                            .background(Color(red: 0.43, green: 0.65, blue: 0.96))
+                            .background(DesignSystem.Color.Prime)
                             .clipShape(Capsule())
                     }
                 }
@@ -96,6 +97,6 @@ struct CustomAlbumView: View {
         }
         .padding(.vertical, 10)
         .frame(height: 56)
-        .background(Color.white)
+        .background(DesignSystem.Color.Gray_white)
     }
 }

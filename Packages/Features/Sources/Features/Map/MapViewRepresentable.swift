@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import DesignSystem
 
 struct MapViewRepresentable: UIViewRepresentable {
     @ObservedObject var viewModel: MapViewModel
