@@ -101,6 +101,7 @@ public struct ARCameraView: View {
                     mode: viewModel.cameraMode,
                     isPlacementConfirmed: viewModel.isPlacementConfirmed,
                     onSwitchToPlacement: viewModel.switchToPlacementMode,
+                    onSelectFlower: viewModel.showFlowerSelectionSheet,
                     onCancelPlacement: viewModel.cancelPlacement,
                     onConfirmPlacement: viewModel.confirmPlacement,
                     onRepositionPlacement: viewModel.repositionPlacement,
