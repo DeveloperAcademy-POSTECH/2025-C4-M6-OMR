@@ -8,6 +8,7 @@
 import SwiftUI
 import PhotosUI
 import Domain
+import DesignSystem
 
 public struct RecordDetailBottomSheet: View {
     @StateObject private var viewModel: RecordDetailViewModel
@@ -137,6 +138,11 @@ public struct RecordDetailBottomSheet: View {
         
         var body: some View {
             HStack(spacing: 8) {
+                DesignSystemAssets.image(named: "mainFlower")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 17, height: 17)
+                    .clipped()
                 Text(flowerName)
                     .font(.headline)
                 Text(flowerMeaning)
@@ -155,7 +161,7 @@ public struct RecordDetailBottomSheet: View {
         let originalTitle: String
         let isEditing: Bool
         let date: String
-        let location: String // ✅ 추가됨
+        let location: String
 
         var body: some View {
             VStack(spacing: 4) {
