@@ -10,7 +10,6 @@ public struct Marker: Equatable, Identifiable, Sendable {
     public let id: UUID
     public let name: String
     public let floriography: String
-    public let emotionType: EmotionType
     public let thumbnailImageName: String
     public let objectImageName: String
     
@@ -18,14 +17,12 @@ public struct Marker: Equatable, Identifiable, Sendable {
         id: UUID,
         name: String,
         floriography: String,
-        emotionType: EmotionType,
         thumbnailImageName: String,
         objectImageName: String
     ) {
         self.id = id
         self.name = name
         self.floriography = floriography
-        self.emotionType = emotionType
         self.thumbnailImageName = thumbnailImageName
         self.objectImageName = objectImageName
     }
