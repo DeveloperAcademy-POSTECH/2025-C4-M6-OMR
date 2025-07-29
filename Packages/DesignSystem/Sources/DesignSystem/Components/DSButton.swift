@@ -117,7 +117,7 @@ public func ARConfirmationButton(action: @escaping () -> Void) -> some View {
     Button(action: action) {
         Button(action: action) {
             Text("완료")
-                .font(Font.custom("Pretendard", size: 20).weight(.medium))
+                .font(DesignSystem.Font.LargeTitle.semibold)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.white)
                 .frame(width: 68, height: 68)
@@ -189,7 +189,7 @@ public func ARCancelButton(action: @escaping () -> Void) -> some View {
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.white)
             Text("꽃 심기 취소")
-                .font(Font.custom("Pretendard", size: 14).weight(.medium))
+                .font(DesignSystem.Font.Headline.medium)
                 .foregroundColor(.white)
         }
         .padding(.horizontal, 12)
