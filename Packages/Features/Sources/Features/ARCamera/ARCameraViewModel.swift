@@ -138,20 +138,45 @@ public class ARCameraViewModel: NSObject, ObservableObject {
     }
 
     func confirmPlacement() {
+        print("🔥 confirmPlacement() 호출 시작")
         guard let placement = currentPlacement else {
             statusMessage = "배치할 객체가 없습니다."
+            print("❌ currentPlacement가 nil")
             return
         }
+        
+        print("🔥 현재 placement 위치: (\(String(format: "%.6f", placement.position.latitude)), \(String(format: "%.6f", placement.position.longitude)))")
 
+        // ✅ arSceneManager.confirmPlacement() 호출 전에 실제 위치 가져오기
+        print("🔥 getCurrentPlacementCoordinate() 호출 시도... (confirmPlacement 이전)")
+        let updatedPosition: ARCoordinate
+        if let actualCoordinate = arSceneManager.getCurrentPlacementCoordinate() {
+            updatedPosition = ARCoordinate(
+                latitude: actualCoordinate.latitude,
+                longitude: actualCoordinate.longitude
+            )
+            print("🌸 배치 위치 업데이트 성공: (\(String(format: "%.6f", actualCoordinate.latitude)), \(String(format: "%.6f", actualCoordinate.longitude)))")
+        } else {
+            // Fallback: 기존 위치 유지
+            updatedPosition = placement.position
+            print("⚠️ 실제 위치 가져오기 실패, 기존 위치 유지: (\(String(format: "%.6f", placement.position.latitude)), \(String(format: "%.6f", placement.position.longitude)))")
+        }
+        
+        print("🔥 최종 업데이트될 위치: (\(String(format: "%.6f", updatedPosition.latitude)), \(String(format: "%.6f", updatedPosition.longitude)))")
+
+        // ✅ 위치 정보 확보 후 confirmPlacement 호출
         arSceneManager.confirmPlacement()
+        print("🔥 arSceneManager.confirmPlacement() 완료")
+        
         currentPlacement = ARPlacementData(
             flower: placement.flower,
-            position: placement.position,
+            position: updatedPosition,
             isConfirmed: true,
             placedAt: Date()
         )
         isPlacementConfirmed = true
         statusMessage = "배치가 확정되었습니다. 저장 버튼을 눌러 기록을 저장하세요."
+        print("🔥 confirmPlacement() 완료")
     }
 
     func repositionPlacement() {
@@ -232,18 +257,19 @@ public class ARCameraViewModel: NSObject, ObservableObject {
         let arFlower = RecordMapper.toARFlower(from: flower)
         print("🌸 ARFlower 변환 완료: \(arFlower.name)")
 
-        // TODO: 실제 배치 위치 계산 로직 필요
-        let placementPosition = ARCoordinate(
+        // ✅ 임시 위치로 설정 (confirmPlacement에서 실제 배치 위치로 업데이트됨)
+        let temporaryPosition = ARCoordinate(
             latitude: location.coordinate.latitude,
             longitude: location.coordinate.longitude
         )
+        print("🌸 임시 위치 설정: (\(String(format: "%.6f", temporaryPosition.latitude)), \(String(format: "%.6f", temporaryPosition.longitude)))")
 
         currentPlacement = ARPlacementData(
             flower: arFlower,
-            position: placementPosition,
+            position: temporaryPosition,
             isConfirmed: false
         )
-        print("🌸 Placement 데이터 설정 완료")
+        print("🌸 Placement 데이터 설정 완료 (임시 위치)")
 
         arSceneManager.placeTemporaryObject(flower: arFlower) {
             [weak self] message in

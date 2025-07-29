@@ -119,6 +119,40 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         onPlacementStateChanged?(placementState.status)
     }
     
+    /// 현재 배치된 위치의 GPS 좌표를 반환합니다.
+    /// - Returns: 배치된 위치의 GPS 좌표, 배치되지 않았거나 변환 실패 시 nil
+    func getCurrentPlacementCoordinate() -> CLLocationCoordinate2D? {
+        print("🚀 getCurrentPlacementCoordinate() 시작")
+        
+        guard let position = placementPosition else {
+            print("⚠️ placementPosition이 없음")
+            return nil
+        }
+        
+        print("🚀 placementPosition 존재: [\(String(format: "%.3f", position.x)), \(String(format: "%.3f", position.y)), \(String(format: "%.3f", position.z))]")
+        
+        // convertARPositionToGeographic 호출 전 필수 데이터 확인
+        print("🚀 arSessionStartLocation: \(arSessionStartLocation != nil ? "존재" : "nil")")
+        print("🚀 arSessionStartHeading: \(arSessionStartHeading != nil ? "존재" : "nil")")
+        
+        if let startLoc = arSessionStartLocation {
+            print("🚀 시작 위치: (\(String(format: "%.6f", startLoc.coordinate.latitude)), \(String(format: "%.6f", startLoc.coordinate.longitude)))")
+        }
+        
+        if let startHeading = arSessionStartHeading {
+            print("🚀 시작 방향: \(String(format: "%.1f", startHeading.trueHeading))°")
+        }
+        
+        let coordinate = convertARPositionToGeographic(arPosition: position)
+        if let coord = coordinate {
+            print("✅ 현재 배치 좌표: (\(String(format: "%.6f", coord.latitude)), \(String(format: "%.6f", coord.longitude)))")
+        } else {
+            print("❌ GPS 좌표 변환 실패")
+        }
+        
+        return coordinate
+    }
+    
     func removePlacementObject() {
         if let arView = arView {
             placementState.removeFrom(arView: arView)
@@ -482,10 +516,19 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     
     // MARK: - Coordinate Conversion
     private func convertARPositionToGeographic(arPosition: SIMD3<Float>) -> CLLocationCoordinate2D? {
+        print("🎯 convertARPositionToGeographic() 시작")
+        print("🎯 입력 AR 위치: [\(String(format: "%.3f", arPosition.x)), \(String(format: "%.3f", arPosition.y)), \(String(format: "%.3f", arPosition.z))]")
+        
         guard let startLocation = arSessionStartLocation,
               let startHeading = arSessionStartHeading else {
+            print("❌ arSessionStartLocation 또는 arSessionStartHeading이 nil")
+            print("🎯 arSessionStartLocation: \(arSessionStartLocation?.description ?? "nil")")
+            print("🎯 arSessionStartHeading: \(arSessionStartHeading?.description ?? "nil")")
             return nil
         }
+        
+        print("🎯 시작 위치: (\(String(format: "%.6f", startLocation.coordinate.latitude)), \(String(format: "%.6f", startLocation.coordinate.longitude)))")
+        print("🎯 시작 방향: \(String(format: "%.1f", startHeading.trueHeading))°")
         
         // 더 정확한 지구 측지학적 상수들
         let earthRadiusM = 6378137.0 // WGS84 지구 반지름 (미터)
@@ -501,9 +544,13 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         let arForward = Double(-arPosition.z)  // AR에서 앞쪽 (사용자가 바라보는 방향)
         let arRight = Double(arPosition.x)     // AR에서 오른쪽
         
+        print("🎯 AR 변환: forward=\(String(format: "%.3f", arForward)), right=\(String(format: "%.3f", arRight))")
+        
         // 회전 변환: 세션 시작 방향을 기준으로 실제 지리적 방향에 정렬
         let eastOffset = arRight * cos(bearingRadians) + arForward * sin(bearingRadians)
         let northOffset = -arRight * sin(bearingRadians) + arForward * cos(bearingRadians)
+        
+        print("🎯 지리적 오프셋: east=\(String(format: "%.3f", eastOffset)), north=\(String(format: "%.3f", northOffset))")
         
         // 시작 위치의 위도 (라디안)
         let startLatRad = startLocation.coordinate.latitude * degToRad
@@ -517,6 +564,9 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         
         let newLatitude = startLocation.coordinate.latitude + deltaLatitude
         let newLongitude = startLocation.coordinate.longitude + deltaLongitude
+        
+        print("🎯 델타 계산: deltaLat=\(String(format: "%.8f", deltaLatitude)), deltaLon=\(String(format: "%.8f", deltaLongitude))")
+        print("🎯 최종 좌표: (\(String(format: "%.6f", newLatitude)), \(String(format: "%.6f", newLongitude)))")
         
         return CLLocationCoordinate2D(latitude: newLatitude, longitude: newLongitude)
     }
