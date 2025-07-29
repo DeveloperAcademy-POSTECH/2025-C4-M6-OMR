@@ -372,3 +372,7 @@ struct LocationMarker: Identifiable {
     let id = UUID()
     let coordinate: CLLocationCoordinate2D
 }
+
+#Preview {
+    MainView()
+}

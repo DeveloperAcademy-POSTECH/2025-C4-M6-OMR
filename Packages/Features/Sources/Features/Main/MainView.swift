@@ -84,7 +84,7 @@ extension MainView {
                 )
                 .font(DesignSystem.Font.Title2.semibold)
                 .foregroundColor(DesignSystem.Color.Gray_black)
-                .padding()
+                .padding(.bottom, 47)
             }
 
             ARButton(action: {

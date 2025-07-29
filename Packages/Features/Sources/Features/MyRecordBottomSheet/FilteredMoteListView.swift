@@ -16,7 +16,7 @@ struct FilteredMoteListView: View {
 
     var body: some View {
         if !filteredMotes.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 18) {
                 Text("\(currentAddress.isEmpty ? "주소 없음" : currentAddress)에서 심은 꽃")
                     .font(DesignSystem.Font.Title2.bold)
                     .foregroundColor(DesignSystem.Color.Gray_black)
@@ -31,7 +31,7 @@ struct FilteredMoteListView: View {
                                        .buttonStyle(.plain)
                 }
             }
-            .padding(.bottom,36)
+            .padding(.bottom,16)
         }
     }
 }

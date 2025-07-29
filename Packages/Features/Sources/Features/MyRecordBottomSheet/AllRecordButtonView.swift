@@ -17,7 +17,7 @@ struct AllRecordButtonView: View {
             HStack {
                 Text("전체")
                     .font(DesignSystem.Font.Title3.medium)
-                    .foregroundColor(DesignSystem.Color.Gray_01)
+                    .foregroundColor(DesignSystem.Color.Gray_04)
                     .opacity(0.6)
 
                 Spacer()
@@ -37,6 +37,6 @@ struct AllRecordButtonView: View {
             .background(DesignSystem.Color.Gray_01)
             .cornerRadius(16)
         }
-        .padding(.bottom, 36)
+        .padding(.bottom, 16)
     }
 }
