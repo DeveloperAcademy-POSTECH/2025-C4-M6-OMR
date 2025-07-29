@@ -34,3 +34,19 @@ public struct Record: Equatable, Identifiable, Sendable {
         self.isPublic = isPublic
     }
 }
+
+public extension Record {
+    func with(authorID: UUID) -> Record {
+        return Record(
+            id: self.id,
+            authorID: authorID,
+            markerTypeID: self.markerTypeID,
+            title: self.title,
+            coordinate: self.coordinate,
+            address: self.address,
+            date: self.date,
+            photos: self.photos,
+            isPublic: self.isPublic
+        )
+    }
+}

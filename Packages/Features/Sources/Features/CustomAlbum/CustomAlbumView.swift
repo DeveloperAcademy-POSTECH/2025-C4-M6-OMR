@@ -1,11 +1,12 @@
 import SwiftUI
 import Photos
+import DesignSystem
 
 struct CustomAlbumView: View {
-    @ObservedObject var viewModel: RecordSaveSheetViewModel
+    @ObservedObject var viewModel: CustomAlbumViewModel
     @Environment(\.dismiss) private var dismiss
     
-    @State private var showLimitAlert = false  // ← 추가
+    @State private var showLimitAlert = false
     
     private let columns = 3
     private let spacing: CGFloat = 2
@@ -59,7 +60,7 @@ struct CustomAlbumView: View {
         .onAppear {
             viewModel.prepareForAllPhotos()
         }
-        .alert("최대 \(viewModel.maxImageCount)장까지 기록할 수 있어요", isPresented: $showLimitAlert) {
+        .alert("최대 \(viewModel.maxImageCount)장까지 선택할 수 있어요", isPresented: $showLimitAlert) {
             Button("확인", role: .cancel) { }
         }
     }
@@ -76,7 +77,7 @@ struct CustomAlbumView: View {
                 
                 if !viewModel.selectedAssets.isEmpty {
                     Button(action: {
-                        viewModel.finalizeAssetSelection()
+                        viewModel.finalizeSelection()
                         dismiss()
                     }) {
                         Text("\(viewModel.selectedAssets.count) 선택")
@@ -84,7 +85,7 @@ struct CustomAlbumView: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
-                            .background(Color(red: 0.43, green: 0.65, blue: 0.96))
+                            .background(DesignSystem.Color.Prime)
                             .clipShape(Capsule())
                     }
                 }
@@ -96,6 +97,6 @@ struct CustomAlbumView: View {
         }
         .padding(.vertical, 10)
         .frame(height: 56)
-        .background(Color.white)
+        .background(DesignSystem.Color.Gray_white)
     }
 }

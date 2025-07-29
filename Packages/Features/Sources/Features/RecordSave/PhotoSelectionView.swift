@@ -56,7 +56,6 @@ public struct PhotoSelectionView: View {
     @ViewBuilder
     private var photoLibraryButton: some View {
         Button(action: {
-            // CustomAlbumView 띄우기 전 전체 사진 호출
             viewModel.prepareForAllPhotos()
             showCustomAlbum = true
         }) {
@@ -66,11 +65,11 @@ public struct PhotoSelectionView: View {
                 Spacer()
             }
             .font(.system(size: 16, weight: .semibold))
-            .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
+            .foregroundColor(DesignSystem.Color.Gray_black)
             .background(.clear)
         }
         .fullScreenCover(isPresented: $showCustomAlbum) {
-            CustomAlbumView(viewModel: viewModel)
+            CustomAlbumView(viewModel: viewModel.albumViewModel)
         }
     }
 }

@@ -8,6 +8,7 @@
 import SwiftUI
 import MapKit
 import CoreLocation
+import DesignSystem
 
 // MARK: - Detent Enum
 
@@ -49,6 +50,9 @@ struct CustomModalView: View {
     @State private var isDraggingUp = false      // .low -> .large 전환 중
     @State private var isDraggingDown = false    // .large -> .low 전환 중
     
+    
+    @State private var selectedRecordID: IdentifiableUUID? = nil
+
     var body: some View {
         let isLarge = (sheetDetent == .large)
         let currentOffset: CGFloat = isLarge ? detentOffsets.large : detentOffsets.low
@@ -60,19 +64,20 @@ struct CustomModalView: View {
                 if sheetDetent == .low {
                     VStack(alignment: .leading) {
                         Text("내 꽃")
-                            .font(
-                                Font.custom("Pretendard", size: 24)
-                                    .weight(.semibold)
-                            )
+                            .font(DesignSystem.Font.Title1.semibold)
                             .padding(.bottom, 8)
                         
-                        Text("\(totalCount)개의 꽃")
-                            .font(
-                                Font.custom("Pretendard", size: 16)
-                                    .weight(.semibold)
-                            )
-                            .foregroundColor(Color(red: 0.41, green: 0.49, blue: 0.6).opacity(0.72))
-                        
+                        if(totalCount == 0) {
+                            Text("기록한 꽃이 없습니다")
+                                .font(DesignSystem.Font.Title3.semibold)
+                                .foregroundColor(DesignSystem.Color.Gray_03)
+                        } else {
+                            Text("\(totalCount)개의 꽃")
+                                .font(DesignSystem.Font.Title3.semibold)
+                                .foregroundColor(DesignSystem.Color.Gray_03)
+                        }
+                            
+                            
                         Spacer(minLength: 40)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -96,11 +101,8 @@ struct CustomModalView: View {
                                 .frame(height: 0)
                                 
                                 Text("내 꽃")
-                                    .font(
-                                        Font.custom("Pretendard", size: 26)
-                                            .weight(.bold)
-                                    )
-                                    .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.14))
+                                    .font(DesignSystem.Font.NavigationTitle.bold)
+                                    .foregroundColor(DesignSystem.Color.Gray_black)
                                     .frame(maxWidth: .infinity, alignment: .topLeading)
                                 
                                 
@@ -116,28 +118,31 @@ struct CustomModalView: View {
                                 
                                 FilteredMoteListView(
                                     filteredMotes: viewModel.filteredMotes,
-                                    currentAddress: locationManager.currentAddress
+                                    currentAddress: locationManager.currentAddress,
+                                    onRecordTap: { id in
+                                        selectedRecordID = IdentifiableUUID(id: id)
+
+                                    }
                                 )
+                                .padding(.bottom, 16)
+
                                 
-                                VStack{}.frame(height: 20)
-                                
-                                //                                지도
-                                Text("지도")
-                                    .font(
-                                        Font.custom("Pretendard", size: 18)
-                                            .weight(.bold)
-                                    )
-                                    .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                
-                                if let location = locationManager.currentLocation {
-                                    CurrentLocationMapView(location: location.coordinate) {
-                                        print("지도 눌림 – 맵뷰로 이동")
-                                        nav.push(.map)
+                                VStack (spacing: 8) {
+                                    Text("지도")
+                                        .font(DesignSystem.Font.Title2.bold)
+                                        .foregroundColor(DesignSystem.Color.Gray_black)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                    if let location = locationManager.currentLocation {
+                                        CurrentLocationMapView(location: location.coordinate) {
+                                            print("지도 눌림 – 맵뷰로 이동")
+                                            nav.push(.map)
+                                        }
                                     }
                                 }
+
                                 
-                                Spacer(minLength: 80)
+                                Spacer(minLength: 90)
                                
                                 
                                 
@@ -245,9 +250,11 @@ struct CustomModalView: View {
             viewModel.loadAllMotes()
             locationManager.requestLocationAgain()
         }
-        
-        
         .ignoresSafeArea(.all)
+        .sheet(item: $selectedRecordID) { identifiableID in
+            RecordDetailBottomSheet(viewModel: RecordDetailViewModel(id: identifiableID.id))
+        }
+
     }
     
     private var grabberArea: some View {
@@ -366,4 +373,8 @@ struct BouncingControlledScrollView<Content: View>: UIViewRepresentable {
 struct LocationMarker: Identifiable {
     let id = UUID()
     let coordinate: CLLocationCoordinate2D
+}
+
+#Preview {
+    MainView()
 }

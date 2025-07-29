@@ -117,7 +117,7 @@ public func ARConfirmationButton(action: @escaping () -> Void) -> some View {
     Button(action: action) {
         Button(action: action) {
             Text("완료")
-                .font(Font.custom("Pretendard", size: 20).weight(.medium))
+                .font(DesignSystem.Font.LargeTitle.semibold)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.white)
                 .frame(width: 68, height: 68)
@@ -189,7 +189,7 @@ public func ARCancelButton(action: @escaping () -> Void) -> some View {
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.white)
             Text("꽃 심기 취소")
-                .font(Font.custom("Pretendard", size: 14).weight(.medium))
+                .font(DesignSystem.Font.Headline.medium)
                 .foregroundColor(.white)
         }
         .padding(.horizontal, 12)
@@ -221,10 +221,9 @@ public func ARCancelButton(action: @escaping () -> Void) -> some View {
     .buttonStyle(PlainButtonStyle())
 }
 
-struct MyLocationButton: View {
-    let action: () -> Void
+@MainActor
+public func MyLocationButton(action: @escaping () -> Void) -> some View {
 
-    var body: some View {
         Button(action: action) {
             Image(systemName: "location")
                 .foregroundColor(DesignSystem.Color.Prime)
@@ -236,13 +235,13 @@ struct MyLocationButton: View {
                 .shadow(color: .black.opacity(0.18), radius: 5, x: 0, y: 0)
         }
         .buttonStyle(PlainButtonStyle())
-    }
+    
 }
 
-struct HomeButton: View {
-    let action: () -> Void
+@MainActor
 
-    var body: some View {
+public func HomeButton(action: @escaping () -> Void) -> some View {
+
         Button(action: action) {
             DesignSystemAssets.image(named: "buttonFlower")
                 .scaledToFit()
@@ -265,7 +264,7 @@ struct HomeButton: View {
                 .clipShape(Circle())
         }
         .buttonStyle(PlainButtonStyle())
-    }
+    
 }
 
 struct CustomButtonView: View {

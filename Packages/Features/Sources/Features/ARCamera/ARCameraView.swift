@@ -92,13 +92,18 @@ public struct ARCameraView: View {
                 .edgesIgnoringSafeArea(.all)
 
             VStack {
-                ARTopBarView(onClose: { dismiss() })
+                ARTopBarView(
+                    onClose: { dismiss() },
+                    onCancelPlacement: viewModel.cancelPlacement,
+                    mode: viewModel.cameraMode
+                )
                 Spacer()
                 ARStatusView(message: viewModel.statusMessage)
                 ARBottomBarView(
                     mode: viewModel.cameraMode,
                     isPlacementConfirmed: viewModel.isPlacementConfirmed,
                     onSwitchToPlacement: viewModel.switchToPlacementMode,
+                    onSelectFlower: viewModel.showFlowerSelectionSheet,
                     onCancelPlacement: viewModel.cancelPlacement,
                     onConfirmPlacement: viewModel.confirmPlacement,
                     onRepositionPlacement: viewModel.repositionPlacement,

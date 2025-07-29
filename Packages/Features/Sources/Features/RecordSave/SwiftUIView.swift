@@ -51,12 +51,14 @@ public struct SwiftUIView: View {
                 }
             }
             .sheet(isPresented: $isShowingSaveSheet) {
+                let albumVM = CustomAlbumViewModel()
                 let viewModel = RecordSaveSheetViewModel(
                     info: RecordSaveSheetInfo(
                         flower: ARFlower(name: "Test Flower", modelName: "test", floriography: "Test", thumbnail: "test", thumbnailLarge: ""),
                         location: .init(),
                         address: "Test Address"
                     ),
+                    albumViewModel: albumVM,
                     onSave: { finalRecord in
                         // 여기서는 실제 저장을 하지 않으므로 비워둡니다.
                         // 필요하다면 savedRecords에 추가하는 로직을 구현할 수 있습니다.

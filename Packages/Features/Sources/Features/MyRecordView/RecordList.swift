@@ -13,7 +13,7 @@ struct RecordList: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack {
+            LazyVStack(spacing: 18) {
                 ForEach(records) { record in
                     Button(action: {
                         print("✅ Tapped Record:")
@@ -23,10 +23,8 @@ struct RecordList: View {
                          print("Flower: \(record.flowerImageName)")
                          
                          onRecordTap(record.id)
-                        onRecordTap(record.id)
                     }) {
                         RecordCard(record: record)
-                            .padding(.vertical, 8)
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
@@ -34,4 +32,3 @@ struct RecordList: View {
         }
     }
 }
-

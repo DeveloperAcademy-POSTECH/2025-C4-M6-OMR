@@ -29,7 +29,7 @@ let package = Package(
                 .product(name: "Lottie", package: "lottie-ios")
             ],
             resources: [
-                .copy("ARCamera/Resources")
+                .process("ARCamera/Resources")
             ]
         ),
         .testTarget(

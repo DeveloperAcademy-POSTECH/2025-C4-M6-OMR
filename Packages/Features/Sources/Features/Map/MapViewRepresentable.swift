@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import DesignSystem
 
 struct MapViewRepresentable: UIViewRepresentable {
     @ObservedObject var viewModel: MapViewModel
@@ -142,12 +143,22 @@ struct MapViewRepresentable: UIViewRepresentable {
             }
 
             if let titleLabel = annotationView.viewWithTag(1001) as? UILabel {
-                titleLabel.text = annotation.title ?? ""
+                let text = annotation.title ?? ""
+                let font = UIFont.systemFont(ofSize: 14, weight: .medium)
+                let customColor = UIColor(red: 0.1, green: 0.12, blue: 0.15, alpha: 1.0)
+
+                let strokeTextAttributes: [NSAttributedString.Key: Any] = [
+                    .strokeColor: UIColor.white,
+                    .foregroundColor: customColor,
+                    .strokeWidth: -4.0,
+                    .font: font
+                ]
+
+                titleLabel.attributedText = NSAttributedString(string: text ?? "", attributes: strokeTextAttributes)
                 titleLabel.sizeToFit()
                 titleLabel.frame.size.width = titleLabel.frame.width + 10
                 titleLabel.center.x = annotationView.bounds.width / 2
             }
-
             return annotationView
         }
 
@@ -186,13 +197,13 @@ struct MapViewRepresentable: UIViewRepresentable {
         private func makeTitleLabel() -> UILabel {
             let label = UILabel()
             label.tag = 1001
-            label.font = UIFont.systemFont(ofSize: 12)
+            label.font = UIFont.systemFont(ofSize: 14)
             label.textColor = .black
             label.textAlignment = .center
             label.backgroundColor = UIColor.white.withAlphaComponent(0.0)
             label.layer.cornerRadius = 4
             label.layer.masksToBounds = true
-            label.frame = CGRect(x: -30, y: 60, width: 100, height: 20)
+            label.frame = CGRect(x: -30, y: 70, width: 100, height: 20)
             return label
         }
     }

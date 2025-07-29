@@ -24,21 +24,20 @@ struct MyRecordView: View {
                         }
                     }) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 24))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 24).weight(.semibold))
+                            .foregroundColor(DesignSystem.Color.Gray_02)
                     }
                     Spacer()
                 }
-                .padding(.top, 16)
+                .padding(.top, 15)
 
                 Text("전체")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.black)
-                    .padding(.vertical, 20)
+                    .font(DesignSystem.Font.NavigationTitle.bold)
+                    .foregroundColor(DesignSystem.Color.Gray_black)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 30)
+                    .padding(.bottom, 20)
 
-                Spacer()
-                    .frame(height: 20)
 
                 RecordList(
                     records: viewModel.records,

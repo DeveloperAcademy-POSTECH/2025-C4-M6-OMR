@@ -15,7 +15,7 @@ struct RecentPhotosView: View {
     
     var body: some View {
         VStack {
-            switch viewModel.authorizationStatus {
+            switch viewModel.albumViewModel.authorizationStatus {
             case .authorized, .limited:
                 authorizedView
             case .denied, .restricted:
@@ -30,7 +30,7 @@ struct RecentPhotosView: View {
     
     @ViewBuilder
     private var authorizedView: some View {
-        if viewModel.isLoading {
+        if viewModel.albumViewModel.isLoading {
             loadingView
         } else if viewModel.recentPhotoAssets.isEmpty {
             VStack {
@@ -46,11 +46,11 @@ struct RecentPhotosView: View {
                     ForEach(viewModel.recentPhotoAssets, id: \.self) { asset in
                         PhotoItemView(
                             asset: asset,
-                            isSelected: viewModel.selectedAssets.contains(asset),
-                            selectedIndex: viewModel.selectedAssets.firstIndex(of: asset),
-                            viewModel: viewModel
+                            isSelected: viewModel.albumViewModel.selectedAssets.contains(asset),
+                            selectedIndex: viewModel.albumViewModel.selectedAssets.firstIndex(of: asset),
+                            viewModel: viewModel.albumViewModel
                         ) {
-                            viewModel.toggleAssetSelection(asset)
+                            viewModel.handleRecentPhotoTap(for: asset)
                         }
                     }
                 }
@@ -89,7 +89,7 @@ private struct PhotoItemView: View {
     let asset: PHAsset
     let isSelected: Bool
     let selectedIndex: Int?
-    let viewModel: RecordSaveSheetViewModel
+    let viewModel: CustomAlbumViewModel
     let action: () -> Void
     
     @State private var image: UIImage?
@@ -134,7 +134,7 @@ private struct SelectionOverlay: View {
                 .font(.caption.bold())
                 .foregroundColor(.white)
                 .frame(width: 20, height: 20)
-                .background(Circle().fill(Color(red: 0.43, green: 0.65, blue: 0.96)))
+                .background(Circle().fill(DesignSystem.Color.Prime))
                 .padding(4)
         }
     }

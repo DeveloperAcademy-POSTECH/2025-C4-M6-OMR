@@ -7,15 +7,26 @@
 
 import SwiftUI
 import Photos
+import DesignSystem
 
 struct AlbumGridItemView: View {
     let asset: PHAsset
     let isSelected: Bool
     let selectedIndex: Int?
-    let viewModel: RecordSaveSheetViewModel
+    let viewModel: CustomAlbumViewModel
     let cellSize: CGFloat
 
     @State private var image: UIImage?
+    
+    init(asset: PHAsset, isSelected: Bool, selectedIndex: Int?, viewModel: CustomAlbumViewModel, cellSize: CGFloat) {
+        self.asset = asset
+        self.isSelected = isSelected
+        self.selectedIndex = selectedIndex
+        self.viewModel = viewModel
+        self.cellSize = cellSize
+        // State 변수를 ViewModel의 캐시 값으로 초기화합니다.
+        _image = State(initialValue: viewModel.getCachedImage(for: asset))
+    }
 
     var body: some View {
         ZStack {
@@ -24,7 +35,7 @@ struct AlbumGridItemView: View {
                     .resizable()
                     .scaledToFill()
             } else {
-                Color.gray.opacity(0.3)
+                DesignSystem.Color.Gray_Button
             }
         }
         .frame(width: cellSize, height: cellSize)
@@ -32,10 +43,11 @@ struct AlbumGridItemView: View {
         .contentShape(Rectangle())
         .overlay(selectionOverlay)
         .onAppear {
-            Task {
-                // thumbnailSize를 cellSize에 맞춰 요청하여 화질 최적화
-                let thumbnailSize = CGSize(width: cellSize * UIScreen.main.scale, height: cellSize * UIScreen.main.scale)
-                self.image = await viewModel.fetchImage(for: asset, size: thumbnailSize)
+            if image == nil {
+                Task {
+                    let thumbnailSize = CGSize(width: cellSize * UIScreen.main.scale, height: cellSize * UIScreen.main.scale)
+                    self.image = await viewModel.fetchImage(for: asset, size: thumbnailSize)
+                }
             }
         }
 
@@ -51,7 +63,7 @@ struct AlbumGridItemView: View {
                     .font(.caption.bold())
                     .foregroundColor(.white)
                     .frame(width: 20, height: 20)
-                    .background(Circle().fill(Color(red: 0.43, green: 0.65, blue: 0.96)))
+                    .background(Circle().fill(DesignSystem.Color.Prime))
                     .padding(4)
             }
         }

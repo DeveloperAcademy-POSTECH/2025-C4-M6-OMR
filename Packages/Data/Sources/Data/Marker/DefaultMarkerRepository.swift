@@ -5,8 +5,8 @@
 //  Created by eunsong on 7/21/25.
 //
 
-import Foundation
 import Domain
+import Foundation
 
 public struct DefaultMarkerRepository: MarkerRepository, Sendable {
     private let local: MarkerLocalDatasource
@@ -26,7 +26,7 @@ public struct DefaultMarkerRepository: MarkerRepository, Sendable {
         }
         return MarkerMapper.toDomain(entity: entity)
     }
-    
+
     public func fetchAll() async throws -> [Marker] {
         let entities = try await local.fetchAll()
         return entities.map { MarkerMapper.toDomain(entity: $0) }

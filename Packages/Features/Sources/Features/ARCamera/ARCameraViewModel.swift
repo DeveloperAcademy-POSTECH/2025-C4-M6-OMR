@@ -121,13 +121,22 @@ public class ARCameraViewModel: NSObject, ObservableObject {
 
     // MARK: - AR Actions
     func switchToPlacementMode() {
+        guard cameraMode != .placement else {
+            showFlowerSelectionSheet()
+            return
+        }
+
         print("🎯 switchToPlacementMode 호출됨")
         cameraMode = .placement
         isPlacementConfirmed = false
         statusMessage = "배치할 꽃을 선택하세요."
         print("🎯 cameraMode = .placement 설정됨")
+        
+        showFlowerSelectionSheet()
+    }
+    
+    func showFlowerSelectionSheet() {
         bottomSheetCoordinator.showFlowerSelection()
-        print("🎯 꽃 선택 시트 표시 요청됨")
     }
 
     func cancelPlacement() {

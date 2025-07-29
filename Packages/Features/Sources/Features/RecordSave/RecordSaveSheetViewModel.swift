@@ -6,52 +6,81 @@ import SwiftUI
 
 @MainActor
 public final class RecordSaveSheetViewModel: ObservableObject {
-
+    
     // MARK: - Properties
     @Published var flowerName: String
     @Published var flowerMeaning: String
     @Published var flowerImageName: String
     @Published var address: String
-
+    
     @Published var recentPhotoAssets: [PHAsset] = []
-    @Published var allPhotoAssetsResult: PHFetchResult<PHAsset>?
-
-    @Published var selectedAssets: [PHAsset] = []
     @Published var selectedImages: [UIImage] = []
-
     @Published var didSelectFromLibrary: Bool = false
-    @Published var authorizationStatus: PHAuthorizationStatus = .notDetermined
+    
     @Published var isLoading = false
-
-    private let cachingImageManager = PHCachingImageManager()
-    private let onSave: (FinalRecordPayload) -> Void
-
+    
+    let albumViewModel: CustomAlbumViewModel
+    
+    private var cancellables = Set<AnyCancellable>()
+    let onSave: (FinalRecordPayload) -> Void
+    
     public var isSaveButtonDisabled: Bool {
-        return selectedAssets.isEmpty
+        return selectedImages.isEmpty
     }
-
-    let maxImageCount = 4
-
+    
     // MARK: - Initialization
     public init(
         info: RecordSaveSheetInfo,
+        albumViewModel: CustomAlbumViewModel,
         onSave: @escaping (FinalRecordPayload) -> Void
     ) {
         self.flowerName = info.flower.name
         self.flowerMeaning = info.flower.floriography
         self.flowerImageName = info.flower.thumbnailLarge
         self.address = info.address
+        self.albumViewModel = albumViewModel
         self.onSave = onSave
-        print("RecordSaveSheetViewModel \(flowerImageName)")
-        fetchInitialRecentAssets()
+        bindAlbumViewModel()
     }
-
+    
+    // MARK: - Binding
+    
+    private func bindAlbumViewModel() {
+        // 자식 ViewModel의 변화를 감지하여 View를 갱신
+        albumViewModel.objectWillChange
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+            }
+            .store(in: &cancellables)
+        
+        // 최근 사진 목록 동기화
+        albumViewModel.$recentPhotoAssets
+            .receive(on: DispatchQueue.main)
+            .assign(to: \.recentPhotoAssets, on: self)
+            .store(in: &cancellables)
+        
+        // 전체 앨범에서 '완료'를 눌렀을 때의 이벤트 구독
+        albumViewModel.selectionDidFinishPublisher
+            .sink { [weak self] selectedAssets in
+                // View 전환이 필요한 경우
+                self?.processSelectedAssets(selectedAssets, shouldFinalizeSelection: true)
+            }
+            .store(in: &cancellables)
+    }
+    
     // MARK: - User Actions
-
-    func save() {
+    
+    /// RecentPhotosView에서 사진을 탭했을 때 호출될 메서드
+    public func handleRecentPhotoTap(for asset: PHAsset) {
+        albumViewModel.toggleAssetSelection(asset)
+        // View 전환이 필요 없는 경우
+        processSelectedAssets(albumViewModel.selectedAssets, shouldFinalizeSelection: false)
+    }
+    
+    public func save() {
         isLoading = true
         Task {
-            let images = await fetchSelectedImages()
+            let images = self.selectedImages
             var savedFileNames: [String] = []
             
             for image in images {
@@ -69,27 +98,13 @@ public final class RecordSaveSheetViewModel: ObservableObject {
             isLoading = false
         }
     }
-
-    private func fetchSelectedImages() async -> [UIImage] {
-        var images: [UIImage] = []
-        for asset in selectedAssets {
-            if let image = await fetchImage(
-                for: asset,
-                size: PHImageManagerMaximumSize
-            ) {
-                images.append(image)
-            }
-        }
-        return images
-    }
-
-    /// 커스텀 앨범에서 '완료'를 눌렀을 때 호출
-    func finalizeAssetSelection() {
+    
+    private func processSelectedAssets(_ assets: [PHAsset], shouldFinalizeSelection: Bool) {
         Task {
             self.isLoading = true
             var images: [UIImage] = []
-            for asset in selectedAssets {
-                if let image = await fetchImage(
+            for asset in assets {
+                if let image = await albumViewModel.fetchImage(
                     for: asset,
                     size: CGSize(width: 400, height: 400)
                 ) {
@@ -97,126 +112,34 @@ public final class RecordSaveSheetViewModel: ObservableObject {
                 }
             }
             self.selectedImages = images
-            self.didSelectFromLibrary = true
+            
+            if shouldFinalizeSelection {
+                self.didSelectFromLibrary = !images.isEmpty
+            }
+            
             self.isLoading = false
         }
     }
-
-    /// 최종 선택된 사진 그리드에서 이미�� 삭제
-    func removeSelectedImage(_ image: UIImage) {
+    
+    public func removeSelectedImage(_ image: UIImage) {
         if let index = selectedImages.firstIndex(of: image) {
             selectedImages.remove(at: index)
-            if selectedAssets.indices.contains(index) {
-                selectedAssets.remove(at: index)
+            albumViewModel.selectedAssets.remove(at: index)
+            if selectedImages.isEmpty {
+                didSelectFromLibrary = false
             }
         }
     }
-
-    /// 커스텀 앨범에서 사진 선택/해제
-    func toggleAssetSelection(_ asset: PHAsset) {
-        if let index = selectedAssets.firstIndex(of: asset) {
-            selectedAssets.remove(at: index)
-        } else if selectedAssets.count < maxImageCount {
-            selectedAssets.append(asset)
-        }
+    
+    // MARK: - Pass-through Methods to AlbumViewModel
+    
+    /// View의 요청을 AlbumViewModel에 전달하는 역할
+    public func prepareForAllPhotos() {
+        albumViewModel.prepareForAllPhotos()
     }
-
-    /// 선택된 모든 에셋 초기화
-    func clearSelectedAssets() {
-        selectedAssets.removeAll()
-        didSelectFromLibrary = false
-    }
-
-    // MARK: - Data Fetching
-
-    /// RecentPhotosView를 위해 최근 에셋 20개만 불러옵니다.
-    func fetchInitialRecentAssets() {
-        isLoading = true
-        checkPermission { [weak self] hasPermission in
-            guard let self = self, hasPermission else {
-                DispatchQueue.main.async { self?.isLoading = false }
-                return
-            }
-
-            DispatchQueue.global(qos: .userInitiated).async {
-                let fetchOptions = PHFetchOptions()
-                fetchOptions.sortDescriptors = [
-                    NSSortDescriptor(key: "creationDate", ascending: false)
-                ]
-                fetchOptions.fetchLimit = 20
-
-                let fetchResult = PHAsset.fetchAssets(
-                    with: .image,
-                    options: fetchOptions
-                )
-                var assets: [PHAsset] = []
-                fetchResult.enumerateObjects { asset, _, _ in
-                    assets.append(asset)
-                }
-
-                DispatchQueue.main.async {
-                    self.recentPhotoAssets = assets
-                    self.isLoading = false
-                }
-            }
-        }
-    }
-
-    func prepareForAllPhotos() {
-        guard allPhotoAssetsResult == nil else { return }  // 이미 로드했으면 다시 재로드 X
-
-        checkPermission { [weak self] hasPermission in
-            guard let self = self, hasPermission else { return }
-
-            let opts = PHFetchOptions()
-            opts.sortDescriptors = [
-                NSSortDescriptor(key: "creationDate", ascending: false)
-            ]
-            self.allPhotoAssetsResult = PHAsset.fetchAssets(
-                with: .image,
-                options: opts
-            )
-        }
-    }
-
-    /// 권한을 확인하고 요청하는 공통 헬퍼 메서드
-    private func checkPermission(completion: @escaping (Bool) -> Void) {
-        let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
-        self.authorizationStatus = status
-
-        switch status {
-        case .authorized, .limited:
-            completion(true)
-        case .notDetermined:
-            PHPhotoLibrary.requestAuthorization(for: .readWrite) { newStatus in
-                DispatchQueue.main.async {
-                    self.authorizationStatus = newStatus
-                    completion(
-                        newStatus == .authorized || newStatus == .limited
-                    )
-                }
-            }
-        default:  // .denied, .restricted
-            completion(false)
-        }
-    }
-
-    /// 주어진 PHAsset으로 UIImage를 비동기적으로 불러옵니다 (캐싱 적용).
+    
     public func fetchImage(for asset: PHAsset, size: CGSize) async -> UIImage? {
-        let options = PHImageRequestOptions()
-        options.deliveryMode = .highQualityFormat
-        options.isNetworkAccessAllowed = true
-
-        return await withCheckedContinuation { continuation in
-            cachingImageManager.requestImage(
-                for: asset,
-                targetSize: size,
-                contentMode: .aspectFill,
-                options: options
-            ) { image, _ in
-                continuation.resume(returning: image)
-            }
-        }
+        return await albumViewModel.fetchImage(for: asset, size: size)
     }
 }
 

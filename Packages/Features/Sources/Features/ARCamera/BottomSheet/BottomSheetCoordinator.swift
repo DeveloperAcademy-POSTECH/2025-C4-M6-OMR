@@ -96,13 +96,17 @@ public class BottomSheetCoordinator: ObservableObject {
     ) {
         print("📱 showSaveSheet 호출됨: \(info.flower.name)")
 
+        let CustomAlbumVM = CustomAlbumViewModel()
+        
         let viewModel = RecordSaveSheetViewModel(
             info: info,
+            albumViewModel: CustomAlbumVM,
             onSave: { [weak self] payload in
                 onSave(payload)
                 self?.dismissSheet()
             }
         )
+        
         self.saveSheetViewModel = viewModel
         self.onCancelPlacement = onCancel
         self.activeSheet = .saveSheet

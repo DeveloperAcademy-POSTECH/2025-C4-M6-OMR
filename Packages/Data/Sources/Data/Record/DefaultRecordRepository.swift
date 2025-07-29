@@ -94,7 +94,14 @@ public final class DefaultRecordRepository: RecordRepository {
             authorID: record.authorID,
             markerID: record.markerTypeID
         )
-        try await local.save(model: model)
+
+        do {
+            try await local.save(model: model)
+            print("Record 저장 성공: \(record.id)")
+        } catch {
+            print("Record 저장 실패: \(record.id), error: \(error)")
+            throw error
+        }
     }
 
     /// Record 업데이트

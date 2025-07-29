@@ -18,29 +18,24 @@ public final class RecordDetailViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published var detail: RecordDetailUIModel?
     @Published var isEditing: Bool = false
+    @Published var isLoading: Bool = false
 
     // 수정 전 원본 데이터를 저장할 프로퍼티
     private var originalDetail: RecordDetailUIModel?
+    // Combine 구독 관리를 위한 cancellables
+    private var cancellables: Set<AnyCancellable> = []
 
     // MARK: - Computed Properties
     public var isSaveButtonDisabled: Bool {
-        guard let detail = detail, let originalDetail = originalDetail else {
-            return true
-        }
-        
-        if detail.images.isEmpty {
-            return true
-        }
-        
-        let isTitleChanged = detail.title != originalDetail.title
-        let areImagesChanged = detail.images != originalDetail.images
+        // 수정 모드가 아닐 때는 항상 비활성화
+        guard isEditing else { return true }
 
-        if !isTitleChanged && !areImagesChanged {
-            return true
-        }
+        // detail이 존재하고 이미지가 하나 이상 있어야 저장 버튼 활성화
+        guard let detail = detail else { return true }
 
-        return false
+        return detail.images.isEmpty
     }
+
     
     // MARK: - Initialization
     
@@ -152,33 +147,45 @@ public final class RecordDetailViewModel: ObservableObject {
     }
 
     func saveButtonTapped() {
-        if detail?.title.isEmpty == true {
-            detail?.title = originalDetail?.title ?? ""
+        if let detail = detail,
+           detail.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            self.detail?.title = "\(detail.location)에서"
         }
 
-        // TODO: 변경된 detail 객체를 UseCase에 전달하여 저장하는 로직
+        // TODO: 변경된 detail 객체를 저장
         print("저장할 제목: \(detail?.title ?? "")")
-
         isEditing = false
     }
+
 
     func deleteButtonTapped() {
         print("삭제 버튼 탭됨")
     }
+    
+    public func subscribeToAlbumEvents(albumViewModel: CustomAlbumViewModel) {
+        albumViewModel.selectionDidFinishPublisher
+            .sink { [weak self] selectedAssets in
+                // 앨범에서 선택이 완료되면, 이미지 추가 로직을 실행합니다.
+                self?.addImages(from: selectedAssets, using: albumViewModel)
+            }
+            .store(in: &cancellables)
+    }
 
     // MARK: - Image Handling
 
-    func addImages(from items: [PhotosPickerItem]) {
+   func addImages(from assets: [PHAsset], using albumViewModel: CustomAlbumViewModel) {
+        guard detail != nil else { return }
+        
+        isLoading = true
         Task {
             var newImages: [UIImage] = []
-            for item in items {
-                if let data = try? await item.loadTransferable(type: Data.self),
-                    let image = UIImage(data: data)
-                {
+            for asset in assets {
+                if let image = await albumViewModel.fetchImage(for: asset, size: PHImageManagerMaximumSize) {
                     newImages.append(image)
                 }
             }
             detail?.images.append(contentsOf: newImages)
+            isLoading = false
         }
     }
 
