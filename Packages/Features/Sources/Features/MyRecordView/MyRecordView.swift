@@ -33,7 +33,7 @@ struct MyRecordView: View {
 
                 Text("전체")
                     .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.black)
+                    .foregroundColor(DesignSystem.Color.Gray_black)
                     .padding(.vertical, 20)
                     .frame(maxWidth: .infinity, alignment: .leading)
 

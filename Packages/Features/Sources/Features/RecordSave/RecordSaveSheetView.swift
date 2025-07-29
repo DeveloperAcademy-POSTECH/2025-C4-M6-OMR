@@ -76,12 +76,12 @@ private struct RecordSaveHeaderView: View {
                 }) {
                     ZStack {
                         Circle()
-                            .fill(Color(red: 0.45, green: 0.51, blue: 0.59).opacity(0.16))
+                            .fill(DesignSystem.Color.Gray_Button)
                             .frame(width: 30, height: 30)
                         
                         Image(systemName: "xmark")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15).opacity(0.25))
+                            .foregroundColor(DesignSystem.Color.Gray_black.opacity(0.25))
                     }
                 }
                 .alert(
@@ -127,7 +127,7 @@ private struct SelectedFlowerCardView: View {
             
             Text(flowerMeaning)
                 .font(DesignSystem.Font.custom(size: 14, weight: .regular))
-                .foregroundColor(Color(red: 0.43, green: 0.65, blue: 0.96))
+                .foregroundColor(DesignSystem.Color.Prime2)
             
             DesignSystemAssets.image(named: flowerImageName)
                 .resizable()
@@ -137,7 +137,7 @@ private struct SelectedFlowerCardView: View {
         .padding(.top, 14)
         .padding(.bottom, 30)
         .padding(.horizontal, 45)
-        .background(Color(red: 0.94, green: 0.96, blue: 1))
+        .background(DesignSystem.Color.Gray_01)
         .cornerRadius(20)
     }
 }
@@ -154,10 +154,10 @@ private struct SaveButtonView: View {
         }) {
             Text("저장")
                 .font(.headline.bold())
-                .foregroundColor(isDisabled ? Color(red: 0.56, green: 0.56, blue: 0.56) : Color.white)
+                .foregroundColor(isDisabled ? DesignSystem.Color.Gray_Text2 : DesignSystem.Color.Gray_white)
                 .frame(height: 52)
                 .frame(maxWidth: .infinity)
-                .background(isDisabled ? Color(red: 0.88, green: 0.9, blue: 0.93).opacity(0.39) : Color(red: 0.43, green: 0.65, blue: 0.96))
+                .background(isDisabled ? DesignSystem.Color.Gray_Button2 : DesignSystem.Color.Prime2)
                 .cornerRadius(12)
         }
         .disabled(isDisabled)

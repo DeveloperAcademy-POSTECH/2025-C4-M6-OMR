@@ -27,18 +27,15 @@ struct MoteItemView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(mote.title.isEmpty ? "제목 없음" : mote.title)")
-                    .font(
-                    Font.custom("Pretendard", size: 16)
-                    .weight(.semibold)
-                    )
-                    .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
+                    .font(DesignSystem.Font.Title3.semibold)
+                    .foregroundColor(DesignSystem.Color.Gray_black)
 
                     .frame(maxWidth: .infinity, alignment: .topLeading)
 
                 Text("\(formattedDate(from: mote.createdAt))")
-                    .font(Font.custom("Pretendard", size: 14))
+                    .font(DesignSystem.Font.Headline.regular)
                     .multilineTextAlignment(.center)
-                    .foregroundColor(Color(red: 0.57, green: 0.63, blue: 0.71))
+                    .foregroundColor(DesignSystem.Color.Gray_02)
             }
         }
         .padding(.vertical, 4)
