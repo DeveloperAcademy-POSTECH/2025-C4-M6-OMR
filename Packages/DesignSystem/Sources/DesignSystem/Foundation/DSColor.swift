@@ -71,3 +71,72 @@ public extension DesignSystem {
 
     }
 }
+
+// UIKit 확장
+extension DesignSystem.Color {
+    public struct UIKit {
+        public static var Prime: UIColor {
+            UIColor(DesignSystem.Color.Prime)
+        }
+        
+        public static var Prime2: UIColor {
+            UIColor(DesignSystem.Color.Prime2)
+        }
+        
+        public static var Prime3: UIColor {
+            UIColor(DesignSystem.Color.Prime3)
+        }
+        
+        public static var Prime4: UIColor {
+            UIColor(DesignSystem.Color.Prime4)
+        }
+        
+        public static var Prime5: UIColor {
+            UIColor(DesignSystem.Color.Prime5)
+        }
+        
+        public static var Gray_01: UIColor {
+            UIColor(DesignSystem.Color.Gray_01)
+        }
+        
+        public static var Gray_02: UIColor {
+            UIColor(DesignSystem.Color.Gray_02)
+        }
+        
+        public static var Gray_03: UIColor {
+            UIColor(DesignSystem.Color.Gray_03)
+        }
+        
+        public static var Gray_04: UIColor {
+            UIColor(DesignSystem.Color.Gray_04)
+        }
+        
+        public static var Gray_black: UIColor {
+            UIColor(DesignSystem.Color.Gray_black)
+        }
+        
+        public static var Gray_white: UIColor {
+            UIColor(DesignSystem.Color.Gray_white)
+        }
+        
+        public static var Gray_Text: UIColor {
+            UIColor(DesignSystem.Color.Gray_Text)
+        }
+        
+        public static var Gray_BG: UIColor {
+            UIColor(DesignSystem.Color.Gray_BG)
+        }
+        
+        public static var Gray_Button: UIColor {
+            UIColor(DesignSystem.Color.Gray_Button)
+        }
+        
+        public static var Gray_Button2: UIColor {
+            UIColor(DesignSystem.Color.Gray_Button2)
+        }
+        
+        public static var Gray_Text2: UIColor {
+            UIColor(DesignSystem.Color.Gray_Text2)
+        }
+    }
+}
