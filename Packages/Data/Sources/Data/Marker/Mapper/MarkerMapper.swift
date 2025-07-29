@@ -12,30 +12,27 @@ enum MarkerMapper {
     static func toEntity(domain: Marker) -> MarkerEntity {
         .init(
             id: domain.id,
-            name: domain.name,
+            displayName: domain.displayName,
             floriography: domain.floriography,
-            thumbnailImageName: domain.thumbnailImageName,
-            objectImageName: domain.objectImageName
+            imageName: domain.imageName
         )
     }
-    
+
     static func toEntity(defaultData: RawMarkerData) -> MarkerEntity {
         .init(
             id: defaultData.id,
-            name: defaultData.name,
+            displayName: defaultData.displayName,
             floriography: defaultData.floriography,
-            thumbnailImageName: defaultData.thumbnailImageName,
-            objectImageName: defaultData.objectImageName
+            imageName: defaultData.imageName
         )
     }
 
     static func toDomain(entity: MarkerEntity) -> Marker {
         .init(
             id: entity.id,
-            name: entity.name,
+            displayName: entity.displayName,
             floriography: entity.floriography,
-            thumbnailImageName: entity.thumbnailImageName,
-            objectImageName: entity.objectImageName
+            imageName: entity.imageName
         )
     }
 }

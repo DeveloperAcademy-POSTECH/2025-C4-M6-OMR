@@ -1,19 +1,33 @@
 import CoreLocation
 import DesignSystem
-import SwiftUI
 import Lottie
+import SwiftUI
+import Dependencies
 
 // MARK: - MainView
 
 struct MainView: View {
     @EnvironmentObject private var nav: NavigationViewModel
 
-    @StateObject private var viewModel = MainViewModel()
+    @StateObject private var viewModel: MainViewModel
 
     @State private var sheetDetent: Detent = .low
     @State private var isSheetVisible = true
     @State private var previousLocation: CLLocation? = nil
     private let updateThresholdMeters: Double = 20.0
+
+    public init(factory: MainViewModelFactory? = nil) {
+        // factory가 nil이면 Dependencies에서 가져오기
+        let actualFactory: MainViewModelFactory =
+            factory
+            ?? {
+                @Dependency(\.mainViewModelFactory) var defaultFactory:
+                    MainViewModelFactory
+                return defaultFactory
+            }()
+
+        _viewModel = StateObject(wrappedValue: actualFactory.create())
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -44,6 +58,12 @@ struct MainView: View {
             )
             .onAppear {
                 viewModel.requestCurrentLocation()
+                UIFont.familyNames.forEach { family in
+                    print("Font Family: \(family)")
+                    for name in UIFont.fontNames(forFamilyName: family) {
+                        print("- \(name)")
+                    }
+                }
             }
             .onReceive(
                 viewModel.locationManager.$currentLocation.compactMap { $0 }
@@ -52,6 +72,7 @@ struct MainView: View {
                     handleLocationUpdate(location)
                     return
                 }
+                
 
                 previousLocation = location
                 viewModel.loadNearbyMotesMock(center: location, radius: 1000)
@@ -64,20 +85,20 @@ struct MainView: View {
 
 extension MainView {
     private var content: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             currentAddressView
-                .padding(.top, 100)
+                .padding(.top, 65)
 
             if viewModel.isLoading {
                 ProgressView()
             } else {
                 Text(
                     viewModel.nearbyCount == 0
-                        ? "주변에 과거에 기록한 꽃이 없어요" : "주변에 과거에 기록한 꽃이 있어요"
+                        ? "꽃을 눌러 새로운 기록을 남겨보세요" : "주변에 과거에 기록한 꽃이 있어요"
                 )
-                .font(.custom("Pretendard", size: 18).weight(.semibold))
-                .foregroundColor(.black)
-                .padding()
+                .font(DesignSystem.Font.Title2.semibold)
+                .foregroundColor(DesignSystem.Color.Gray_black)
+                .padding(.bottom, 47)
             }
 
             ARButton(action: {
@@ -88,8 +109,7 @@ extension MainView {
                             longitude: location.coordinate.longitude
                         )
                     )
-                }
-                else {
+                } else {
                     print("안됨")
                 }
             })
@@ -110,18 +130,19 @@ extension MainView {
 
     private var currentAddressView: some View {
         HStack(spacing: 8) {
-            Image(systemName: "paperplane.fill")
-                .foregroundColor(.blue)
+            Image(systemName: "location")
+                .foregroundColor(DesignSystem.Color.Prime)
+                .font(.system(size: 12, weight: .semibold))
 
             Text(viewModel.currentAddress)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.blue)
+                .font(DesignSystem.Font.Headline.semibold)
+                .foregroundColor(DesignSystem.Color.Prime)
 
             Button(action: {
                 viewModel.requestCurrentLocation()
             }) {
                 Image(systemName: "arrow.clockwise.circle.fill")
-                    .foregroundColor(.blue)
+                    .foregroundColor(DesignSystem.Color.Prime)
             }
             .buttonStyle(.plain)
         }
@@ -145,4 +166,8 @@ extension MainView {
         previousLocation = location
         viewModel.loadNearbyMotesMock(center: location, radius: 1000)
     }
+}
+
+#Preview {
+    MainView()
 }

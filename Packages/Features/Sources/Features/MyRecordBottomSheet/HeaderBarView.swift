@@ -20,33 +20,15 @@ struct HeaderBarView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 26, height: 26)
-                    .foregroundColor(.blue)
+                    .foregroundColor(DesignSystem.Color.Prime)
             }
             
             Spacer()
             
             // 닫기 버튼
-            Button(action: onCloseTapped) {
-                ZStack {
-                    EllipticalGradient(
-                        stops: [
-                            .init(color: Color(red: 0.96, green: 0.98, blue: 1), location: 0.00),
-                            .init(color: Color(red: 0.86, green: 0.92, blue: 1), location: 1.00),
-                        ],
-                        center: .center
-                    )
-                    .frame(width: 36, height: 36)
-                    .cornerRadius(99)
-                    
-                    DesignSystemAssets.image(named: "flowerLogo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 26, height: 26)
-                        .clipShape(Circle())
-                        .opacity(0.5)
-                }
-                .buttonStyle(.plain)
-            }
+            
+            HomeButton(action: onCloseTapped)
+
         }
         .padding(.bottom, 8)
     }

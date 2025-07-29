@@ -8,4 +8,6 @@ import Foundation
 
 public protocol MarkerRepository: Sendable {
     func fetch(by id: UUID) async throws -> Marker
+    func initializeDefaultMarkers() async throws
+    func fetchAll() async throws -> [Marker]
 }

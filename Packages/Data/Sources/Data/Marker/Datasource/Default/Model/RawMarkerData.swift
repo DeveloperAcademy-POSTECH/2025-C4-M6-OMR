@@ -8,8 +8,7 @@ import Foundation
 
 public struct RawMarkerData {
     public let id: UUID
-    public let name: String
+    public let displayName: String
     public let floriography: String
-    public let thumbnailImageName: String
-    public let objectImageName: String
+    public let imageName: String
 }

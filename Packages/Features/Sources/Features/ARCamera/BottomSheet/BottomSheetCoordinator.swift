@@ -20,19 +20,24 @@ public class BottomSheetCoordinator: ObservableObject {
     @Published var flowerForSave: ARFlower?
 
     // MARK: - ViewModels
-    @Published var flowerSelectionViewModel = FlowerSelectionViewModel()
+    @Published var flowerSelectionViewModel: FlowerSelectionViewModel
     @Published var recordDetailViewModel: RecordDetailViewModel?
     @Published var saveSheetViewModel: RecordSaveSheetViewModel?
 
     // MARK: - Delegate
     weak var delegate: BottomSheetCoordinatorDelegate?
-    
+
     var onCancelPlacement: () -> Void = {}
 
-    init() {
+    private let flowerSelectionViewModelFactory: FlowerSelectionViewModelFactory
+
+    init(flowerSelectionViewModelFactory: FlowerSelectionViewModelFactory) {
+        self.flowerSelectionViewModelFactory = flowerSelectionViewModelFactory
+        self.flowerSelectionViewModel = flowerSelectionViewModelFactory.create()
+
         setupFlowerSelectionCallback()
     }
-    
+
     func cancelPlacement() {
         onCancelPlacement()
         dismissSheet()

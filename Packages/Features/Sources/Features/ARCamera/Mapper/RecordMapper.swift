@@ -5,26 +5,22 @@ import UIKit
 
 /// Domain 모델을 View에서 사용할 모델로 변환하는 Mapper
 enum RecordMapper {
-    static func toARRecordModel(from domain: Domain.Record) -> ARRecordModel {
-        // TODO: MarkerType에 따라 적절한 3D 모델 이름을 반환하는 로직 필요
-        let modelName = "test_flower"
+    static func toARRecordModel(from domain: Domain.RecordDetail) -> ARRecordModel {
 
         return ARRecordModel(
-            id: domain.id,
-            title: domain.title ?? "",
+            id: domain.record.id,
+            title: domain.record.title ?? "",
             coordinate: ARCoordinate(
-                latitude: domain.coordinate.latitude,
-                longitude: domain.coordinate.longitude
+                latitude: domain.record.coordinate.latitude,
+                longitude: domain.record.coordinate.longitude
             ),
-            modelName: modelName,
-            createdDate: domain.date,
-            authorName: "Unknown"  // TODO: 실제 작성자 이름
+            modelName: domain.marker.imageName,
+            createdDate: domain.record.date,
+            authorName: domain.author.name
         )
     }
 
-    static func toARRecordModels(from domains: [Domain.Record])
-        -> [ARRecordModel]
-    {
+    static func toARRecordModels(from domains: [Domain.RecordDetail]) -> [ARRecordModel] {
         return domains.map { toARRecordModel(from: $0) }
     }
 
@@ -70,9 +66,10 @@ enum RecordMapper {
         return ARFlower(
             id: flowerModel.id,
             name: flowerModel.name,
-            modelName: "test_flower",  //flowerModel.objectImageName,
+            modelName: flowerModel.objectImageName,
             floriography: flowerModel.floriography,
-            thumbnail: flowerModel.thumbnailImageName
+            thumbnail: flowerModel.thumbnailImageName,
+            thumbnailLarge: flowerModel.thumbnailLarge
         )
     }
 }

@@ -12,23 +12,22 @@ struct RecordCard: View {
     let record: MyRecordModel
     
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 10) {
             DesignSystemAssets.image(named: record.flowerImageName)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(width: 50, height: 50)
+                .frame(width: 66, height: 66)
                 .clipped()
-                .cornerRadius(8)
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(record.title)
-                    .font(.body)
-                    .foregroundColor(.primary)
+                    .font(DesignSystem.Font.Title3.semibold)
+                    .foregroundColor(DesignSystem.Color.Gray_black)
                     .lineLimit(1)
                 
                 Text(record.formattedDate)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(DesignSystem.Font.Headline.medium)
+                    .foregroundColor(DesignSystem.Color.Gray_02)
             }
             
             Spacer()

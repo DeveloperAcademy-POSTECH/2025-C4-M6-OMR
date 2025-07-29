@@ -18,14 +18,32 @@ public final class MainViewModel: ObservableObject {
     let locationManager = LocationManager()
     private var cancellables = Set<AnyCancellable>()
 
-    @Dependency(\.fetchMyRecordsUseCase) private var fetchMyRecordsUseCase
+    private let fetchMyRecordsUseCase: FetchMyRecordsUseCase
+    private let initializeAppDataUseCase: InitializeAppDataUseCase
 
-    public init() {
+    public init(
+        fetchMyRecordsUseCase: FetchMyRecordsUseCase,
+        initializeAppDataUseCase: InitializeAppDataUseCase
+    ) {
+        self.fetchMyRecordsUseCase = fetchMyRecordsUseCase
+        self.initializeAppDataUseCase = initializeAppDataUseCase
         setupAuthorizationSubscription()
         setupAddressGeocoding()
         setupLocationBinding()
+        
+        Task {
+            do {
+                let recordDetails = try await fetchMyRecordsUseCase()
+                print("✅ fetchMyRecordsUseCase success: \(recordDetails)")
+            } catch {
+                print("❌ fetchMyRecordsUseCase failed: \(error.localizedDescription)")
+            }
+        }
     }
-
+    
+    public func initializeAppDataIfNeeded() async throws {
+        try await initializeAppDataUseCase()
+    }
 
     public func requestCurrentLocation() {
         locationManager.requestLocationAgain()

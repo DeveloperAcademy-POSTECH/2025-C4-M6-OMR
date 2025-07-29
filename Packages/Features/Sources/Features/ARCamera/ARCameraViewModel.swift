@@ -38,6 +38,8 @@ public class ARCameraViewModel: NSObject, ObservableObject {
     // 의존성 명시적 주입
     private let fetchMyRecordsUseCase: FetchMyRecordsUseCase
     private let saveRecordUseCase: SaveRecordUseCase
+    private let initializeAppDataUseCase: InitializeAppDataUseCase
+    private let fetchAllMarkersUseCase: FetchAllMarkersUseCase
 
     // MARK: - Placement State
     private var currentPlacement: ARPlacementData?
@@ -56,11 +58,15 @@ public class ARCameraViewModel: NSObject, ObservableObject {
     init(
         fetchMyRecordsUseCase: FetchMyRecordsUseCase,
         saveRecordUseCase: SaveRecordUseCase,
+        initializeAppDataUseCase: InitializeAppDataUseCase,
+        fetchAllMarkersUseCase: FetchAllMarkersUseCase,
         location: CLLocation,
         bottomSheetCoordinator: BottomSheetCoordinator
     ) {
         self.fetchMyRecordsUseCase = fetchMyRecordsUseCase
         self.saveRecordUseCase = saveRecordUseCase
+        self.initializeAppDataUseCase = initializeAppDataUseCase
+        self.fetchAllMarkersUseCase  = fetchAllMarkersUseCase
         self.location = location
         self.bottomSheetCoordinator = bottomSheetCoordinator
 
@@ -69,9 +75,22 @@ public class ARCameraViewModel: NSObject, ObservableObject {
         self.bottomSheetCoordinator.onCancelPlacement = { [weak self] in
             self?.cancelPlacement()
         }
-
+        Task {
+            do {
+                try await initializeAppDataIfNeeded()
+            } catch {
+                print("초기화 실패: \(error.localizedDescription)")
+            }
+        }
+        
         setupCoordinators()
         setupARSceneManager()
+    }
+    
+    public func initializeAppDataIfNeeded() async throws {
+        try await initializeAppDataUseCase()
+        let markers = try await fetchAllMarkersUseCase()
+        print("initializeAppDataIfNeeded \(markers)")
     }
 
     private func setupCoordinators() {
@@ -347,6 +366,7 @@ public class ARCameraViewModel: NSObject, ObservableObject {
         isLoadingRecords = true
 
         do {
+            print("[ViewModel] fetchMyRecordsUseCase 요청")
             let recordDetails = try await fetchMyRecordsUseCase(
                 in: LocationFilter(
                     center: Coordinate(
@@ -356,11 +376,12 @@ public class ARCameraViewModel: NSObject, ObservableObject {
                     radius: 100.0
                 )
             )
-            let domainRecords = recordDetails.map { $0.record }
+            print("[ViewModel]  \(recordDetails.count) 요청")
+//            let domainRecords = recordDetails.map { $0.record }
             let mappedRecords = RecordMapper.toARRecordModels(
-                from: domainRecords
+                from: recordDetails
             )
-
+            
             await MainActor.run {
                 self.allRecords = mappedRecords
                 self.statusMessage = "\(mappedRecords.count)개의 기록을 불러왔습니다."

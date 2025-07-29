@@ -375,7 +375,9 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     {
         Entity.loadModelAsync(named: modelName, in: .module)
             .catch { error -> AnyPublisher<ModelEntity, Error> in
-                return Entity.loadModelAsync(named: "test_flower")
+
+                print("Failed to load model '\(modelName)': \(error)")
+                return Entity.loadModelAsync(named: modelName)
                     .eraseToAnyPublisher()
             }
             .catch { error -> AnyPublisher<ModelEntity, Error> in

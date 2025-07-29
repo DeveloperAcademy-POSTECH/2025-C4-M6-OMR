@@ -9,8 +9,11 @@ import SwiftUI
 
 public struct AppDI {
     // MARK: - SwiftData & DataSource Setup
-
+    
+    // 메인 큐용 ModelContext (UI 및 동기 작업용)
+    @MainActor
     internal static let modelContext = ModelContext(AppModelContainer.shared)
+    
     internal static let localRecordDS = LocalRecordDataSource(
         container: AppModelContainer.shared
     )
