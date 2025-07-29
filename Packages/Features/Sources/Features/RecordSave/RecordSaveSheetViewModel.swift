@@ -36,11 +36,10 @@ public final class RecordSaveSheetViewModel: ObservableObject {
     ) {
         self.flowerName = info.flower.name
         self.flowerMeaning = info.flower.floriography
-        self.flowerImageName = info.flower.thumbnail
+        self.flowerImageName = info.flower.thumbnailLarge
         self.address = info.address
         self.albumViewModel = albumViewModel
         self.onSave = onSave
-        
         bindAlbumViewModel()
     }
     

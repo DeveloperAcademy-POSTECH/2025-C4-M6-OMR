@@ -17,7 +17,9 @@ public struct ARCameraView: View {
         location: CLLocation,
         factory: ARCameraViewModelFactory
     ) {
-        let coordinator = BottomSheetCoordinator()
+        @Dependency(\.bottomSheetCoordinatorFactory) var coordinatorFactory
+        let coordinator = coordinatorFactory.create()
+        //        let coordinator = BottomSheetCoordinator()
         let viewModel = factory.create(
             location: location,
             bottomSheetCoordinator: coordinator

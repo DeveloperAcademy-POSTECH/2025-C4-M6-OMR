@@ -8,22 +8,27 @@ import Foundation
 
 public struct Marker: Equatable, Identifiable, Sendable {
     public let id: UUID
-    public let name: String
+    public let displayName: String
     public let floriography: String
-    public let thumbnailImageName: String
-    public let objectImageName: String
+    public let imageName: String
+    
+    public var smallThumbnailImageName: String {
+        "\(imageName)_S"
+    }
+
+    public var largeThumbnailImageName: String {
+        "\(imageName)_L"
+    }
     
     public init(
         id: UUID,
-        name: String,
+        displayName: String,
         floriography: String,
-        thumbnailImageName: String,
-        objectImageName: String
+        imageName: String
     ) {
         self.id = id
-        self.name = name
+        self.displayName = displayName
         self.floriography = floriography
-        self.thumbnailImageName = thumbnailImageName
-        self.objectImageName = objectImageName
+        self.imageName = imageName
     }
 }

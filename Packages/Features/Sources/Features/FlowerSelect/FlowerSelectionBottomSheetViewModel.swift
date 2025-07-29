@@ -5,11 +5,13 @@
 //  Created by Woody on 7/23/25.
 //
 
+import Dependencies
+import Domain
 import Foundation
 import SwiftUI
 
 @MainActor
-final class FlowerSelectionViewModel: ObservableObject {
+public final class FlowerSelectionViewModel: ObservableObject {
     @Published var flowers: [FlowerModel] = []
     @Published var selectedFlower: FlowerModel?
     @Published var isLoading = false
@@ -22,7 +24,10 @@ final class FlowerSelectionViewModel: ObservableObject {
         }
     }
 
-    init() {
+    private let fetchAllMarkersUseCase: FetchAllMarkersUseCase
+
+    init(fetchAllMarkersUseCase: FetchAllMarkersUseCase) {
+        self.fetchAllMarkersUseCase = fetchAllMarkersUseCase
         print("🌸 FlowerSelectionViewModel 초기화됨")
         loadFlowers()
     }
@@ -40,12 +45,40 @@ final class FlowerSelectionViewModel: ObservableObject {
         print("🌸 onFlowerSelected 콜백 호출 완료")
     }
 
-    private func loadFlowers() {
+    public func loadFlowers() {
         print("🌸 loadFlowers 호출됨")
         isLoading = true
-        // 실제로는 UseCase를 통해 데이터를 가져와야 함
-        flowers = FlowerModel.FlowerObjects()
-        print("🌸 꽃 데이터 로드 완료: \(flowers.count)개")
-        isLoading = false
+
+        Task {
+            do {
+                // 실제로는 UseCase를 통해 데이터를 가져와야 함
+                //                flowers = FlowerModel.FlowerObjects()
+                //                print("🌸 꽃 데이터 로드 완료: \(flowers.count)개")
+                //                isLoading = false
+                let markers = try await fetchAllMarkersUseCase()
+                
+                let flowerModels = markers.map { marker in
+                    FlowerModel(
+                        id: marker.id,
+                        name: marker.displayName,
+                        floriography: marker.floriography,
+                        thumbnailImageName: marker.smallThumbnailImageName,
+                        objectImageName: marker.imageName,
+                        thumbnailLarge: marker.largeThumbnailImageName
+                    )
+                }
+
+                await MainActor.run {
+                    self.flowers = flowerModels
+                    self.isLoading = false
+                    print("🌸 꽃 데이터 로드 완료: \(flowerModels.count)개")
+                }
+            } catch {
+                await MainActor.run {
+                    self.isLoading = false
+                    print("🌸 꽃 데이터 로드 실패: \(error)")
+                }
+            }
+        }
     }
 }

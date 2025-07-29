@@ -54,7 +54,7 @@ public struct SwiftUIView: View {
                 let albumVM = CustomAlbumViewModel()
                 let viewModel = RecordSaveSheetViewModel(
                     info: RecordSaveSheetInfo(
-                        flower: ARFlower(name: "Test Flower", modelName: "test", floriography: "Test", thumbnail: "test"),
+                        flower: ARFlower(name: "Test Flower", modelName: "test", floriography: "Test", thumbnail: "test", thumbnailLarge: ""),
                         location: .init(),
                         address: "Test Address"
                     ),

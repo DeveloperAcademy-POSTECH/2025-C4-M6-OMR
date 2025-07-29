@@ -28,6 +28,10 @@ public struct DefaultUserRepository: UserRepository, Sendable {
         print("[DefaultUserRepository] Returning default user with ID: \(userEntity.id)")
         return UserMapper.toDomain(entity: userEntity)
     }
+
+    public func initializeDefaultUser() async throws {
+        _ = try await getOrCreateDefaultUser()
+    }
 }
 
 enum UserDataError: Error {

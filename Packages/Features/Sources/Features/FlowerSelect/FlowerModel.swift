@@ -13,16 +13,20 @@ public final class FlowerModel {
     public let floriography: String
     public let thumbnailImageName: String
     public let objectImageName: String
+    public let thumbnailLarge: String
     
     public init(id: UUID = UUID(),
                 name: String,
                 floriography: String,
                 thumbnailImageName: String,
-                objectImageName: String) {
+                objectImageName: String,
+                thumbnailLarge: String
+    ) {
         self.id = id
         self.name = name
         self.floriography = floriography
         self.thumbnailImageName = thumbnailImageName
         self.objectImageName = objectImageName
+        self.thumbnailLarge = thumbnailLarge
     }
 }
