@@ -79,7 +79,7 @@ public struct MapView: View {
         } label: {
             Image(systemName: "chevron.left")
                 .font(.system(size: 24, weight: .bold))
-                .foregroundColor(DesignSystem.Color.Gray_white)
+                .foregroundColor(.white)
                 .padding(12)
         }
         .padding(.top, 8)

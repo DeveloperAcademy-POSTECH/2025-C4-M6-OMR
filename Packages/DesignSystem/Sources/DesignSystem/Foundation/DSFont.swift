@@ -58,10 +58,6 @@ public extension DesignSystem {
             public static var medium: SwiftUI.Font {
                 .custom(Font.medium, size: 16, relativeTo: .title3)
             }
-            
-            public static var bold: SwiftUI.Font {
-                .custom(Font.bold, size: 16, relativeTo: .title3)
-            }
         }
         
         // MARK: - Large Title

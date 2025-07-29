@@ -8,7 +8,6 @@
 import SwiftUI
 import MapKit
 import CoreLocation
-import DesignSystem
 
 // MARK: - Detent Enum
 
@@ -64,20 +63,19 @@ struct CustomModalView: View {
                 if sheetDetent == .low {
                     VStack(alignment: .leading) {
                         Text("내 꽃")
-                            .font(DesignSystem.Font.Title1.semibold)
+                            .font(
+                                Font.custom("Pretendard", size: 24)
+                                    .weight(.semibold)
+                            )
                             .padding(.bottom, 8)
                         
-                        if(totalCount == 0) {
-                            Text("기록한 꽃이 없습니다")
-                                .font(DesignSystem.Font.Title3.semibold)
-                                .foregroundColor(DesignSystem.Color.Gray_03)
-                        } else {
-                            Text("\(totalCount)개의 꽃")
-                                .font(DesignSystem.Font.Title3.semibold)
-                                .foregroundColor(DesignSystem.Color.Gray_03)
-                        }
-                            
-                            
+                        Text("\(totalCount)개의 꽃")
+                            .font(
+                                Font.custom("Pretendard", size: 16)
+                                    .weight(.semibold)
+                            )
+                            .foregroundColor(Color(red: 0.41, green: 0.49, blue: 0.6).opacity(0.72))
+                        
                         Spacer(minLength: 40)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -101,8 +99,11 @@ struct CustomModalView: View {
                                 .frame(height: 0)
                                 
                                 Text("내 꽃")
-                                    .font(DesignSystem.Font.NavigationTitle.bold)
-                                    .foregroundColor(DesignSystem.Color.Gray_black)
+                                    .font(
+                                        Font.custom("Pretendard", size: 26)
+                                            .weight(.bold)
+                                    )
+                                    .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.14))
                                     .frame(maxWidth: .infinity, alignment: .topLeading)
                                 
                                 
@@ -129,8 +130,11 @@ struct CustomModalView: View {
                                 
                                 //                                지도
                                 Text("지도")
-                                    .font(DesignSystem.Font.Title2.bold)
-                                    .foregroundColor(DesignSystem.Color.Gray_black)
+                                    .font(
+                                        Font.custom("Pretendard", size: 18)
+                                            .weight(.bold)
+                                    )
+                                    .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 
                                 if let location = locationManager.currentLocation {

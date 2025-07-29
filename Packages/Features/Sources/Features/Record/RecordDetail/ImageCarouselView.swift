@@ -7,7 +7,6 @@
 
 import SwiftUI
 import PhotosUI
-import DesignSystem
 
 struct ImageCarouselView: View {
     @ObservedObject var viewModel: RecordDetailViewModel
@@ -52,7 +51,7 @@ struct ImageCarouselView: View {
                 if images.count > 1 {
                     Text("+\(images.count - 1)")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(DesignSystem.Color.Gray_white)
+                        .foregroundColor(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
                         .background {
@@ -152,9 +151,9 @@ struct AddPhotoButton: View {
                 Text("사진 추가")
             }
             .font(.headline)
-            .foregroundColor(DesignSystem.Color.Gray_Text)
+            .foregroundColor(.secondary)
             .frame(width: size, height: size)
-            .background(DesignSystem.Color.Gray_BG)
+            .background(Color(.systemGray6))
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }

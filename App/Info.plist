@@ -2,9 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>사용자가 선택한 사진을 기록에 저장하기 위해 사진 접근 권한이 필요합니다.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>AR 기능을 사용하려면 카메라 권한이 필요합니다.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>현재 위치를 기반으로 AR 기록을 표시하고 저장하기 위해 위치 정보 접근 권한이 필요합니다.</string>
 	<key>UIAppFonts</key>
 	<array>
-		<string>PretendardVariable.ttf</string>
 		<string>Pretendard-Black.otf</string>
 		<string>Pretendard-Bold.otf</string>
 		<string>Pretendard-ExtraBold.otf</string>

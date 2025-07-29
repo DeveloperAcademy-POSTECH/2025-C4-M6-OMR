@@ -23,12 +23,12 @@ struct RecordCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(record.title)
                     .font(.body)
-                    .foregroundColor(DesignSystem.Color.Gray_black)
+                    .foregroundColor(.primary)
                     .lineLimit(1)
                 
                 Text(record.formattedDate)
                     .font(.caption)
-                    .foregroundColor(DesignSystem.Color.Gray_02)
+                    .foregroundColor(.secondary)
             }
             
             Spacer()
