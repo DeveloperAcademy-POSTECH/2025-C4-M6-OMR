@@ -16,19 +16,19 @@ public struct DefaultMarkerDataSource: Sendable {
                 id: UUID(),
                 displayName: "버터컵",
                 floriography: "순수한 마음, 매력",
-                imageName: "YellowFlower"
+                imageName: "Buttercup"
             ),
             RawMarkerData(
                 id: UUID(),
                 displayName: "화이트 데이지",
                 floriography: "천진난만, 희망",
-                imageName: "WhiteFlower"
+                imageName: "WhiteDaisy"
             ),
             RawMarkerData(
                 id: UUID(),
                 displayName: "핑크 데이지",
                 floriography: "사랑스러움",
-                imageName: "PinkFlower"
+                imageName: "PinkDaisy"
             ),
             RawMarkerData(
                 id: UUID(),
