@@ -120,7 +120,12 @@ public struct ARCameraView: View {
                     distance: viewModel.raycastDistance
                 )
                 
+                
+               
+              
+                
                 Spacer()
+                
                 ARStatusView(message: viewModel.statusMessage)
                 ARBottomBarView(
                     mode: viewModel.cameraMode,
@@ -130,7 +135,8 @@ public struct ARCameraView: View {
                     onCancelPlacement: viewModel.cancelPlacement,
                     onConfirmPlacement: viewModel.confirmPlacement,
                     onRepositionPlacement: viewModel.repositionPlacement,
-                    onSave: viewModel.requestSave
+                    onSave: viewModel.requestSave,
+                    status: viewModel.raycastStatus
                 )
             }
             .padding()

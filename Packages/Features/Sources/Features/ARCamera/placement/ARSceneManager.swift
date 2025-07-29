@@ -196,6 +196,28 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             .store(in: &cancellables)
     }
     
+    private func addLightingToFlower(_ flowerEntity: ModelEntity) {
+        // 🌞 방향성 조명: 햇빛 역할
+        let directionalLight = DirectionalLight()
+        directionalLight.light.intensity = 10000  // 더 강하게
+        directionalLight.light.color = UIColor(red: 1.0, green: 0.96, blue: 0.85, alpha: 1.0) // 햇빛 느낌의 따뜻한 색
+
+        // 햇빛이 약간 비스듬하게 비추는 느낌 (예: 남동쪽 방향에서)
+        directionalLight.look(at: [0, -1, -0.5], from: [0, 1, 0.5], relativeTo: flowerEntity)
+
+        // 🌤️ 부드러운 전체 조명: 그림자 어두움을 줄이기 위해 Ambient 느낌 추가
+        let ambientLight = PointLight()
+        ambientLight.light.intensity = 5000
+        ambientLight.light.color = UIColor(red: 1.0, green: 0.97, blue: 0.9, alpha: 1.0)
+        ambientLight.light.attenuationRadius = 2.0
+        ambientLight.position = [0, 0.5, 0]
+
+        // 조명들을 꽃에 추가
+        flowerEntity.addChild(directionalLight)
+        flowerEntity.addChild(ambientLight)
+    }
+
+    
     func confirmPlacement() {
         guard placementState.canConfirm,
               let arView = arView,
@@ -232,6 +254,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             
             // 꽃 엔티티에 회전 적용
             flowerClone.transform.rotation = rotation
+            addLightingToFlower(flowerClone)
             
             flowerAnchor.addChild(flowerClone)
             arView.scene.addAnchor(flowerAnchor)

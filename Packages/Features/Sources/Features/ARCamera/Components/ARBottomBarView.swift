@@ -7,6 +7,7 @@ import DesignSystem
 //
 import SwiftUI
 
+@available(iOS 18.0, *)
 struct ARBottomBarView: View {
     let mode: ARCameraMode
     let isPlacementConfirmed: Bool
@@ -16,6 +17,7 @@ struct ARBottomBarView: View {
     let onConfirmPlacement: () -> Void
     let onRepositionPlacement: () -> Void
     let onSave: () -> Void
+    let status: ARSceneManager.RaycastStatus
 
     var body: some View {
         switch mode {
@@ -43,6 +45,8 @@ struct ARBottomBarView: View {
                 ARBackWardButton(action: onRepositionPlacement)
             } else {
                 ARCheckButton(action: onConfirmPlacement)
+                    .disabled(!getStatus())
+                      .opacity(getStatus() ? 1.0 : 0.4) // 상태 표시를 위해 반투명 처리
             }
 
             if isPlacementConfirmed {
@@ -50,6 +54,19 @@ struct ARBottomBarView: View {
             } else {
                 Circle().fill(Color.clear).frame(width: 60, height: 60)
             }
+        }
+    }
+    
+    private func getStatus() -> Bool {
+        switch status {
+        case .idle:
+            return false
+        case .success:
+            return true
+        case .fallback:
+            return false
+        case .failed:
+            return true
         }
     }
 }
