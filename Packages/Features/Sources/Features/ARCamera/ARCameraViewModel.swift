@@ -7,6 +7,7 @@ import Domain
 import RealityKit
 import SwiftUI
 
+@available(iOS 18.0, *)
 @MainActor
 public class ARCameraViewModel: NSObject, ObservableObject {
 
@@ -17,6 +18,10 @@ public class ARCameraViewModel: NSObject, ObservableObject {
     @Published var isLoadingRecords: Bool = false
     @Published var isSavingRecord: Bool = false
     @Published var isFocused: Bool = false
+    
+    // MARK: - Real-time Heading Info
+    @Published var currentHeading: Double = 0.0
+    @Published var currentDirection: String = "북쪽"
 
     // MARK: - Public Properties
     let arSceneManager = ARSceneManager()
@@ -38,6 +43,16 @@ public class ARCameraViewModel: NSObject, ObservableObject {
 
     // MARK: - Placement State
     private var currentPlacement: ARPlacementData?
+    
+    // MARK: - Real-time Camera Orientation (추가)
+    @Published var currentPitch: Double = 0.0
+    @Published var currentPitchDirection: String = "수평"
+
+    // MARK: - RayCast Status (추가)
+    @Published var raycastStatus: ARSceneManager.RaycastStatus = .idle
+    @Published var raycastDistance: Float = 0.0
+    private var cancellables = Set<AnyCancellable>()
+
 
     // MARK: - Initialization
     init(
@@ -94,6 +109,32 @@ public class ARCameraViewModel: NSObject, ObservableObject {
         arSceneManager.onFocusStateChanged = { [weak self] isFocused in
             self?.isFocused = isFocused
         }
+        
+        arSceneManager.onHeadingUpdated = { [weak self] heading, direction in
+            self?.currentHeading = heading
+            self?.currentDirection = direction
+        }
+        
+        // setupARSceneManager() 메서드에 추가할 콜백
+        arSceneManager.onCameraOrientationUpdated = { [weak self] pitch, pitchDirection in
+            self?.currentPitch = pitch
+            self?.currentPitchDirection = pitchDirection
+        }
+        
+        // RayCast 상태 콜백 추가
+        arSceneManager.$raycastStatus
+                   .receive(on: DispatchQueue.main)
+                   .sink { [weak self] status in
+                       self?.raycastStatus = status
+                   }
+                   .store(in: &cancellables)
+               
+               arSceneManager.$lastRaycastDistance
+                   .receive(on: DispatchQueue.main)
+                   .sink { [weak self] distance in
+                       self?.raycastDistance = distance
+                   }
+                   .store(in: &cancellables)
     }
 
     // MARK: - Public Methods
@@ -147,20 +188,45 @@ public class ARCameraViewModel: NSObject, ObservableObject {
     }
 
     func confirmPlacement() {
+        print("🔥 confirmPlacement() 호출 시작")
         guard let placement = currentPlacement else {
             statusMessage = "배치할 객체가 없습니다."
+            print("❌ currentPlacement가 nil")
             return
         }
+        
+        print("🔥 현재 placement 위치: (\(String(format: "%.6f", placement.position.latitude)), \(String(format: "%.6f", placement.position.longitude)))")
 
+        // ✅ arSceneManager.confirmPlacement() 호출 전에 실제 위치 가져오기
+        print("🔥 getCurrentPlacementCoordinate() 호출 시도... (confirmPlacement 이전)")
+        let updatedPosition: ARCoordinate
+        if let actualCoordinate = arSceneManager.getCurrentPlacementCoordinate() {
+            updatedPosition = ARCoordinate(
+                latitude: actualCoordinate.latitude,
+                longitude: actualCoordinate.longitude
+            )
+            print("🌸 배치 위치 업데이트 성공: (\(String(format: "%.6f", actualCoordinate.latitude)), \(String(format: "%.6f", actualCoordinate.longitude)))")
+        } else {
+            // Fallback: 기존 위치 유지
+            updatedPosition = placement.position
+            print("⚠️ 실제 위치 가져오기 실패, 기존 위치 유지: (\(String(format: "%.6f", placement.position.latitude)), \(String(format: "%.6f", placement.position.longitude)))")
+        }
+        
+        print("🔥 최종 업데이트될 위치: (\(String(format: "%.6f", updatedPosition.latitude)), \(String(format: "%.6f", updatedPosition.longitude)))")
+
+        // ✅ 위치 정보 확보 후 confirmPlacement 호출
         arSceneManager.confirmPlacement()
+        print("🔥 arSceneManager.confirmPlacement() 완료")
+        
         currentPlacement = ARPlacementData(
             flower: placement.flower,
-            position: placement.position,
+            position: updatedPosition,
             isConfirmed: true,
             placedAt: Date()
         )
         isPlacementConfirmed = true
         statusMessage = "배치가 확정되었습니다. 저장 버튼을 눌러 기록을 저장하세요."
+        print("🔥 confirmPlacement() 완료")
     }
 
     func repositionPlacement() {
@@ -179,6 +245,8 @@ public class ARCameraViewModel: NSObject, ObservableObject {
     func requestSave() {
         guard let placement = currentPlacement else { return }
 
+        arSceneManager.pauseARSession()
+
         // 현재 위치 정보를 가져와서 주소로 변환
         fetchAddress(from: location) { [weak self] address in
             guard let self else { return }
@@ -192,12 +260,14 @@ public class ARCameraViewModel: NSObject, ObservableObject {
             self.bottomSheetCoordinator.showSaveSheet(
                 info: saveSheetInfo,
                 onSave: { [weak self] payload in
+                    self?.arSceneManager.resumeARSession()
                     self?.handleSaveRecord(
                         placement: placement,
                         payload: payload
                     )
                 },
                 onCancel: { [weak self] in
+                    self?.arSceneManager.resumeARSession()
                     self?.cancelPlacement()
                 }
             )
@@ -241,18 +311,19 @@ public class ARCameraViewModel: NSObject, ObservableObject {
         let arFlower = RecordMapper.toARFlower(from: flower)
         print("🌸 ARFlower 변환 완료: \(arFlower.name)")
 
-        // TODO: 실제 배치 위치 계산 로직 필요
-        let placementPosition = ARCoordinate(
+        // ✅ 임시 위치로 설정 (confirmPlacement에서 실제 배치 위치로 업데이트됨)
+        let temporaryPosition = ARCoordinate(
             latitude: location.coordinate.latitude,
             longitude: location.coordinate.longitude
         )
+        print("🌸 임시 위치 설정: (\(String(format: "%.6f", temporaryPosition.latitude)), \(String(format: "%.6f", temporaryPosition.longitude)))")
 
         currentPlacement = ARPlacementData(
             flower: arFlower,
-            position: placementPosition,
+            position: temporaryPosition,
             isConfirmed: false
         )
-        print("🌸 Placement 데이터 설정 완료")
+        print("🌸 Placement 데이터 설정 완료 (임시 위치)")
 
         arSceneManager.placeTemporaryObject(flower: arFlower) {
             [weak self] message in
@@ -331,10 +402,6 @@ public class ARCameraViewModel: NSObject, ObservableObject {
             return
         }
 
-//        print("🧭 사용자 위치: \(location.coordinate)")
-//        print("🧭 사용자 방향: \(userHeading.trueHeading)")
-//        print("📊 업데이트할 레코드 수: \(allRecords.count)")
-
         arSceneManager.updateSceneWithRecords(
             records: allRecords,
             userLocation: location,
@@ -411,6 +478,7 @@ public class ARCameraViewModel: NSObject, ObservableObject {
 }
 
 // MARK: - BottomSheetCoordinatorDelegate
+@available(iOS 18.0, *)
 extension ARCameraViewModel: BottomSheetCoordinatorDelegate {
     func didSelectFlower(_ flower: FlowerModel) {
         print(" didSelectFlower 호출됨: \(flower.name)")
@@ -423,6 +491,7 @@ extension ARCameraViewModel: BottomSheetCoordinatorDelegate {
 }
 
 // MARK: - CLLocationManagerDelegate
+@available(iOS 18.0, *)
 extension ARCameraViewModel: CLLocationManagerDelegate {
     public nonisolated func locationManager(
         _ manager: CLLocationManager,

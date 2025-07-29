@@ -34,13 +34,26 @@ enum RecordMapper {
             URL(string: image)
         }
 
+        // ✅ 최종 저장되는 위치 정보 로그
+        let finalLatitude = placementData.position.latitude
+        let finalLongitude = placementData.position.longitude
+        print("💾 =====  Record 저장 위치 정보 =====")
+        print("💾 최종 저장 좌표: (\(String(format: "%.6f", finalLatitude)), \(String(format: "%.6f", finalLongitude)))")
+        print("📱 사용자 현재 위치: (\(String(format: "%.6f", userLocation.coordinate.latitude)), \(String(format: "%.6f", userLocation.coordinate.longitude)))")
+        
+        // 거리 계산
+        let finalLocation = CLLocation(latitude: finalLatitude, longitude: finalLongitude)
+        let distance = userLocation.distance(from: finalLocation)
+        print("📏 사용자로부터 거리: \(String(format: "%.2f", distance))m")
+        print("===============================")
+
         return Domain.Record(
             id: UUID(),
             authorID: UUID(),  // TODO: Replace with actual author ID
             markerTypeID: placementData.flower.id,
             coordinate: Domain.Coordinate(
-                latitude: placementData.position.latitude,
-                longitude: placementData.position.longitude
+                latitude: finalLatitude,
+                longitude: finalLongitude
             ),
             address: Domain.Address(fullAddress: payload.description),
             date: placementData.placedAt,
