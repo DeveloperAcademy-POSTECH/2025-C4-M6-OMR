@@ -112,6 +112,19 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
                 return .systemRed
             }
         }
+        
+        var success : Bool {
+            switch self {
+            case .idle:
+                return false
+            case .success:
+                return true
+            case .fallback:
+                return false
+            case .failed:
+                return false
+            }
+        }
     }
     
     
@@ -217,7 +230,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         flowerEntity.addChild(ambientLight)
     }
 
-    
     func confirmPlacement() {
         guard placementState.canConfirm,
               let arView = arView,
