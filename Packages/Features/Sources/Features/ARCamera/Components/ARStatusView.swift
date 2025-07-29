@@ -17,6 +17,7 @@ struct ARStatusView: View {
             .cornerRadius(10)
             .padding(.bottom, 20)
             .animation(.easeInOut, value: message)
+            .multilineTextAlignment(.center)
     }
     
     private func formatMessage(_ message: String) -> some View {
