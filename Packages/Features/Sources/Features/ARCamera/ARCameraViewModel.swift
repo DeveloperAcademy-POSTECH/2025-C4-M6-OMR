@@ -7,6 +7,7 @@ import Domain
 import RealityKit
 import SwiftUI
 
+@available(iOS 18.0, *)
 @MainActor
 public class ARCameraViewModel: NSObject, ObservableObject {
 
@@ -17,6 +18,10 @@ public class ARCameraViewModel: NSObject, ObservableObject {
     @Published var isLoadingRecords: Bool = false
     @Published var isSavingRecord: Bool = false
     @Published var isFocused: Bool = false
+    
+    // MARK: - Real-time Heading Info
+    @Published var currentHeading: Double = 0.0
+    @Published var currentDirection: String = "북쪽"
 
     // MARK: - Public Properties
     let arSceneManager = ARSceneManager()
@@ -74,6 +79,11 @@ public class ARCameraViewModel: NSObject, ObservableObject {
 
         arSceneManager.onFocusStateChanged = { [weak self] isFocused in
             self?.isFocused = isFocused
+        }
+        
+        arSceneManager.onHeadingUpdated = { [weak self] heading, direction in
+            self?.currentHeading = heading
+            self?.currentDirection = direction
         }
     }
 
@@ -310,10 +320,6 @@ public class ARCameraViewModel: NSObject, ObservableObject {
             return
         }
 
-        print("🧭 사용자 위치: \(location.coordinate)")
-        print("🧭 사용자 방향: \(userHeading.trueHeading)")
-        print("📊 업데이트할 레코드 수: \(allRecords.count)")
-
         arSceneManager.updateSceneWithRecords(
             records: allRecords,
             userLocation: location,
@@ -390,6 +396,7 @@ public class ARCameraViewModel: NSObject, ObservableObject {
 }
 
 // MARK: - BottomSheetCoordinatorDelegate
+@available(iOS 18.0, *)
 extension ARCameraViewModel: BottomSheetCoordinatorDelegate {
     func didSelectFlower(_ flower: FlowerModel) {
         print(" didSelectFlower 호출됨: \(flower.name)")
@@ -402,6 +409,7 @@ extension ARCameraViewModel: BottomSheetCoordinatorDelegate {
 }
 
 // MARK: - CLLocationManagerDelegate
+@available(iOS 18.0, *)
 extension ARCameraViewModel: CLLocationManagerDelegate {
     public nonisolated func locationManager(
         _ manager: CLLocationManager,

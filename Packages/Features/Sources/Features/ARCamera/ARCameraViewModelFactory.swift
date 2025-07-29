@@ -6,6 +6,7 @@ import Foundation
 // MARK: - Factory Protocol
 @MainActor
 public protocol ARCameraViewModelFactory: Sendable {
+    @available(iOS 18.0, *)
     func create(
         location: CLLocation,
         bottomSheetCoordinator: BottomSheetCoordinator
@@ -14,6 +15,7 @@ public protocol ARCameraViewModelFactory: Sendable {
 
 // MARK: - Live Factory with Dependencies
 public struct LiveARCameraViewModelFactory: ARCameraViewModelFactory {
+    @available(iOS 18.0, *)
     @MainActor
     public func create(
         location: CLLocation,

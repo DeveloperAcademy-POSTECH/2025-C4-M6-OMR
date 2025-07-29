@@ -5,6 +5,7 @@ import RealityKit
 import SwiftUI
 import UIKit
 
+@available(iOS 18.0, *)
 @MainActor
 class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     
@@ -26,8 +27,12 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     private var placementPosition: SIMD3<Float>?
     private var currentFlowerAnchor: AnchorEntity? // 현재 배치된 꽃 앵커 추적
     
-    private var lastIndicatorUpdateTime: TimeInterval = 0
-    private let indicatorUpdateInterval: TimeInterval = 1.0 / 10.0 // 10 FPS로 최적화 (성능 향상)
+    // MARK: - Location Tracking
+    private var arSessionStartLocation: CLLocation? // AR 세션 시작 시 위치
+    private var arSessionStartHeading: CLHeading? // AR 세션 시작 시 헤딩
+    private var currentUserLocation: CLLocation? // 현재 사용자 위치
+    private var currentUserHeading: CLHeading? // 현재 사용자 헤딩
+    
     private let smootingFactor: Float = 0.2 // 스무딩 계수 조정 (부드러운 움직임)
     
     
@@ -35,6 +40,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     var onRecordTapped: ((ARRecordModel) -> Void)?
     var onPlacementStateChanged: ((ARPlacementState.Status) -> Void)?
     var onFocusStateChanged: ((Bool) -> Void)?
+    var onHeadingUpdated: ((Double, String) -> Void)? // 각도, 방향 문자열
     
     // MARK: - Setup
     func setup(arView: ARView) {
@@ -47,6 +53,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         
         arView.session.delegate = self
         setupGestures(on: arView)
+        setupSceneUpdateSubscription(arView: arView)
         
         let config = ARWorldTrackingConfiguration()
         config.planeDetection = [.horizontal]
@@ -60,6 +67,13 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         flower: ARFlower,
         statusUpdate: @escaping (String) -> Void
     ) {
+        // 기존 꽃이 있다면 제거 (새로운 꽃 선택 시)
+        if let arView = arView, let existingFlower = currentFlowerAnchor {
+            arView.scene.removeAnchor(existingFlower)
+            currentFlowerAnchor = nil
+            print("🗑️ 기존 꽃 제거됨 - 새 꽃 선택")
+        }
+        
         placementState.reset()
         statusUpdate("\(flower.name) 모델을 로드하는 중...")
         
@@ -96,7 +110,9 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             
             // 현재 꽃 앵커 추적 (재배치 시 제거용)
             self.currentFlowerAnchor = flowerAnchor
-            print("🌸 꽃 생성됨 - 위치: \(position)")
+            
+            // 배치된 좌표 정보 로그 출력
+            logPlacementCoordinates(arPosition: position)
         }
         
         placementState.confirm()
@@ -141,7 +157,24 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             return
         }
         
-        print("🔄 업데이트할 레코드 수: \(records.count)")
+        // 현재 사용자 위치 및 헤딩 업데이트
+        self.currentUserLocation = userLocation
+        self.currentUserHeading = userHeading
+        
+        // 실시간 헤딩 정보를 UI에 전달
+        let currentHeading = userHeading.trueHeading
+        let directionString = getDirectionStringFromHeading(currentHeading)
+        onHeadingUpdated?(currentHeading, directionString)
+        
+        // AR 세션 시작 위치와 헤딩이 없다면 현재 위치/헤딩으로 설정
+        if arSessionStartLocation == nil {
+            arSessionStartLocation = userLocation
+            arSessionStartHeading = userHeading
+            print("📍 AR 세션 시작 기준점 설정:")
+            print("   위치: (\(userLocation.coordinate.latitude), \(userLocation.coordinate.longitude))")
+            print("   헤딩: \(userHeading.trueHeading)° (자북 기준)")
+        }
+        
         
         removeObsoleteMarkers(currentRecords: records)
         
@@ -181,8 +214,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
                 createMarkerForRecord(record, at: arPosition, arView: arView)
             }
         }
-        
-        print("🎯 현재 씬의 마커 수: \(recordMarkers.count)")
     }
     
     private func removeObsoleteMarkers(currentRecords: [ARRecordModel]) {
@@ -259,31 +290,32 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             .eraseToAnyPublisher()
     }
     
-    // MARK: - ARSessionDelegate
-    nonisolated func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        Task { @MainActor in
+    // MARK: - Scene Update Subscription
+    private func setupSceneUpdateSubscription(arView: ARView) {
+        arView.scene.subscribe(to: SceneEvents.Update.self) { [weak self] event in
+            guard let self = self else { return }
+            
             // 배치 모드가 아니면 바로 종료 (성능 최적화)
             guard self.placementState.status == .placing,
                   let indicator = self.placementIndicator else { return }
             
-            let currentTime = frame.timestamp
-            guard currentTime - self.lastIndicatorUpdateTime > self.indicatorUpdateInterval else {
-                return
-            }
-            self.lastIndicatorUpdateTime = currentTime
-            
-            // Raycast 수행 및 위치 업데이트
+            // Raycast 수행 및 위치 업데이트 (매 렌더 프레임마다)
             if let targetPosition = self.getPlacementPositionFromRaycast() {
-                let newPosition = lerp(
-                    start: indicator.position,
-                    end: targetPosition,
-                    t: self.smootingFactor
+                // simd_mix 사용으로 GPU 최적화 (세 번째 파라미터를 SIMD3로 변환)
+                let newPosition = simd_mix(
+                    indicator.position,
+                    targetPosition,
+                    SIMD3<Float>(repeating: self.smootingFactor)
                 )
                 indicator.position = newPosition
                 self.placementPosition = newPosition
             }
         }
+        .store(in: &cancellables)
     }
+    
+    // MARK: - ARSessionDelegate
+    // SceneEvents.Update로 대체됨 - 필요시 다른 ARSession 이벤트만 처리
     // Preview flower 표시 코드 제거됨
     
     // MARK: - Placement Indicator Management
@@ -488,12 +520,118 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         return nil
     }
     
-    private func lerp(start: SIMD3<Float>, end: SIMD3<Float>, t: Float) -> SIMD3<Float> {
-        return start + (end - start) * t
+    // MARK: - Coordinate Conversion
+    private func convertARPositionToGeographic(arPosition: SIMD3<Float>) -> CLLocationCoordinate2D? {
+        guard let startLocation = arSessionStartLocation,
+              let startHeading = arSessionStartHeading else {
+            print("❌ AR 세션 시작 위치 또는 헤딩이 없습니다")
+            return nil
+        }
+        
+        // AR 세션 시작 시 사용자가 바라보던 방향 (자북 기준, 도 단위)
+        let sessionStartBearing = startHeading.trueHeading
+        
+        // AR 좌표를 실제 지리적 방향으로 회전 변환
+        // AR에서 -Z축은 사용자가 세션 시작 시 바라보던 방향
+        let bearingRadians = sessionStartBearing * .pi / 180.0
+        
+        // 회전 변환: AR 좌표계를 실제 지리적 방향에 정렬
+        let rotatedX = Double(arPosition.x) * cos(bearingRadians) - Double(-arPosition.z) * sin(bearingRadians)
+        let rotatedZ = Double(arPosition.x) * sin(bearingRadians) + Double(-arPosition.z) * cos(bearingRadians)
+        
+        // 지리적 좌표 변환 (회전된 좌표 사용)
+        // rotatedX: 동서 방향 (경도), rotatedZ: 남북 방향 (위도)
+        let deltaLatitude = rotatedZ / 111320.0  // 북쪽이 양수
+        let deltaLongitude = rotatedX / (111320.0 * cos(startLocation.coordinate.latitude * .pi / 180.0))  // 동쪽이 양수
+        
+        let newLatitude = startLocation.coordinate.latitude + deltaLatitude
+        let newLongitude = startLocation.coordinate.longitude + deltaLongitude
+        
+        print("🔄 좌표 변환 상세:")
+        print("   AR 원본: [\(arPosition.x), \(arPosition.y), \(arPosition.z)]")
+        print("   세션 시작 헤딩: \(sessionStartBearing)°")
+        print("   회전 후: X=\(String(format: "%.3f", rotatedX))m, Z=\(String(format: "%.3f", rotatedZ))m")
+        print("   위도 변화: \(String(format: "%.6f", deltaLatitude))°, 경도 변화: \(String(format: "%.6f", deltaLongitude))°")
+        
+        return CLLocationCoordinate2D(latitude: newLatitude, longitude: newLongitude)
+    }
+    
+    private func logPlacementCoordinates(arPosition: SIMD3<Float>) {
+        guard let placementCoordinate = convertARPositionToGeographic(arPosition: arPosition),
+              let currentLocation = currentUserLocation,
+              let currentHeading = currentUserHeading else {
+            print("❌ 좌표 변환 실패 또는 현재 위치/헤딩 없음")
+            return
+        }
+        
+        print("🌸 ===== 꽃 배치 좌표 정보 =====")
+        print("📍 AR 좌표: [\(String(format: "%.3f", arPosition.x)), \(String(format: "%.3f", arPosition.y)), \(String(format: "%.3f", arPosition.z))]")
+        print("🧭 현재 헤딩: \(String(format: "%.1f", currentHeading.trueHeading))° (자북 기준)")
+        print("🌍 배치된 곳: (\(String(format: "%.6f", placementCoordinate.latitude)), \(String(format: "%.6f", placementCoordinate.longitude)))")
+        print("📱 현재 내 위치: (\(String(format: "%.6f", currentLocation.coordinate.latitude)), \(String(format: "%.6f", currentLocation.coordinate.longitude)))")
+        
+        // 거리 계산
+        let placementLocation = CLLocation(latitude: placementCoordinate.latitude, longitude: placementCoordinate.longitude)
+        let distance = currentLocation.distance(from: placementLocation)
+        
+        print("📏 거리: \(String(format: "%.2f", distance))m")
+        print("🧭 방향: \(getDirectionString(from: currentLocation.coordinate, to: placementCoordinate))")
+        
+        // AR 좌표로부터의 직선 거리 비교
+        let arDistance = sqrt(arPosition.x * arPosition.x + arPosition.z * arPosition.z)
+        print("📐 AR 직선거리: \(String(format: "%.2f", arDistance))m (참고용)")
+        print("===============================")
+    }
+    
+    private func getDirectionString(from: CLLocationCoordinate2D, to: CLLocationCoordinate2D) -> String {
+        // 정확한 bearing 계산 (측지학적 방법)
+        let lat1Rad = from.latitude * .pi / 180.0
+        let lat2Rad = to.latitude * .pi / 180.0
+        let deltaLonRad = (to.longitude - from.longitude) * .pi / 180.0
+        
+        let y = sin(deltaLonRad) * cos(lat2Rad)
+        let x = cos(lat1Rad) * sin(lat2Rad) - sin(lat1Rad) * cos(lat2Rad) * cos(deltaLonRad)
+        
+        let bearingRad = atan2(y, x)
+        let bearingDeg = bearingRad * 180.0 / .pi
+        let normalizedBearing = bearingDeg < 0 ? bearingDeg + 360 : bearingDeg
+        
+        let directionString: String
+        switch normalizedBearing {
+        case 0..<22.5, 337.5...360: directionString = "북쪽"
+        case 22.5..<67.5: directionString = "북동쪽"
+        case 67.5..<112.5: directionString = "동쪽"
+        case 112.5..<157.5: directionString = "남동쪽"
+        case 157.5..<202.5: directionString = "남쪽"
+        case 202.5..<247.5: directionString = "남서쪽"
+        case 247.5..<292.5: directionString = "서쪽"
+        case 292.5..<337.5: directionString = "북서쪽"
+        default: directionString = "알 수 없음"
+        }
+        
+        return "\(directionString) (\(String(format: "%.1f", normalizedBearing))°)"
+    }
+    
+    // MARK: - Real-time Heading
+    private func getDirectionStringFromHeading(_ heading: Double) -> String {
+        let normalizedHeading = heading < 0 ? heading + 360 : heading
+        
+        switch normalizedHeading {
+        case 0..<22.5, 337.5...360: return "북쪽"
+        case 22.5..<67.5: return "북동쪽"
+        case 67.5..<112.5: return "동쪽"
+        case 112.5..<157.5: return "남동쪽"
+        case 157.5..<202.5: return "남쪽"
+        case 202.5..<247.5: return "남서쪽"
+        case 247.5..<292.5: return "서쪽"
+        case 292.5..<337.5: return "북서쪽"
+        default: return "알 수 없음"
+        }
     }
 }
 
 // MARK: - ARCameraManagerDelegate
+@available(iOS 18.0, *)
 extension ARSceneManager: ARCameraManagerDelegate {
     func cameraManagerDidUpdateFocusState(isFocused: Bool) {
         // 포커스 상태 변화를 상위 레이어에 전달

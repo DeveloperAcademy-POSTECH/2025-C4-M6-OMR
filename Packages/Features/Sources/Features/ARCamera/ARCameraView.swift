@@ -6,6 +6,7 @@ import Domain
 import RealityKit
 import SwiftUI
 
+@available(iOS 18.0, *)
 public struct ARCameraView: View {
     @StateObject private var viewModel: ARCameraViewModel
     @StateObject private var permissionsManager = PermissionsManager()
@@ -86,8 +87,12 @@ public struct ARCameraView: View {
 
     private var arContentView: some View {
         ZStack {
-            ARViewContainer(sceneManager: viewModel.arSceneManager)
-                .edgesIgnoringSafeArea(.all)
+            if #available(iOS 18.0, *) {
+                ARViewContainer(sceneManager: viewModel.arSceneManager)
+                    .edgesIgnoringSafeArea(.all)
+            } else {
+                // Fallback on earlier versions
+            }
 
             VStack {
                 ARTopBarView(
@@ -95,6 +100,13 @@ public struct ARCameraView: View {
                     onCancelPlacement: viewModel.cancelPlacement,
                     mode: viewModel.cameraMode
                 )
+                
+                // 실시간 헤딩 정보 표시
+                HeadingDebugView(
+                    heading: viewModel.currentHeading,
+                    direction: viewModel.currentDirection
+                )
+                
                 Spacer()
                 ARStatusView(message: viewModel.statusMessage)
                 ARBottomBarView(
@@ -114,6 +126,7 @@ public struct ARCameraView: View {
 }
 
 // MARK: - ARViewContainer
+@available(iOS 18.0, *)
 internal struct ARViewContainer: UIViewRepresentable {
     public let sceneManager: ARSceneManager
 
@@ -125,5 +138,43 @@ internal struct ARViewContainer: UIViewRepresentable {
 
     public func updateUIView(_ uiView: ARView, context: Context) {
         // ARView 업데이트가 필요한 경우 여기에 로직 추가
+    }
+}
+
+// MARK: - HeadingDebugView
+@available(iOS 18.0, *)
+internal struct HeadingDebugView: View {
+    let heading: Double
+    let direction: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // 나침반 아이콘
+            Image(systemName: "location.north.circle.fill")
+                .font(.title2)
+                .foregroundColor(.white)
+                .rotationEffect(.degrees(-heading))
+                .animation(.easeInOut(duration: 0.2), value: heading)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(String(format: "%.1f", heading))°")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                
+                Text(direction)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.8))
+            }
+            
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.black.opacity(0.7))
+        )
+        .padding(.horizontal)
     }
 }

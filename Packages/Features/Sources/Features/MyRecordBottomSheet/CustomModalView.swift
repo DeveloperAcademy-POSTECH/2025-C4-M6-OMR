@@ -325,7 +325,7 @@ struct BouncingControlledScrollView<Content: View>: UIViewRepresentable {
         self.isScrollEnabled = isScrollEnabled
     }
     
-    // 👇 1. Coordinator 생성
+    // 👇 1. Coordinator 생성
     func makeCoordinator() -> Coordinator {
         Coordinator()
     }
@@ -362,11 +362,11 @@ struct BouncingControlledScrollView<Content: View>: UIViewRepresentable {
         }
     }
     
-    // 👇 3. 최상단에서 음수 offset 무효화
+    // 👇 3. 최상단에서 음수 offset 무효화
     class Coordinator: NSObject, UIScrollViewDelegate {
         func scrollViewDidScroll(_ scrollView: UIScrollView) {
             if scrollView.contentOffset.y < 0 {
-                scrollView.contentOffset.y = 0            // 위로 끌면 즉시 0으로
+                scrollView.contentOffset.y = 0            // 위로 끌면 즉시 0으로
             }
         }
     }

@@ -50,13 +50,17 @@ public struct NavigationHostView: View {
             @Dependency(\.recordRepository) var recordRepo
             let _ = print("[DI] RecordRepository type: \(type(of: recordRepo))")
 
-            ToolbarHiddenWrapper(
-                content:
-                    ARCameraView(
-                        location: location,
-                        factory: LiveARCameraViewModelFactory()
-                    )
-            )
+            if #available(iOS 18.0, *) {
+                ToolbarHiddenWrapper(
+                    content:
+                        ARCameraView(
+                            location: location,
+                            factory: LiveARCameraViewModelFactory()
+                        )
+                )
+            } else {
+                // Fallback on earlier versions
+            }
 
         case .map:
             ToolbarHiddenWrapper(
