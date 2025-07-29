@@ -9,16 +9,16 @@ struct MyRecordBottomSheet: View {
     var body: some View {
         VStack(spacing: 12) {
             // Drag Indicator
-            RoundedRectangle(cornerRadius: 3)
-                .frame(width: 40, height: 5)
-                .foregroundColor(.gray.opacity(0.4))
-                .padding(.top, 8)
+            RoundedRectangle(cornerRadius: 10)
+                .frame(width: 36, height: 5)
+                .foregroundColor(.gray.opacity(0.5))
+                .padding(.top, 6)
                 .frame(maxWidth: .infinity, alignment: .center)
 
             VStack(alignment: .leading) {
                 Text("내 꽃")
                     .font(DesignSystem.Font.Title1.semibold)
-                    .padding(.bottom, 8)
+                    .padding(.bottom, 4)
 
                 Text("\(viewModel.allMotes.count)개의 꽃")
                     .font(DesignSystem.Font.Body.regular)
@@ -33,7 +33,7 @@ struct MyRecordBottomSheet: View {
         }
         .background(Color.white)
 
-        .cornerRadius(16)
+        .cornerRadius(10)
         .onAppear {
             viewModel.loadAllMotes()
         }
@@ -41,3 +41,4 @@ struct MyRecordBottomSheet: View {
     }
 
 }
+

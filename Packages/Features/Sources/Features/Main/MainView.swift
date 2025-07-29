@@ -44,6 +44,12 @@ struct MainView: View {
             )
             .onAppear {
                 viewModel.requestCurrentLocation()
+                UIFont.familyNames.forEach { family in
+                    print("Font Family: \(family)")
+                    for name in UIFont.fontNames(forFamilyName: family) {
+                        print("- \(name)")
+                    }
+                }
             }
             .onReceive(
                 viewModel.locationManager.$currentLocation.compactMap { $0 }
@@ -65,9 +71,9 @@ struct MainView: View {
 
 extension MainView {
     private var content: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             currentAddressView
-                .padding(.top, 100)
+                .padding(.top, 65)
 
             if viewModel.isLoading {
                 ProgressView()
@@ -78,7 +84,7 @@ extension MainView {
                 )
                 .font(DesignSystem.Font.Title2.semibold)
                 .foregroundColor(DesignSystem.Color.Gray_black)
-                .padding()
+                .padding(.bottom, 47)
             }
 
             ARButton(action: {
@@ -111,11 +117,12 @@ extension MainView {
 
     private var currentAddressView: some View {
         HStack(spacing: 8) {
-            Image(systemName: "paperplane.fill")
+            Image(systemName: "location")
                 .foregroundColor(DesignSystem.Color.Prime)
+                .font(.system(size: 12, weight: .semibold))
 
             Text(viewModel.currentAddress)
-                .font(.system(size: 14, weight: .medium))
+                .font(DesignSystem.Font.Headline.semibold)
                 .foregroundColor(DesignSystem.Color.Prime)
 
             Button(action: {
