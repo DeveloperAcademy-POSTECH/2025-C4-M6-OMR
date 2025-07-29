@@ -41,8 +41,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     nonisolated(unsafe) private var lastRaycastTime: TimeInterval = 0
     private let raycastInterval: TimeInterval = 1.0 / 20.0 // 20 FPS로 레이캐스트 주기 설정
     nonisolated(unsafe) private var targetPosition: SIMD3<Float>?
-    
-    
+
     // MARK: - Callbacks
     var onRecordTapped: ((ARRecordModel) -> Void)?
     var onPlacementStateChanged: ((ARPlacementState.Status) -> Void)?
@@ -77,7 +76,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         let velocity = distance / Float(deltaTime)
         
         // 빠른 움직임 감지 (초당 30cm 이상 이동)
-        return velocity > 0.3
+        return velocity > 0.1
     }
 
     
@@ -514,7 +513,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         if let result = estimatedResults.first {
             let position = extractPositionFromTransform(result.worldTransform)
             let distance = length(position - getCameraPosition())
-            raycastStatus = .success(distance: distance)
+            raycastStatus = .fallback(distance: distance)
             lastRaycastDistance = distance
             return position
         }
@@ -529,7 +528,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         if let result = anyPlaneResults.first {
             let position = extractPositionFromTransform(result.worldTransform)
             let distance = length(position - getCameraPosition())
-            raycastStatus = .success(distance: distance)
+            raycastStatus = .fallback(distance: distance)
             lastRaycastDistance = distance
             return position
         }
@@ -660,14 +659,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             return
         }
         
-        // 더 눈에 잘 띄는 인디케이터 생성 (펄스 애니메이션 추가)
-        let radius: Float = 0.10
-        let indicatorMesh = MeshResource.generateSphere(radius: radius)
-        
-        var material = UnlitMaterial(color: .red) // UnlitMaterial로 변경하여 더 선명하게
-        
-        let indicator = ModelEntity(mesh: indicatorMesh, materials: [material])
-        
         // 🎭 펄스 애니메이션 추가
         let scaleUp = Transform(scale: SIMD3<Float>(1.2, 1.2, 1.2), rotation: simd_quatf(), translation: SIMD3<Float>(0, 0, 0))
         let scaleDown = Transform(scale: SIMD3<Float>(0.8, 0.8, 0.8), rotation: simd_quatf(), translation: SIMD3<Float>(0, 0, 0))
@@ -686,18 +677,33 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         
         // 그림자 효과
         let shadowMesh = MeshResource.generatePlane(width: 0.25, depth: 0.25,cornerRadius: 50)
-        var shadowMaterial = UnlitMaterial(color: UIColor.red.withAlphaComponent(0.05))
+       
+  
+
+        var shadowMaterial = UnlitMaterial()
+        shadowMaterial.baseColor = MaterialColorParameter.color(UIColor.red.withAlphaComponent(0.3))
         
+     
+   
         let shadow = ModelEntity(mesh: shadowMesh, materials: [shadowMaterial])
         shadow.position.y = -0.12
         
+        let dashedCircle = makeDashedCircle(
+            radius: 0.125,              // 바깥 원의 반지름
+            dotCount: 24,               // 점 개수 (숫자가 작을수록 간격 넓음)
+            dotSize: 0.005,             // 점 하나의 크기 (반지름)
+            color: UIColor.white.withAlphaComponent(0.8) // 점 색상 및 투명도
+        )
+        dashedCircle.position.y = -0.12
+        
         if let resource = animationResource {
             shadow.playAnimation(resource.repeat())
+            dashedCircle.playAnimation(resource.repeat())
         }
         
         // 앵커 생성 및 설정
         let indicatorAnchor = AnchorEntity(world: finalPosition)
-//        indicatorAnchor.addChild(indicator)
+        indicatorAnchor.addChild(dashedCircle)
         indicatorAnchor.addChild(shadow)
         arView.scene.addAnchor(indicatorAnchor)
         
@@ -705,6 +711,29 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         
         print("✅ 개선된 인디케이터 생성: [\(String(format: "%.3f", finalPosition.x)), \(String(format: "%.3f", finalPosition.y)), \(String(format: "%.3f", finalPosition.z))]")
     }
+    
+    func makeDashedCircle(radius: Float, dotCount: Int, dotSize: Float, color: UIColor) -> Entity {
+        let parent = Entity()
+
+        for i in 0..<dotCount {
+            let angle = (Float(i) / Float(dotCount)) * 2 * Float.pi
+            let x = cos(angle) * radius
+            let z = sin(angle) * radius
+
+            let dotMesh = MeshResource.generateSphere(radius: dotSize)
+            var dotMaterial = UnlitMaterial()
+            dotMaterial.baseColor = .color(color)
+
+            let dotEntity = ModelEntity(mesh: dotMesh, materials: [dotMaterial])
+            dotEntity.position = [x, 0, z]
+
+            parent.addChild(dotEntity)
+        }
+
+        return parent
+    }
+    
+    
     private func removePlacementAnchor() {
         guard let arView = arView,
               let anchor = placementAnchor else { return }
