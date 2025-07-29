@@ -114,7 +114,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             return
         }
 
-        print("🔄 업데이트할 레코드 수: \(records.count)")
+//        print("🔄 업데이트할 레코드 수: \(records.count)")
 
         removeObsoleteMarkers(currentRecords: records)
 
@@ -213,7 +213,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         Entity.loadModelAsync(named: modelName, in: .module)
             .catch { error -> AnyPublisher<ModelEntity, Error> in
                 print("Failed to load model '\(modelName)': \(error)")
-                return Entity.loadModelAsync(named: "test_flower")
+                return Entity.loadModelAsync(named: modelName)
                     .eraseToAnyPublisher()
             }
             .catch { error -> AnyPublisher<ModelEntity, Error> in

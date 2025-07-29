@@ -11,29 +11,23 @@ import SwiftData
 @Model
 public final class MarkerEntity {
     @Attribute(.unique) public var id: UUID
-    public var name: String
+    public var displayName: String
     public var floriography: String
-    public var emotionTypeRaw: String
-    public var thumbnailImageName: String
-    public var objectImageName: String
+    public var imageName: String
 
     // 단방향: RecordEntity 에서만 MarkerEntity 를 참조
     @Relationship public var records: [RecordEntity]
 
     public init(
         id: UUID = .init(),
-        name: String,
+        displayName: String,
         floriography: String,
-        emotionTypeRaw: String,
-        thumbnailImageName: String,
-        objectImageName: String
+        imageName: String
     ) {
         self.id = id
-        self.name = name
+        self.displayName = displayName
         self.floriography = floriography
-        self.emotionTypeRaw = emotionTypeRaw
-        self.thumbnailImageName = thumbnailImageName
-        self.objectImageName = objectImageName
+        self.imageName = imageName
         self.records = []
     }
 }

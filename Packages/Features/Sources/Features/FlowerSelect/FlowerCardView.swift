@@ -14,7 +14,7 @@ struct FlowerCardView: View {
     
     var body: some View {
         VStack(spacing: 8) {
-            DesignSystemAssets.image(named: flower.objectImageName)
+            DesignSystemAssets.image(named: flower.thumbnailImageName)
                 .resizable()
                 .scaledToFit()
                 .frame(height: 70)

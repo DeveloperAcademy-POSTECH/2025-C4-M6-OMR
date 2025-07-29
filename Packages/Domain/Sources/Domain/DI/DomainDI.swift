@@ -23,6 +23,20 @@ public struct FetchMyRecordsUseCaseKey: DependencyKey, Sendable {
     public static let liveValue = FetchMyRecordsUseCase()
 }
 
+public struct SaveRecordUseCaseKey: DependencyKey, Sendable {
+    public static let liveValue = SaveRecordUseCase()
+}
+
+public struct InitializeAppDataUseCaseKey: DependencyKey, Sendable {
+    public static let liveValue = InitializeAppDataUseCase()
+}
+
+public struct FetchAllMarkersUseCaseKey: DependencyKey, Sendable {
+    public static let liveValue = FetchAllMarkersUseCase()
+}
+
+///
+
 public struct FetchPublicRecordsUseCaseKey: DependencyKey, Sendable {
     public static var liveValue: FetchPublicRecordsUseCase {
         @Dependency(\.recordRepository) var recordRepository
@@ -47,10 +61,6 @@ public struct FetchRecordDetailUseCaseKey: DependencyKey, Sendable {
             markerRepository: markerRepository
         )
     }
-}
-
-public struct SaveRecordUseCaseKey: DependencyKey, Sendable {
-    public static let liveValue = SaveRecordUseCase()
 }
 
 public struct DeleteRecordUseCaseKey: DependencyKey, Sendable {
@@ -114,6 +124,16 @@ extension DependencyValues {
         get { self[UpdateRecordUseCaseKey.self] }
         set { self[UpdateRecordUseCaseKey.self] = newValue }
     }
+
+    public var initializeAppDataUseCase: InitializeAppDataUseCase {
+        get { self[InitializeAppDataUseCaseKey.self] }
+        set { self[InitializeAppDataUseCaseKey.self] = newValue }
+    }
+
+    public var fetchAllMarkersUseCase: FetchAllMarkersUseCase {
+        get { self[FetchAllMarkersUseCaseKey.self] }
+        set { self[FetchAllMarkersUseCaseKey.self] = newValue }
+    }
 }
 
 // MARK: - Unimplemented Repository Placeholders
@@ -149,10 +169,25 @@ private struct UnimplementedUserRepository: UserRepository {
     func fetch(by id: UUID) async throws -> User {
         throw UnimplementedError()
     }
+
+    func getOrCreateDefaultUser() async throws -> User {
+        throw UnimplementedError()
+    }
+
+    func initializeDefaultUser() async throws {
+        throw UnimplementedError()
+    }
 }
 
 private struct UnimplementedMarkerRepository: MarkerRepository {
     func fetch(by id: UUID) async throws -> Marker {
+        throw UnimplementedError()
+    }
+
+    func initializeDefaultMarkers() async throws {
+        throw UnimplementedError()
+    }
+    func fetchAll() async throws -> [Marker] {
         throw UnimplementedError()
     }
 }

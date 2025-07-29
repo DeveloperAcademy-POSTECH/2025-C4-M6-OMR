@@ -9,4 +9,6 @@ import Foundation
 
 public protocol UserRepository: Sendable {
     func fetch(by id: UUID) async throws -> User
+    func getOrCreateDefaultUser() async throws -> User
+    func initializeDefaultUser() async throws
 }

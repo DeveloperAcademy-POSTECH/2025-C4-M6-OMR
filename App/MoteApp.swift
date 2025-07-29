@@ -5,6 +5,7 @@ import SwiftUI
 
 @main
 struct MoteApp: App {
+    
     init() {
         // Setup global dependencies at app launch
         AppDI.setup()

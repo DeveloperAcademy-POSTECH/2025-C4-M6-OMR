@@ -28,4 +28,21 @@ public struct UserLocalDatasource: Sendable {
         try await modelContext.insert(entity)
         try await modelContext.save()
     }
+
+    /// 기본 유저가 없으면 생성 후 반환
+    public func getOrCreateDefaultUser() async throws -> UserEntity {
+        if let existing = try await fetchUserEntity() {
+            print("[UserLocalDatasource] Found existing user: \(existing.id)")
+            return existing
+        }
+
+        let defaultUser = UserEntity(
+            id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
+            name: "Default User"
+        )
+
+        try await save(entity: defaultUser)
+        print("[UserLocalDatasource] Created default user with id: \(defaultUser.id)")
+        return defaultUser
+    }
 }

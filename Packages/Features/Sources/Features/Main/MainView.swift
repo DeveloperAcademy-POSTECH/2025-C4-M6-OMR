@@ -1,19 +1,33 @@
 import CoreLocation
 import DesignSystem
-import SwiftUI
 import Lottie
+import SwiftUI
+import Dependencies
 
 // MARK: - MainView
 
 struct MainView: View {
     @EnvironmentObject private var nav: NavigationViewModel
 
-    @StateObject private var viewModel = MainViewModel()
+    @StateObject private var viewModel: MainViewModel
 
     @State private var sheetDetent: Detent = .low
     @State private var isSheetVisible = true
     @State private var previousLocation: CLLocation? = nil
     private let updateThresholdMeters: Double = 20.0
+
+    public init(factory: MainViewModelFactory? = nil) {
+        // factory가 nil이면 Dependencies에서 가져오기
+        let actualFactory: MainViewModelFactory =
+            factory
+            ?? {
+                @Dependency(\.mainViewModelFactory) var defaultFactory:
+                    MainViewModelFactory
+                return defaultFactory
+            }()
+
+        _viewModel = StateObject(wrappedValue: actualFactory.create())
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -88,8 +102,7 @@ extension MainView {
                             longitude: location.coordinate.longitude
                         )
                     )
-                }
-                else {
+                } else {
                     print("안됨")
                 }
             })

@@ -22,6 +22,16 @@ public struct DefaultUserRepository: UserRepository, Sendable {
         }
         return UserMapper.toDomain(entity: userEntity)
     }
+    
+    public func getOrCreateDefaultUser() async throws -> User {
+        let userEntity = try await local.getOrCreateDefaultUser()
+        print("[DefaultUserRepository] Returning default user with ID: \(userEntity.id)")
+        return UserMapper.toDomain(entity: userEntity)
+    }
+
+    public func initializeDefaultUser() async throws {
+        _ = try await getOrCreateDefaultUser()
+    }
 }
 
 enum UserDataError: Error {

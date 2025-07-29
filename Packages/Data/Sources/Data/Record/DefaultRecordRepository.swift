@@ -95,7 +95,6 @@ public final class DefaultRecordRepository: RecordRepository {
             markerID: record.markerTypeID
         )
         try await local.save(model: model)
-//        try await remote.save(model: model)
     }
 
     /// Record 업데이트
