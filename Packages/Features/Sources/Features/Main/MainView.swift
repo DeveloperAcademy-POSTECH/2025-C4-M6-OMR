@@ -52,6 +52,7 @@ struct MainView: View {
                     handleLocationUpdate(location)
                     return
                 }
+                
 
                 previousLocation = location
                 viewModel.loadNearbyMotesMock(center: location, radius: 1000)
