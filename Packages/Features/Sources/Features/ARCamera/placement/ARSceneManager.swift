@@ -71,7 +71,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         if let arView = arView, let existingFlower = currentFlowerAnchor {
             arView.scene.removeAnchor(existingFlower)
             currentFlowerAnchor = nil
-            print("🗑️ 기존 꽃 제거됨 - 새 꽃 선택")
         }
         
         placementState.reset()
@@ -135,7 +134,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         if let arView = arView, let existingFlower = currentFlowerAnchor {
             arView.scene.removeAnchor(existingFlower)
             currentFlowerAnchor = nil
-            print("🗑️ 기존 꽃 제거됨 - 재배치 준비")
         }
         
         if let arView = arView {
@@ -153,7 +151,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         transformUseCase: TransformCoordinateUseCase
     ) {
         guard let arView = arView else {
-            print("❌ ARView가 없음 - updateSceneWithRecords 실패")
             return
         }
         
@@ -170,9 +167,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         if arSessionStartLocation == nil {
             arSessionStartLocation = userLocation
             arSessionStartHeading = userHeading
-            print("📍 AR 세션 시작 기준점 설정:")
-            print("   위치: (\(userLocation.coordinate.latitude), \(userLocation.coordinate.longitude))")
-            print("   헤딩: \(userHeading.trueHeading)° (자북 기준)")
         }
         
         
@@ -190,7 +184,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
                     from: userLocation.coordinate,
                     to: recordCoordinate
                 ) {
-                    print("⚠️ Record \(record.id) 범위 밖 - 스킵")
                     continue
                 }
                 
@@ -200,14 +193,11 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
                     targetCoordinate: recordCoordinate
                 )
                 
-                print("📍 Record \(record.id) 변환된 위치: \(arPosition)")
-                
                 // 추가 안전 검사
                 let distance = length(arPosition)
                 if distance > 100.0 || distance < 0.1 || arPosition.x.isNaN
                     || arPosition.z.isNaN
                 {
-                    print("⚠️ 비정상적인 위치값: \(distance)m - 스킵")
                     continue
                 }
                 
@@ -223,7 +213,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             if !currentRecordIds.contains(recordId) {
                 marker.parent?.removeFromParent()
                 recordMarkers.removeValue(forKey: recordId)
-                print("🗑️ 마커 제거: \(recordId)")
             }
         }
     }
@@ -233,8 +222,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         at position: SIMD3<Float>,
         arView: ARView
     ) {
-        print("🏗️ 마커 생성 시작: \(record.id)")
-        
         let marker = ARMarker(record: record)
         marker.generateCollisionShapes(recursive: true)
         let anchor = AnchorEntity(world: position)
@@ -246,17 +233,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         anchor.addChild(marker)
         arView.scene.addAnchor(anchor)
         recordMarkers[record.id] = marker
-        
-        print("✅ 마커 생성 완료: \(record.id) at \(position)")
-        print("🔧 마커 이름: \(marker.name), 앵커 이름: \(anchor.name)")
-        
-        // 2초 후 마커 상태 확인
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            print("🔍 마커 상태 확인: \(marker.debugInfo())")
-            print(
-                "🔍 마커 충돌 컴포넌트: \(marker.components[CollisionComponent.self] != nil ? "있음" : "없음")"
-            )
-        }
     }
     
     func deselectCurrentMarker() {
@@ -271,12 +247,10 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     {
         Entity.loadModelAsync(named: modelName, in: .module)
             .catch { error -> AnyPublisher<ModelEntity, Error> in
-                print("Failed to load model '\(modelName)': \(error)")
                 return Entity.loadModelAsync(named: "test_flower")
                     .eraseToAnyPublisher()
             }
             .catch { error -> AnyPublisher<ModelEntity, Error> in
-                print("Failed to load fallback model: \(error)")
                 let fallbackModel = ModelEntity(
                     mesh: .generateBox(size: 0.3),
                     materials: [
@@ -373,7 +347,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         }
         
         guard let finalPosition = position else {
-            print("❌ 배치 위치를 계산할 수 없습니다")
             return
         }
         
@@ -429,28 +402,20 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         // 가장 위에 있는 엔티티만으로도 충분할 수 있습니다.
         if let tappedEntity = arView.entity(at: location),
            let tappedMarker = findARMarker(in: tappedEntity) {
-            print("🎯 충돌 감지로 마커 발견: \(tappedMarker.record.id)")
             handleMarkerTap(tappedMarker)
         } else {
-            print("❌ 마커를 찾을 수 없음")
             handleEmptySpaceTap()
         }
     }
     
     private func handleMarkerTap(_ marker: ARMarker) {
-        print("🎯 handleMarkerTap called for marker: \(marker.record.id)")
-        
         if marker !== selectedMarker {
             // 이전 마커의 포커스 해제
             if let prevMarker = selectedMarker {
-                print(
-                    "🎯 Removing focus from previous marker: \(prevMarker.record.id)"
-                )
                 prevMarker.setFocus(isFocused: false)
             }
             
             // 새 마커에 포커스
-            print("🎯 Setting focus on new marker: \(marker.record.id)")
             marker.setFocus(isFocused: true)
             
             // 카메라 매니저에 포커스 요청
@@ -463,7 +428,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             selectedMarker = marker
         } else {
             // 같은 마커를 다시 탭한 경우 선택 해제
-            print("🎯 Deselecting marker: \(marker.record.id)")
             deselectCurrentMarker()
         }
     }
@@ -502,10 +466,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             }
         }
         
-        if let marker = nearestMarker {
-            print("📏 가장 가까운 마커 거리: \(nearestDistance)px")
-        }
-        
         return nearestMarker
     }
     
@@ -524,34 +484,39 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     private func convertARPositionToGeographic(arPosition: SIMD3<Float>) -> CLLocationCoordinate2D? {
         guard let startLocation = arSessionStartLocation,
               let startHeading = arSessionStartHeading else {
-            print("❌ AR 세션 시작 위치 또는 헤딩이 없습니다")
             return nil
         }
         
-        // AR 세션 시작 시 사용자가 바라보던 방향 (자북 기준, 도 단위)
+        // 더 정확한 지구 측지학적 상수들
+        let earthRadiusM = 6378137.0 // WGS84 지구 반지름 (미터)
+        let degToRad = Double.pi / 180.0
+        let radToDeg = 180.0 / Double.pi
+        
+        // AR 세션 시작 시 사용자가 바라보던 방향 (자북 기준)
         let sessionStartBearing = startHeading.trueHeading
+        let bearingRadians = sessionStartBearing * degToRad
         
-        // AR 좌표를 실제 지리적 방향으로 회전 변환
-        // AR에서 -Z축은 사용자가 세션 시작 시 바라보던 방향
-        let bearingRadians = sessionStartBearing * .pi / 180.0
+        // AR 좌표를 지리적 방향으로 정확히 회전 변환
+        // AR 좌표계: X(오른쪽), Y(위), Z(뒤) → 지리적: X(동), Y(북)
+        let arForward = Double(-arPosition.z)  // AR에서 앞쪽 (사용자가 바라보는 방향)
+        let arRight = Double(arPosition.x)     // AR에서 오른쪽
         
-        // 회전 변환: AR 좌표계를 실제 지리적 방향에 정렬
-        let rotatedX = Double(arPosition.x) * cos(bearingRadians) - Double(-arPosition.z) * sin(bearingRadians)
-        let rotatedZ = Double(arPosition.x) * sin(bearingRadians) + Double(-arPosition.z) * cos(bearingRadians)
+        // 회전 변환: 세션 시작 방향을 기준으로 실제 지리적 방향에 정렬
+        let eastOffset = arRight * cos(bearingRadians) + arForward * sin(bearingRadians)
+        let northOffset = -arRight * sin(bearingRadians) + arForward * cos(bearingRadians)
         
-        // 지리적 좌표 변환 (회전된 좌표 사용)
-        // rotatedX: 동서 방향 (경도), rotatedZ: 남북 방향 (위도)
-        let deltaLatitude = rotatedZ / 111320.0  // 북쪽이 양수
-        let deltaLongitude = rotatedX / (111320.0 * cos(startLocation.coordinate.latitude * .pi / 180.0))  // 동쪽이 양수
+        // 시작 위치의 위도 (라디안)
+        let startLatRad = startLocation.coordinate.latitude * degToRad
+        
+        // 정확한 지리적 좌표 변환
+        // 위도 변화: 북쪽 방향 오프셋을 위도 변화로 변환
+        let deltaLatitude = (northOffset / earthRadiusM) * radToDeg
+        
+        // 경도 변화: 동쪽 방향 오프셋을 경도 변화로 변환 (위도에 따른 보정 적용)
+        let deltaLongitude = (eastOffset / (earthRadiusM * cos(startLatRad))) * radToDeg
         
         let newLatitude = startLocation.coordinate.latitude + deltaLatitude
         let newLongitude = startLocation.coordinate.longitude + deltaLongitude
-        
-        print("🔄 좌표 변환 상세:")
-        print("   AR 원본: [\(arPosition.x), \(arPosition.y), \(arPosition.z)]")
-        print("   세션 시작 헤딩: \(sessionStartBearing)°")
-        print("   회전 후: X=\(String(format: "%.3f", rotatedX))m, Z=\(String(format: "%.3f", rotatedZ))m")
-        print("   위도 변화: \(String(format: "%.6f", deltaLatitude))°, 경도 변화: \(String(format: "%.6f", deltaLongitude))°")
         
         return CLLocationCoordinate2D(latitude: newLatitude, longitude: newLongitude)
     }
@@ -560,7 +525,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         guard let placementCoordinate = convertARPositionToGeographic(arPosition: arPosition),
               let currentLocation = currentUserLocation,
               let currentHeading = currentUserHeading else {
-            print("❌ 좌표 변환 실패 또는 현재 위치/헤딩 없음")
             return
         }
         
@@ -636,8 +600,6 @@ extension ARSceneManager: ARCameraManagerDelegate {
     func cameraManagerDidUpdateFocusState(isFocused: Bool) {
         // 포커스 상태 변화를 상위 레이어에 전달
         onFocusStateChanged?(isFocused)
-        
-        print("📷 Camera focus state changed: \(isFocused)")
     }
 }
 
