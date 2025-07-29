@@ -20,22 +20,19 @@ struct FlowerCardView: View {
                 .frame(height: 70)
             
             Text(flower.name)
-                .font(
-                    Font.custom("Pretendard", size: 14)
-                        .weight(.medium)
-                )
-                .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
+                .font(DesignSystem.Font.Headline.medium)
+                .foregroundColor(DesignSystem.Color.Gray_black)
             Text(flower.floriography)
-                .font(Font.custom("Pretendard", size: 12))
+                .font(DesignSystem.Font.Body.regular)
                 .multilineTextAlignment(.center)
-                .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
+                .foregroundColor(DesignSystem.Color.Gray_black)
                 .opacity(0.8)
         }
         .padding(.horizontal, 4)
         .padding(.top, 4)
         .padding(.bottom, 10)
         .frame(width: 86, height: 130, alignment: .center)
-        .background(isSelected ? Color(red: 0.94, green: 0.96, blue: 1) : Color.white)
+        .background(isSelected ? DesignSystem.Color.Gray_01 : Color.white)
         .cornerRadius(20)
     }
 }
