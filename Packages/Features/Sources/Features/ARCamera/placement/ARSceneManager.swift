@@ -4,6 +4,7 @@ import CoreLocation
 import RealityKit
 import SwiftUI
 import UIKit
+import simd
 
 @available(iOS 18.0, *)
 @MainActor
@@ -198,12 +199,41 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     func confirmPlacement() {
         guard placementState.canConfirm,
               let arView = arView,
-              let position = placementAnchor?.position else { return }
+              let position = placementAnchor?.position,
+              let currentFrame = arView.session.currentFrame else { return }
         
         // 인디케이터 위치에 꽃 생성
         if let entity = placementState.entity {
             let flowerAnchor = AnchorEntity(world: position)
-            flowerAnchor.addChild(entity.clone(recursive: true))
+            let flowerClone = entity.clone(recursive: true)
+            
+            // 🌸 카메라를 향하도록 꽃 회전 설정
+            let cameraPosition = extractPositionFromTransform(currentFrame.camera.transform)
+            let flowerPosition = position
+            
+            // 🌸 꽃 크기 조정
+            let distanceVector = cameraPosition - flowerPosition
+            let distance = simd_length(distanceVector)
+            let dynamicScale = max(0.3, min(0.5, 0.8 / distance)) //꽃 크기 조정 가능
+            flowerClone.transform.scale = SIMD3<Float>(dynamicScale, dynamicScale, dynamicScale)
+            
+            // 꽃에서 카메라로의 방향 벡터 계산
+            let directionToCamera = normalize(cameraPosition - flowerPosition)
+            
+            // Y축 회전만 적용 (꽃이 기울어지지 않고 수평면에서만 회전)
+            let horizontalDirection = normalize(SIMD3<Float>(directionToCamera.x, 0, directionToCamera.z))
+            
+            // 기본 앞 방향 (0, 0, -1)에서 목표 방향으로의 회전 계산
+            let defaultForward = SIMD3<Float>(0, 0, -1)
+            let angle = atan2(horizontalDirection.x, -horizontalDirection.z)
+            
+            // Y축 회전만 적용 (수평 회전만)
+            let rotation = simd_quatf(angle: angle, axis: SIMD3<Float>(0, 1, 0))
+            
+            // 꽃 엔티티에 회전 적용
+            flowerClone.transform.rotation = rotation
+            
+            flowerAnchor.addChild(flowerClone)
             arView.scene.addAnchor(flowerAnchor)
             
             // 현재 꽃 앵커 추적 (재배치 시 제거용)
@@ -211,6 +241,9 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             
             // 배치된 좌표 정보 로그 출력
             logPlacementCoordinates(arPosition: position)
+            
+            print("🌸 꽃이 카메라를 향하도록 회전 적용: \(String(format: "%.1f", angle * 180 / Float.pi))도")
+            print("🌸 꽃 크기 동적 조정: \(String(format: "%.1f", dynamicScale * 100))% (거리: \(String(format: "%.2f", distance))m - 멀어질수록 작아짐)")
         }
         
         placementState.confirm()
@@ -753,6 +786,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         removePlacementAnchor()
         onPlacementStateChanged?(placementState.status)
     }
+    
     // 카메라 위치 헬퍼 메서드 추가
     private func getCameraPosition() -> SIMD3<Float> {
         guard let arView = arView,
