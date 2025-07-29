@@ -55,7 +55,8 @@ enum RecordMapper {
             name: flowerModel.name,
             modelName: flowerModel.objectImageName,
             floriography: flowerModel.floriography,
-            thumbnail: flowerModel.thumbnailImageName
+            thumbnail: flowerModel.thumbnailImageName,
+            thumbnailLarge: flowerModel.thumbnailLarge
         )
     }
 }

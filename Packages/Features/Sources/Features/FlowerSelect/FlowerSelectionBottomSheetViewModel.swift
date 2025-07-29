@@ -57,25 +57,14 @@ public final class FlowerSelectionViewModel: ObservableObject {
                 //                isLoading = false
                 let markers = try await fetchAllMarkersUseCase()
                 
-                let flowerModel11 = markers.map { marker in
-                    print("- displayName: \(marker.displayName)")
-                    print("- floriography: \(marker.floriography)")
-                    print("- imageName: \(marker.imageName)")
-                    print(
-                        "- smallThumbnailImageName: \(marker.smallThumbnailImageName)"
-                    )
-                    print(
-                        "- largeThumbnailImageName: \(marker.largeThumbnailImageName)"
-                    )
-                }
-                
                 let flowerModels = markers.map { marker in
                     FlowerModel(
                         id: marker.id,
                         name: marker.displayName,
                         floriography: marker.floriography,
                         thumbnailImageName: marker.smallThumbnailImageName,
-                        objectImageName: marker.imageName
+                        objectImageName: marker.imageName,
+                        thumbnailLarge: marker.largeThumbnailImageName
                     )
                 }
 

@@ -7,19 +7,22 @@ public struct ARFlower: Identifiable, Equatable, Hashable {
     public let modelName: String  // realitykit에 사용할 모델 파일 이름
     public let floriography: String  // 꽃말 추가
     public let thumbnail: String
+    public let thumbnailLarge: String
 
     public init(
         id: UUID = UUID(),
         name: String,
         modelName: String,
         floriography: String,
-        thumbnail: String
+        thumbnail: String,
+        thumbnailLarge: String
     ) {
         self.id = id
         self.name = name
         self.modelName = modelName
         self.floriography = floriography
         self.thumbnail = thumbnail
+        self.thumbnailLarge = thumbnailLarge
     }
 
     public static func == (lhs: ARFlower, rhs: ARFlower) -> Bool {
