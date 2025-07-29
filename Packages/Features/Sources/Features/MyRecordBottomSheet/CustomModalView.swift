@@ -124,23 +124,25 @@ struct CustomModalView: View {
 
                                     }
                                 )
+                                .padding(.bottom, 16)
+
                                 
-                                VStack{}.frame(height: 20)
-                                
-                                //                                지도
-                                Text("지도")
-                                    .font(DesignSystem.Font.Title2.bold)
-                                    .foregroundColor(DesignSystem.Color.Gray_black)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                
-                                if let location = locationManager.currentLocation {
-                                    CurrentLocationMapView(location: location.coordinate) {
-                                        print("지도 눌림 – 맵뷰로 이동")
-                                        nav.push(.map)
+                                VStack (spacing: 8) {
+                                    Text("지도")
+                                        .font(DesignSystem.Font.Title2.bold)
+                                        .foregroundColor(DesignSystem.Color.Gray_black)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    
+                                    if let location = locationManager.currentLocation {
+                                        CurrentLocationMapView(location: location.coordinate) {
+                                            print("지도 눌림 – 맵뷰로 이동")
+                                            nav.push(.map)
+                                        }
                                     }
                                 }
+
                                 
-                                Spacer(minLength: 80)
+                                Spacer(minLength: 90)
                                
                                 
                                 

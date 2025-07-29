@@ -1,6 +1,7 @@
 import SwiftUI
 import MapKit
 import CoreLocation
+import DesignSystem
 
 struct CurrentLocationMapView: View {
     let location: CLLocationCoordinate2D
@@ -10,19 +11,16 @@ struct CurrentLocationMapView: View {
         let marker = LocationMarker(coordinate: location)
         
         ZStack {
-            // 지도
+            // 지도 (마커 없이)
             Map(
                 coordinateRegion: .constant(
                     MKCoordinateRegion(
                         center: location,
                         span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
                     )
-                ),
-                annotationItems: [marker]
-            ) { item in
-                MapMarker(coordinate: item.coordinate, tint: .blue)
-            }
-            .frame(height: 200)
+                )
+            )
+            .frame(height: 150)
             .cornerRadius(12)
             .allowsHitTesting(false)
             
@@ -43,7 +41,23 @@ struct CurrentLocationMapView: View {
                         )
                     )
             }
-            .frame(height: 200)
+            .frame(height: 150)
+            .cornerRadius(12)
+            .allowsHitTesting(false)
+            
+            // 그래픽 아이콘 (좌측 하단에 고정 배치)
+            VStack {
+                Spacer()
+                HStack {
+                    Image(systemName: "map.fill")
+                        .foregroundColor(DesignSystem.Color.Gray_white)
+                        .font(.system(size: 22, weight: .medium))
+                        .padding(.leading, 19)
+                        .padding(.bottom, 12)
+                    Spacer()
+                }
+            }
+            .frame(height: 150)
             .cornerRadius(12)
             .allowsHitTesting(false)
 
@@ -53,7 +67,7 @@ struct CurrentLocationMapView: View {
             }) {
                 Color.white.opacity(0.01) // invisible touch area
             }
-            .frame(height: 200)
+            .frame(height: 150)
             .cornerRadius(12)
             .buttonStyle(.plain)
         }
