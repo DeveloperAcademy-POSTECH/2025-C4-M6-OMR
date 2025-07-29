@@ -117,7 +117,7 @@ private struct SelectedFlowerCardView: View {
     var body: some View {
         VStack(spacing: 8) {
             HStack(spacing: 4) {
-                DesignSystemAssets.image(named: "flower_icon")
+                DesignSystemAssets.image(named: "MainFlower")
                     .resizable()
                     .frame(width: 16, height: 16)
                 
