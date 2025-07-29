@@ -195,6 +195,8 @@ public class ARCameraViewModel: NSObject, ObservableObject {
     func requestSave() {
         guard let placement = currentPlacement else { return }
 
+        arSceneManager.pauseARSession()
+
         // 현재 위치 정보를 가져와서 주소로 변환
         fetchAddress(from: location) { [weak self] address in
             guard let self else { return }
@@ -208,12 +210,14 @@ public class ARCameraViewModel: NSObject, ObservableObject {
             self.bottomSheetCoordinator.showSaveSheet(
                 info: saveSheetInfo,
                 onSave: { [weak self] payload in
+                    self?.arSceneManager.resumeARSession()
                     self?.handleSaveRecord(
                         placement: placement,
                         payload: payload
                     )
                 },
                 onCancel: { [weak self] in
+                    self?.arSceneManager.resumeARSession()
                     self?.cancelPlacement()
                 }
             )

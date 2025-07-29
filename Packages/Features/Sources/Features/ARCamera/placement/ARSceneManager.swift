@@ -22,9 +22,8 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     private var recordMarkers: [UUID: ARMarker] = [:]
     private var selectedMarker: ARMarker?
     
-    // MARK: - Placement Indicator
-    private var placementIndicator: ModelEntity?
-    private var placementPosition: SIMD3<Float>?
+    // MARK: - Placement Anchor (Single Source of Truth)
+    private var placementAnchor: AnchorEntity?
     private var currentFlowerAnchor: AnchorEntity? // 현재 배치된 꽃 앵커 추적
     
     // MARK: - Location Tracking
@@ -34,6 +33,11 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     private var currentUserHeading: CLHeading? // 현재 사용자 헤딩
     
     private let smootingFactor: Float = 0.2 // 스무딩 계수 조정 (부드러운 움직임)
+    
+    // MARK: - Raycast Throttling (Thread-Safe)
+    nonisolated(unsafe) private var lastRaycastTime: TimeInterval = 0
+    private let raycastInterval: TimeInterval = 1.0 / 20.0 // 20 FPS로 레이캐스트 주기 설정
+    nonisolated(unsafe) private var targetPosition: SIMD3<Float>?
     
     
     // MARK: - Callbacks
@@ -62,6 +66,32 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         
     }
     
+    // MARK: - AR Session Control
+    
+    /// AR 세션을 일시정지합니다 (배터리 절약)
+    func pauseARSession() {
+        guard let arView = arView else { return }
+        
+        print("⏸️ AR 세션 일시정지 - 배터리 절약 모드")
+        arView.session.pause()
+    }
+    
+    /// AR 세션을 재개하고 좌표계를 리셋합니다
+    func resumeARSession() {
+        guard let arView = arView else { return }
+        
+        print("▶️ AR 세션 재개 중...")
+        
+        // 좌표계 참조점 리셋 (pause/resume으로 인한 원점 변화 대응)
+        resetARSessionReference()
+        
+        let config = ARWorldTrackingConfiguration()
+        config.planeDetection = [.horizontal]
+        arView.session.run(config, options: [.resetTracking, .removeExistingAnchors])
+        
+        print("✅ AR 세션 재개 완료 - 새로운 좌표계로 설정")
+    }
+    
     // MARK: - Placement Logic
     func placeTemporaryObject(
         flower: ARFlower,
@@ -86,7 +116,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
                 },
                 receiveValue: { [weak self] modelEntity in
                     self?.placementState.setEntity(modelEntity, flower: flower)
-                    self?.createPlacementIndicator() // 인디케이터 생성
+                    self?.createPlacementAnchor() // 앵커 생성
                     self?.onPlacementStateChanged?(
                         self?.placementState.status ?? .idle
                     )
@@ -99,7 +129,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     func confirmPlacement() {
         guard placementState.canConfirm,
               let arView = arView,
-              let position = placementPosition else { return }
+              let position = placementAnchor?.position else { return }
         
         // 인디케이터 위치에 꽃 생성
         if let entity = placementState.entity {
@@ -115,7 +145,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         }
         
         placementState.confirm()
-        removePlacementIndicator() // 인디케이터 제거
+        removePlacementAnchor() // 앵커 제거
         onPlacementStateChanged?(placementState.status)
     }
     
@@ -124,12 +154,12 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     func getCurrentPlacementCoordinate() -> CLLocationCoordinate2D? {
         print("🚀 getCurrentPlacementCoordinate() 시작")
         
-        guard let position = placementPosition else {
-            print("⚠️ placementPosition이 없음")
+        guard let position = placementAnchor?.position else {
+            print("⚠️ placementAnchor가 없음")
             return nil
         }
         
-        print("🚀 placementPosition 존재: [\(String(format: "%.3f", position.x)), \(String(format: "%.3f", position.y)), \(String(format: "%.3f", position.z))]")
+        print("🚀 placementAnchor 존재: [\(String(format: "%.3f", position.x)), \(String(format: "%.3f", position.y)), \(String(format: "%.3f", position.z))]")
         
         // convertARPositionToGeographic 호출 전 필수 데이터 확인
         print("🚀 arSessionStartLocation: \(arSessionStartLocation != nil ? "존재" : "nil")")
@@ -157,7 +187,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         if let arView = arView {
             placementState.removeFrom(arView: arView)
         }
-        removePlacementIndicator() // 인디케이터 제거
+        removePlacementAnchor() // 앵커 제거
         onPlacementStateChanged?(placementState.status)
     }
     
@@ -173,7 +203,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         if let arView = arView {
             placementState.startRepositioning(in: arView)
         }
-        createPlacementIndicator() // 재배치 시 새로운 인디케이터 생성
+        createPlacementAnchor() // 재배치 시 새로운 인디케이터 생성
         onPlacementStateChanged?(placementState.status)
     }
     
@@ -305,26 +335,90 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             
             // 배치 모드가 아니면 바로 종료 (성능 최적화)
             guard self.placementState.status == .placing,
-                  let indicator = self.placementIndicator else { return }
+                  let anchor = self.placementAnchor else { return }
             
-            // Raycast 수행 및 위치 업데이트 (매 렌더 프레임마다)
-            if let targetPosition = self.getPlacementPositionFromRaycast() {
-                // simd_mix 사용으로 GPU 최적화 (세 번째 파라미터를 SIMD3로 변환)
+            // ✅ 가벼운 보간 연산만 수행 (매 프레임)
+            // 무거운 Raycast는 ARSessionDelegate에서 throttling하여 처리
+            if let target = self.targetPosition {
                 let newPosition = simd_mix(
-                    indicator.position,
-                    targetPosition,
+                    anchor.position,
+                    target,
                     SIMD3<Float>(repeating: self.smootingFactor)
                 )
-                indicator.position = newPosition
-                self.placementPosition = newPosition
+                anchor.position = newPosition
             }
         }
         .store(in: &cancellables)
     }
     
     // MARK: - ARSessionDelegate
-    // SceneEvents.Update로 대체됨 - 필요시 다른 ARSession 이벤트만 처리
-    // Preview flower 표시 코드 제거됨
+    
+    nonisolated func session(_ session: ARSession, didFailWithError error: Error) {
+        Task { @MainActor in
+            print("🚨 AR 세션 실패: \(error.localizedDescription)")
+            resetARSessionReference()
+        }
+    }
+    
+    nonisolated func session(_ session: ARSession, didUpdate frame: ARFrame) {
+        let currentTime = frame.timestamp
+        // 정해진 간격마다 한 번씩만 실행
+        guard currentTime - lastRaycastTime > raycastInterval else { return }
+        lastRaycastTime = currentTime
+        
+        // ✅ MainActor 컨텍스트에서 안전하게 레이캐스트 실행
+        Task { @MainActor in
+            // 배치 모드가 아니면 레이캐스트 수행하지 않음
+            guard self.placementState.status == .placing else { return }
+            
+            // 메인 스레드에서 레이캐스트 실행
+            let newTargetPosition = self.getPlacementPositionFromRaycast()
+            
+            // 계산된 목표 위치를 thread-safe 프로퍼티에 저장
+            self.targetPosition = newTargetPosition
+        }
+    }
+    
+    nonisolated func sessionWasInterrupted(_ session: ARSession) {
+        Task { @MainActor in
+            print("⚠️ AR 세션 중단됨 - 좌표계 참조점 초기화")
+            resetARSessionReference()
+        }
+    }
+    
+    nonisolated func sessionInterruptionEnded(_ session: ARSession) {
+        Task { @MainActor in
+            print("✅ AR 세션 재개됨 - 새로운 좌표계로 재설정 예정")
+            // 세션이 재개되면 다음 위치 업데이트 시 새로운 참조점이 설정됩니다
+        }
+    }
+    
+    nonisolated func session(_ session: ARSession, cameraDidChangeTrackingState camera: ARCamera) {
+        Task { @MainActor in
+            switch camera.trackingState {
+            case .limited(.relocalizing):
+                print("⚠️ AR 추적 상태: 재위치화 중 - 좌표계 참조점 초기화")
+                resetARSessionReference()
+            case .notAvailable:
+                print("❌ AR 추적 불가능 - 좌표계 참조점 초기화")
+                resetARSessionReference()
+            case .normal:
+                print("✅ AR 추적 정상")
+            case .limited(let reason):
+                print("⚠️ AR 추적 제한됨: \(reason)")
+                // 일시적인 제한은 참조점을 유지
+            @unknown default:
+                print("🤷‍♂️ 알 수 없는 AR 추적 상태")
+            }
+        }
+    }
+    
+    /// AR 세션 참조점을 초기화합니다
+    private func resetARSessionReference() {
+        arSessionStartLocation = nil
+        arSessionStartHeading = nil
+        print("🔄 AR 세션 참조점 초기화 완료")
+    }
     
     // MARK: - Placement Indicator Management
     
@@ -368,7 +462,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         return targetPosition
     }
     
-    private func createPlacementIndicator() {
+    private func createPlacementAnchor() {
         guard let arView = arView else { return }
         
         // 1차: Raycast 시도
@@ -385,7 +479,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         }
         
         // 기존 인디케이터 제거
-        removePlacementIndicator()
+        removePlacementAnchor()
         
         // 빨간색 원형 인디케이터 생성
         let radius: Float = 0.2
@@ -402,19 +496,17 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         indicatorAnchor.addChild(indicator)
         arView.scene.addAnchor(indicatorAnchor)
         
-        self.placementIndicator = indicator
-        self.placementPosition = finalPosition
+        self.placementAnchor = indicatorAnchor
         
         
     }
     
-    private func removePlacementIndicator() {
-        if let indicator = placementIndicator {
-            indicator.removeFromParent()
-            self.placementIndicator = nil
-            self.placementPosition = nil
-            
-        }
+    private func removePlacementAnchor() {
+        guard let arView = arView,
+              let anchor = placementAnchor else { return }
+        
+        arView.scene.removeAnchor(anchor)
+        self.placementAnchor = nil
     }
     
     // MARK: - Gesture Handling
