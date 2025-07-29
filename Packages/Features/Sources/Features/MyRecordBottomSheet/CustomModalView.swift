@@ -187,7 +187,7 @@ struct CustomModalView: View {
         .background(.white)
         .cornerRadius((isLarge && !isDragging) ? 0 : 20, corners: [.topLeft, .topRight])
         .cornerRadius((!isDraggingDown) ? 0 : 20, corners: [.topLeft, .topRight])
-        .shadow(radius: isLarge ? 0 : 10)
+        .shadow(color: .black.opacity(0.05), radius: 50, x: 0, y: 0)
         .offset(y: {
             let rawOffset = currentOffset + dragTranslation
             let screenHeight = UIScreen.main.bounds.height
