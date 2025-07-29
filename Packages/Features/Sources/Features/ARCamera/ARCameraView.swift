@@ -106,19 +106,29 @@ public struct ARCameraView: View {
                     heading: viewModel.currentHeading,
                     direction: viewModel.currentDirection
                 )
+                CameraPitchView(
+                               pitch: viewModel.currentPitch,
+                               direction: viewModel.currentPitchDirection
+                           )
+                
+                // RayCast 상태 표시 (추가)
+                                RaycastStatusView(
+                                    status: viewModel.raycastStatus,
+                                    distance: viewModel.raycastDistance
+                                )
                 
                 Spacer()
                 ARStatusView(message: viewModel.statusMessage)
                 ARBottomBarView(
-                    mode: viewModel.cameraMode,
-                    isPlacementConfirmed: viewModel.isPlacementConfirmed,
-                    onSwitchToPlacement: viewModel.switchToPlacementMode,
-                    onSelectFlower: viewModel.showFlowerSelectionSheet,
-                    onCancelPlacement: viewModel.cancelPlacement,
-                    onConfirmPlacement: viewModel.confirmPlacement,
-                    onRepositionPlacement: viewModel.repositionPlacement,
-                    onSave: viewModel.requestSave
-                )
+                                mode: viewModel.cameraMode,
+                                isPlacementConfirmed: viewModel.isPlacementConfirmed,
+                                onSwitchToPlacement: viewModel.switchToPlacementMode,
+                                onSelectFlower: viewModel.showFlowerSelectionSheet,
+                                onCancelPlacement: viewModel.cancelPlacement,
+                                onConfirmPlacement: viewModel.confirmPlacement,
+                                onRepositionPlacement: viewModel.repositionPlacement,
+                                onSave: viewModel.requestSave
+                            )
             }
             .padding()
         }
@@ -176,5 +186,116 @@ internal struct HeadingDebugView: View {
                 .fill(Color.black.opacity(0.7))
         )
         .padding(.horizontal)
+    }
+}
+
+@available(iOS 18.0, *)
+internal struct CameraPitchView: View {
+    let pitch: Double
+    let direction: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // 카메라 방향 아이콘
+            Image(systemName: getCameraIcon())
+                .font(.title2)
+                .foregroundColor(getIconColor())
+                .rotationEffect(.degrees(pitch))
+                .animation(.easeInOut(duration: 0.2), value: pitch)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(String(format: "%.1f", pitch))°")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                
+                Text(direction)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.8))
+            }
+            
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.black.opacity(0.7))
+        )
+        .padding(.horizontal)
+    }
+    
+    private func getCameraIcon() -> String {
+        switch pitch {
+        case 30...: return "camera.rotate"
+        case 10..<30: return "camera"
+        case -10..<10: return "camera.fill"
+        case -30..<(-10): return "camera"
+        case ..<(-30): return "camera.rotate"
+        default: return "camera.fill"
+        }
+    }
+    
+    private func getIconColor() -> Color {
+        switch pitch {
+        case 60...: return .cyan    // 하늘
+        case 30..<60: return .blue  // 위쪽
+        case 10..<30: return .green // 약간 위
+        case -10..<10: return .white // 수평
+        case -30..<(-10): return .yellow // 약간 아래
+        case -60..<(-30): return .orange // 아래쪽
+        case ..<(-60): return .red   // 바닥
+        default: return .white
+        }
+    }
+}
+
+// MARK: - RaycastStatusView (새로 추가)
+@available(iOS 18.0, *)
+internal struct RaycastStatusView: View {
+    let status: ARSceneManager.RaycastStatus
+    let distance: Float
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // RayCast 상태 아이콘
+            Image(systemName: getStatusIcon())
+                .font(.title2)
+                .foregroundColor(Color(status.color))
+                .animation(.easeInOut(duration: 0.3), value: status.displayText)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text("RayCast")
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.8))
+                
+                Text(status.displayText)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+            }
+            
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.black.opacity(0.7))
+        )
+        .padding(.horizontal)
+    }
+    
+    private func getStatusIcon() -> String {
+        switch status {
+        case .idle:
+            return "eye.slash"
+        case .success:
+            return "eye.fill"
+        case .fallback:
+            return "eye.trianglebadge.exclamationmark"
+        case .failed:
+            return "eye.slash.fill"
+        }
     }
 }

@@ -41,6 +41,16 @@ public class ARCameraViewModel: NSObject, ObservableObject {
 
     // MARK: - Placement State
     private var currentPlacement: ARPlacementData?
+    
+    // MARK: - Real-time Camera Orientation (추가)
+    @Published var currentPitch: Double = 0.0
+    @Published var currentPitchDirection: String = "수평"
+
+    // MARK: - RayCast Status (추가)
+    @Published var raycastStatus: ARSceneManager.RaycastStatus = .idle
+    @Published var raycastDistance: Float = 0.0
+    private var cancellables = Set<AnyCancellable>()
+
 
     // MARK: - Initialization
     init(
@@ -85,6 +95,27 @@ public class ARCameraViewModel: NSObject, ObservableObject {
             self?.currentHeading = heading
             self?.currentDirection = direction
         }
+        
+        // setupARSceneManager() 메서드에 추가할 콜백
+        arSceneManager.onCameraOrientationUpdated = { [weak self] pitch, pitchDirection in
+            self?.currentPitch = pitch
+            self?.currentPitchDirection = pitchDirection
+        }
+        
+        // RayCast 상태 콜백 추가
+        arSceneManager.$raycastStatus
+                   .receive(on: DispatchQueue.main)
+                   .sink { [weak self] status in
+                       self?.raycastStatus = status
+                   }
+                   .store(in: &cancellables)
+               
+               arSceneManager.$lastRaycastDistance
+                   .receive(on: DispatchQueue.main)
+                   .sink { [weak self] distance in
+                       self?.raycastDistance = distance
+                   }
+                   .store(in: &cancellables)
     }
 
     // MARK: - Public Methods

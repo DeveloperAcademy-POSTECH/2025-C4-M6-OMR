@@ -32,7 +32,10 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     private var currentUserLocation: CLLocation? // 현재 사용자 위치
     private var currentUserHeading: CLHeading? // 현재 사용자 헤딩
     
-    private let smootingFactor: Float = 0.2 // 스무딩 계수 조정 (부드러운 움직임)
+    
+    
+    private let smoothingFactor: Float = 0.15 // 더 부드러운 스무딩
+    private var isRaycastActive: Bool = false // raycast 활성화 상태
     
     // MARK: - Raycast Throttling (Thread-Safe)
     nonisolated(unsafe) private var lastRaycastTime: TimeInterval = 0
@@ -45,6 +48,73 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     var onPlacementStateChanged: ((ARPlacementState.Status) -> Void)?
     var onFocusStateChanged: ((Bool) -> Void)?
     var onHeadingUpdated: ((Double, String) -> Void)? // 각도, 방향 문자열
+    var onCameraOrientationUpdated: ((Double, String) -> Void)?
+    
+    
+    @Published var raycastStatus: RaycastStatus = .idle
+    @Published var lastRaycastDistance: Float = 0.0
+    
+    // 🆕 빠른 카메라 움직임 감지
+    private var lastCameraPosition: SIMD3<Float>?
+    private var lastUpdateTime: TimeInterval = 0
+
+    private func shouldForceUpdate(currentCameraPosition: SIMD3<Float>) -> Bool {
+        let currentTime = CACurrentMediaTime()
+        
+        defer {
+            lastCameraPosition = currentCameraPosition
+            lastUpdateTime = currentTime
+        }
+        
+        guard let lastPos = lastCameraPosition else {
+            return true // 첫 번째 업데이트
+        }
+        
+        let deltaTime = currentTime - lastUpdateTime
+        guard deltaTime > 0.016 else { return false } // 60fps 제한
+        
+        let distance = length(currentCameraPosition - lastPos)
+        let velocity = distance / Float(deltaTime)
+        
+        // 빠른 움직임 감지 (초당 30cm 이상 이동)
+        return velocity > 0.3
+    }
+
+    
+    enum RaycastStatus {
+        case idle
+        case success(distance: Float)
+        case fallback(distance: Float)
+        case failed
+        
+        var displayText: String {
+            switch self {
+            case .idle:
+                return "대기 중"
+            case .success(let distance):
+                return "평면 감지됨 (\(String(format: "%.2f", distance))m)"
+            case .fallback(let distance):
+                return "추정 위치 (\(String(format: "%.2f", distance))m)"
+            case .failed:
+                return "감지 실패"
+            }
+        }
+        
+        var color: UIColor {
+            switch self {
+            case .idle:
+                return .systemGray
+            case .success:
+                return .systemGreen
+            case .fallback:
+                return .systemOrange
+            case .failed:
+                return .systemRed
+            }
+        }
+    }
+    
+    
     
     // MARK: - Setup
     func setup(arView: ARView) {
@@ -120,7 +190,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
                     self?.onPlacementStateChanged?(
                         self?.placementState.status ?? .idle
                     )
-                    statusUpdate("🔴 빨간 인디케이터 위치에 \(flower.name)이(가) 배치됩니다. 확인 버튼을 눌러주세요.")
+                    statusUpdate("🔴 여기에 \(flower.name)를 심을까요?")
                 }
             )
             .store(in: &cancellables)
@@ -183,13 +253,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         return coordinate
     }
     
-    func removePlacementObject() {
-        if let arView = arView {
-            placementState.removeFrom(arView: arView)
-        }
-        removePlacementAnchor() // 앵커 제거
-        onPlacementStateChanged?(placementState.status)
-    }
+    
     
     func startRepositioning() {
         guard placementState.status == .confirmed else { return }
@@ -328,28 +392,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             .eraseToAnyPublisher()
     }
     
-    // MARK: - Scene Update Subscription
-    private func setupSceneUpdateSubscription(arView: ARView) {
-        arView.scene.subscribe(to: SceneEvents.Update.self) { [weak self] event in
-            guard let self = self else { return }
-            
-            // 배치 모드가 아니면 바로 종료 (성능 최적화)
-            guard self.placementState.status == .placing,
-                  let anchor = self.placementAnchor else { return }
-            
-            // ✅ 가벼운 보간 연산만 수행 (매 프레임)
-            // 무거운 Raycast는 ARSessionDelegate에서 throttling하여 처리
-            if let target = self.targetPosition {
-                let newPosition = simd_mix(
-                    anchor.position,
-                    target,
-                    SIMD3<Float>(repeating: self.smootingFactor)
-                )
-                anchor.position = newPosition
-            }
-        }
-        .store(in: &cancellables)
-    }
     
     // MARK: - ARSessionDelegate
     
@@ -360,24 +402,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         }
     }
     
-    nonisolated func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        let currentTime = frame.timestamp
-        // 정해진 간격마다 한 번씩만 실행
-        guard currentTime - lastRaycastTime > raycastInterval else { return }
-        lastRaycastTime = currentTime
-        
-        // ✅ MainActor 컨텍스트에서 안전하게 레이캐스트 실행
-        Task { @MainActor in
-            // 배치 모드가 아니면 레이캐스트 수행하지 않음
-            guard self.placementState.status == .placing else { return }
-            
-            // 메인 스레드에서 레이캐스트 실행
-            let newTargetPosition = self.getPlacementPositionFromRaycast()
-            
-            // 계산된 목표 위치를 thread-safe 프로퍼티에 저장
-            self.targetPosition = newTargetPosition
-        }
-    }
+    
     
     nonisolated func sessionWasInterrupted(_ session: ARSession) {
         Task { @MainActor in
@@ -419,94 +444,297 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         arSessionStartHeading = nil
         print("🔄 AR 세션 참조점 초기화 완료")
     }
+    // MARK: - Scene Update Subscription
+    private func setupSceneUpdateSubscription(arView: ARView) {
+        arView.scene.subscribe(to: SceneEvents.Update.self) { [weak self] event in
+            guard let self = self else { return }
+            
+            // 배치 모드가 아니면 업데이트 중단
+            guard self.placementState.status == .placing,
+                  let anchor = self.placementAnchor else {
+                return
+            }
+            
+            // 💡 핵심 개선: 더 적극적인 위치 업데이트
+            if let newPosition = self.getPlacementPositionFromRaycast() {
+                // raycast 성공 시 즉시 업데이트
+                anchor.position = newPosition
+            } else {
+                // raycast 실패 시에도 fallback으로 즉시 업데이트
+                if let fallbackPosition = self.getFallbackPlacementPosition() {
+                    anchor.position = fallbackPosition
+                } else {
+                    // 최후의 수단: 카메라 앞 고정 거리에 배치
+                    if let emergencyPosition = self.getEmergencyPlacementPosition() {
+                        anchor.position = emergencyPosition
+                    }
+                }
+            }
+        }
+        .store(in: &cancellables)
+    }
     
-    // MARK: - Placement Indicator Management
-    
+    // MARK: - Placement Position Methods (수정된 버전)
     private func getPlacementPositionFromRaycast() -> SIMD3<Float>? {
-        guard let arView = arView else { return nil }
+        guard let arView = arView else {
+            raycastStatus = .failed
+            return nil
+        }
         
-        // 화면 중앙에서 레이캐스트 수행
-        let screenCenter = arView.center
-        let raycastResults = arView.raycast(
+        // 화면 중앙 좌표 정확히 계산
+        let screenCenter = CGPoint(
+            x: arView.bounds.midX,
+            y: arView.bounds.midY
+        )
+        
+        // 🎯 1단계: 기존 평면 지오메트리로 raycast
+        let existingPlaneResults = arView.raycast(
             from: screenCenter,
-            allowing: .estimatedPlane, // 추정된 평면도 포함
+            allowing: .existingPlaneGeometry,
             alignment: .horizontal
         )
         
-        // 가장 먼저 감지된 결과의 월드 좌표를 반환
-        return raycastResults.first?.worldTransform.columns.3.xyz
+        if let result = existingPlaneResults.first {
+            let position = extractPositionFromTransform(result.worldTransform)
+            let distance = length(position - getCameraPosition())
+            raycastStatus = .success(distance: distance)
+            lastRaycastDistance = distance
+            return position
+        }
+        
+        // 🎯 2단계: 추정 평면으로 raycast
+        let estimatedResults = arView.raycast(
+            from: screenCenter,
+            allowing: .estimatedPlane,
+            alignment: .horizontal
+        )
+        
+        if let result = estimatedResults.first {
+            let position = extractPositionFromTransform(result.worldTransform)
+            let distance = length(position - getCameraPosition())
+            raycastStatus = .success(distance: distance)
+            lastRaycastDistance = distance
+            return position
+        }
+        
+        // 🎯 3단계: 더 관대한 raycast (수직 평면도 포함)
+        let anyPlaneResults = arView.raycast(
+            from: screenCenter,
+            allowing: .estimatedPlane,
+            alignment: .any
+        )
+        
+        if let result = anyPlaneResults.first {
+            let position = extractPositionFromTransform(result.worldTransform)
+            let distance = length(position - getCameraPosition())
+            raycastStatus = .success(distance: distance)
+            lastRaycastDistance = distance
+            return position
+        }
+        
+        raycastStatus = .failed
+        return nil
     }
     
     private func getFallbackPlacementPosition() -> SIMD3<Float>? {
+        guard let arView = arView,
+              let currentFrame = arView.session.currentFrame else {
+            raycastStatus = .failed
+            return nil
+        }
+        
+        let cameraTransform = currentFrame.camera.transform
+        let cameraPosition = extractPositionFromTransform(cameraTransform)
+        let forwardDirection = extractForwardFromTransform(cameraTransform)
+        
+        // 🎯 더 똑똑한 fallback: 카메라 각도에 따라 거리 조절
+        let pitch = asin(forwardDirection.y) * 180.0 / Float.pi
+        
+        // 카메라가 아래를 향할수록 가까이, 위를 향할수록 멀리
+        let basePlacementDistance: Float = 1.5
+        let distanceMultiplier: Float
+        
+        switch pitch {
+        case ..<(-45): // 많이 아래를 향함
+            distanceMultiplier = 0.7
+        case (-45)..<(-15): // 약간 아래를 향함
+            distanceMultiplier = 0.85
+        case (-15)...(15): // 거의 수평
+            distanceMultiplier = 1.0
+        case 15..<45: // 약간 위를 향함
+            distanceMultiplier = 1.3
+        default: // 많이 위를 향함
+            distanceMultiplier = 1.8
+        }
+        
+        let placementDistance = basePlacementDistance * distanceMultiplier
+        
+        // 수평 방향으로만 이동
+        let horizontalForward = normalize(SIMD3<Float>(forwardDirection.x, 0, forwardDirection.z))
+        let targetPosition = cameraPosition + (horizontalForward * placementDistance)
+        
+        // Y 위치는 카메라 높이에서 적절히 조절
+        let adjustedPosition = SIMD3<Float>(
+            targetPosition.x,
+            cameraPosition.y - 0.3, // 30cm 아래
+            targetPosition.z
+        )
+        
+        raycastStatus = .fallback(distance: placementDistance)
+        lastRaycastDistance = placementDistance
+        
+        return adjustedPosition
+    }
+    private func getEmergencyPlacementPosition() -> SIMD3<Float>? {
         guard let arView = arView,
               let currentFrame = arView.session.currentFrame else {
             return nil
         }
         
         let cameraTransform = currentFrame.camera.transform
-        let cameraPosition = SIMD3<Float>(
-            cameraTransform.columns.3.x,
-            cameraTransform.columns.3.y,
-            cameraTransform.columns.3.z
+        let cameraPosition = extractPositionFromTransform(cameraTransform)
+        let forwardDirection = extractForwardFromTransform(cameraTransform)
+        
+        // 카메라 정면 1미터에 무조건 배치 (절대 실패하지 않음)
+        let emergencyDistance: Float = 1.0
+        let horizontalForward = normalize(SIMD3<Float>(forwardDirection.x, 0, forwardDirection.z))
+        
+        let emergencyPosition = SIMD3<Float>(
+            cameraPosition.x + horizontalForward.x * emergencyDistance,
+            cameraPosition.y - 0.5, // 50cm 아래
+            cameraPosition.z + horizontalForward.z * emergencyDistance
         )
         
-        let forwardDirection = -SIMD3<Float>(
-            cameraTransform.columns.2.x,
-            cameraTransform.columns.2.y,
-            cameraTransform.columns.2.z
-        )
+        raycastStatus = .fallback(distance: emergencyDistance)
+        lastRaycastDistance = emergencyDistance
         
-        let placementDistance: Float = 3.0 // 3m 앞 고정 거리
-        let targetPosition = cameraPosition + (normalize(forwardDirection) * placementDistance)
+        print("🚨 Emergency placement at: [\(String(format: "%.3f", emergencyPosition.x)), \(String(format: "%.3f", emergencyPosition.y)), \(String(format: "%.3f", emergencyPosition.z))]")
         
-        return targetPosition
+        return emergencyPosition
     }
+    private func extractPositionFromTransform(_ transform: simd_float4x4) -> SIMD3<Float> {
+        return SIMD3<Float>(
+            transform.columns.3.x,
+            transform.columns.3.y,
+            transform.columns.3.z
+        )
+    }
+
+    private func extractForwardFromTransform(_ transform: simd_float4x4) -> SIMD3<Float> {
+        return -SIMD3<Float>(
+            transform.columns.2.x,
+            transform.columns.2.y,
+            transform.columns.2.z
+        )
+    }
+
     
+    
+    // MARK: - Placement Anchor Creation (수정된 버전)
     private func createPlacementAnchor() {
         guard let arView = arView else { return }
-        
-        // 1차: Raycast 시도
-        var position = getPlacementPositionFromRaycast()
-        
-        // 2차: Fallback - 카메라 앞 3m 고정 거리
-        if position == nil {
-            position = getFallbackPlacementPosition()
-            
-        }
-        
-        guard let finalPosition = position else {
-            return
-        }
         
         // 기존 인디케이터 제거
         removePlacementAnchor()
         
-        // 빨간색 원형 인디케이터 생성
-        let radius: Float = 0.2
+        // 💡 더 적극적인 초기 위치 결정
+        var position: SIMD3<Float>?
+        
+        // 1차 시도: raycast
+        position = getPlacementPositionFromRaycast()
+        
+        // 2차 시도: fallback
+        if position == nil {
+            position = getFallbackPlacementPosition()
+        }
+        
+        // 3차 시도: emergency (절대 실패하지 않음)
+        if position == nil {
+            position = getEmergencyPlacementPosition()
+        }
+        
+        guard let finalPosition = position else {
+            print("❌ 모든 배치 방법 실패")
+            return
+        }
+        
+        // 더 눈에 잘 띄는 인디케이터 생성 (펄스 애니메이션 추가)
+        let radius: Float = 0.10
         let indicatorMesh = MeshResource.generateSphere(radius: radius)
         
-        var material = SimpleMaterial()
-        material.color = .init(tint: UIColor.red)
-        material.roughness = 0.0
-        material.metallic = 0.0
+        var material = UnlitMaterial(color: .red) // UnlitMaterial로 변경하여 더 선명하게
         
         let indicator = ModelEntity(mesh: indicatorMesh, materials: [material])
         
+        // 🎭 펄스 애니메이션 추가
+        let scaleUp = Transform(scale: SIMD3<Float>(1.2, 1.2, 1.2), rotation: simd_quatf(), translation: SIMD3<Float>(0, 0, 0))
+        let scaleDown = Transform(scale: SIMD3<Float>(0.8, 0.8, 0.8), rotation: simd_quatf(), translation: SIMD3<Float>(0, 0, 0))
+        
+        let scaleAnimation = FromToByAnimation(
+            name: "pulse",
+            from: scaleDown,
+            to: scaleUp,
+            duration: 0.8,
+            timing: .easeInOut,
+            isAdditive: false
+        )
+        
+        let animationResource = try? AnimationResource.generate(with: scaleAnimation)
+       
+        
+        // 그림자 효과
+        let shadowMesh = MeshResource.generatePlane(width: 0.25, depth: 0.25,cornerRadius: 50)
+        var shadowMaterial = UnlitMaterial(color: UIColor.red.withAlphaComponent(0.05))
+        
+        let shadow = ModelEntity(mesh: shadowMesh, materials: [shadowMaterial])
+        shadow.position.y = -0.12
+        
+        if let resource = animationResource {
+            shadow.playAnimation(resource.repeat())
+        }
+        
+        // 앵커 생성 및 설정
         let indicatorAnchor = AnchorEntity(world: finalPosition)
-        indicatorAnchor.addChild(indicator)
+//        indicatorAnchor.addChild(indicator)
+        indicatorAnchor.addChild(shadow)
         arView.scene.addAnchor(indicatorAnchor)
         
         self.placementAnchor = indicatorAnchor
         
-        
+        print("✅ 개선된 인디케이터 생성: [\(String(format: "%.3f", finalPosition.x)), \(String(format: "%.3f", finalPosition.y)), \(String(format: "%.3f", finalPosition.z))]")
     }
-    
     private func removePlacementAnchor() {
         guard let arView = arView,
               let anchor = placementAnchor else { return }
         
         arView.scene.removeAnchor(anchor)
         self.placementAnchor = nil
+        self.isRaycastActive = false // raycast 비활성화
+        raycastStatus = .idle
+        
+        print("🗑️ 인디케이터 제거 완료")
+    }
+    
+    func removePlacementObject() {
+        if let arView = arView {
+            placementState.removeFrom(arView: arView)
+        }
+        removePlacementAnchor()
+        onPlacementStateChanged?(placementState.status)
+    }
+    // 카메라 위치 헬퍼 메서드 추가
+    private func getCameraPosition() -> SIMD3<Float> {
+        guard let arView = arView,
+              let currentFrame = arView.session.currentFrame else {
+            return SIMD3<Float>(0, 0, 0)
+        }
+        
+        let cameraTransform = currentFrame.camera.transform
+        return SIMD3<Float>(
+            cameraTransform.columns.3.x,
+            cameraTransform.columns.3.y,
+            cameraTransform.columns.3.z
+        )
     }
     
     // MARK: - Gesture Handling
@@ -734,6 +962,63 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         default: return "알 수 없음"
         }
     }
+    // MARK: - ARSessionDelegate (수정)
+    nonisolated func session(_ session: ARSession, didUpdate frame: ARFrame) {
+        Task { @MainActor in
+            // 카메라 방향 업데이트
+            let cameraTransform = frame.camera.transform
+            self.updateCameraOrientation(from: cameraTransform)
+            
+            // 💡 추가: 카메라가 빠르게 움직일 때 즉시 인디케이터 업데이트
+            if self.placementState.status == .placing,
+               let anchor = self.placementAnchor {
+                
+                // 카메라 움직임 감지 (이전 프레임과 비교)
+                let currentCameraPos = self.extractPositionFromTransform(cameraTransform)
+                
+                // 빠른 움직임 감지되면 즉시 업데이트
+                if self.shouldForceUpdate(currentCameraPosition: currentCameraPos) {
+                    if let newPosition = self.getPlacementPositionFromRaycast() {
+                        anchor.position = newPosition
+                    } else if let fallbackPosition = self.getFallbackPlacementPosition() {
+                        anchor.position = fallbackPosition
+                    }
+                }
+            }
+        }
+    }
+    private func updateCameraOrientation(from transform: simd_float4x4) {
+        // 카메라의 forward 벡터 추출 (카메라가 바라보는 방향)
+        let forward = SIMD3<Float>(
+            -transform.columns.2.x,
+             -transform.columns.2.y,
+             -transform.columns.2.z
+        )
+        
+        // Pitch 계산 (상하 각도)
+        let pitch = asin(forward.y) * 180.0 / Float.pi
+        let pitchDouble = Double(pitch)
+        
+        // 방향 문자열 생성
+        let pitchDirection = getPitchDirectionString(from: pitchDouble)
+        
+        // UI 업데이트
+        onCameraOrientationUpdated?(pitchDouble, pitchDirection)
+    }
+    
+    // Pitch 방향 문자열 생성 메서드 (추가)
+    private func getPitchDirectionString(from pitch: Double) -> String {
+        switch pitch {
+        case 60...: return "하늘"
+        case 30..<60: return "위쪽"
+        case 10..<30: return "약간 위"
+        case -10..<10: return "수평"
+        case -30..<(-10): return "약간 아래"
+        case -60..<(-30): return "아래쪽"
+        case ..<(-60): return "바닥"
+        default: return "수평"
+        }
+    }
 }
 
 // MARK: - ARCameraManagerDelegate
@@ -751,4 +1036,3 @@ extension SIMD4<Float> {
         return SIMD3<Float>(x, y, z)
     }
 }
-
