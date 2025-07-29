@@ -221,14 +221,9 @@ public func ARCancelButton(action: @escaping () -> Void) -> some View {
     .buttonStyle(PlainButtonStyle())
 }
 
-public struct MyLocationButton: View {
-    let action: () -> Void
-    
-    public init(action: @escaping () -> Void) {
-        self.action = action
-    }
+@MainActor
+public func MyLocationButton(action: @escaping () -> Void) -> some View {
 
-    public var body: some View {
         Button(action: action) {
             Image(systemName: "location")
                 .foregroundColor(DesignSystem.Color.Prime)
@@ -240,13 +235,13 @@ public struct MyLocationButton: View {
                 .shadow(color: .black.opacity(0.18), radius: 5, x: 0, y: 0)
         }
         .buttonStyle(PlainButtonStyle())
-    }
+    
 }
 
-struct HomeButton: View {
-    let action: () -> Void
+@MainActor
 
-    var body: some View {
+public func HomeButton(action: @escaping () -> Void) -> some View {
+
         Button(action: action) {
             DesignSystemAssets.image(named: "buttonFlower")
                 .scaledToFit()
@@ -269,7 +264,7 @@ struct HomeButton: View {
                 .clipShape(Circle())
         }
         .buttonStyle(PlainButtonStyle())
-    }
+    
 }
 
 struct CustomButtonView: View {

@@ -134,7 +134,7 @@ private struct SelectionOverlay: View {
                 .font(.caption.bold())
                 .foregroundColor(.white)
                 .frame(width: 20, height: 20)
-                .background(Circle().fill(Color(red: 0.43, green: 0.65, blue: 0.96)))
+                .background(Circle().fill(DesignSystem.Color.Prime))
                 .padding(4)
         }
     }

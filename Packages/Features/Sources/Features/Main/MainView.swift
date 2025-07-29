@@ -74,10 +74,10 @@ extension MainView {
             } else {
                 Text(
                     viewModel.nearbyCount == 0
-                        ? "주변에 과거에 기록한 꽃이 없어요" : "주변에 과거에 기록한 꽃이 있어요"
+                        ? "꽃을 눌러 새로운 기록을 남겨보세요" : "주변에 과거에 기록한 꽃이 있어요"
                 )
-                .font(.custom("Pretendard", size: 18).weight(.semibold))
-                .foregroundColor(.black)
+                .font(DesignSystem.Font.Title2.semibold)
+                .foregroundColor(DesignSystem.Color.Gray_black)
                 .padding()
             }
 
@@ -112,17 +112,17 @@ extension MainView {
     private var currentAddressView: some View {
         HStack(spacing: 8) {
             Image(systemName: "paperplane.fill")
-                .foregroundColor(.blue)
+                .foregroundColor(DesignSystem.Color.Prime)
 
             Text(viewModel.currentAddress)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.blue)
+                .foregroundColor(DesignSystem.Color.Prime)
 
             Button(action: {
                 viewModel.requestCurrentLocation()
             }) {
                 Image(systemName: "arrow.clockwise.circle.fill")
-                    .foregroundColor(.blue)
+                    .foregroundColor(DesignSystem.Color.Prime)
             }
             .buttonStyle(.plain)
         }
@@ -146,4 +146,8 @@ extension MainView {
         previousLocation = location
         viewModel.loadNearbyMotesMock(center: location, radius: 1000)
     }
+}
+
+#Preview {
+    MainView()
 }

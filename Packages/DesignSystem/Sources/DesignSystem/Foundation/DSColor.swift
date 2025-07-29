@@ -48,6 +48,26 @@ public extension DesignSystem {
             SwiftUI.Color("Gray_white", bundle: .module)
         }
         
+        public static var Gray_Text: SwiftUI.Color {
+            SwiftUI.Color("Gray_Text", bundle: .module)
+        }
+        
+        public static var Gray_BG: SwiftUI.Color {
+            SwiftUI.Color("Gray_BG", bundle: .module)
+        }
+        
+        public static var Gray_Button: SwiftUI.Color {
+            SwiftUI.Color("Gray_Button", bundle: .module)
+        }
+        
+        public static var Gray_Button2: SwiftUI.Color {
+            SwiftUI.Color("Gray_Button2", bundle: .module)
+        }
+        
+        public static var Gray_Text2: SwiftUI.Color {
+            SwiftUI.Color("Gray_Text2", bundle: .module)
+        }
+        
 
     }
 }

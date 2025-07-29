@@ -23,7 +23,7 @@ struct MyRecordBottomSheet: View {
                 Text("\(viewModel.allMotes.count)개의 꽃")
                     .font(DesignSystem.Font.Body.regular)
                     .foregroundColor(
-                        Color(red: 0.41, green: 0.49, blue: 0.6).opacity(0.72)
+                        DesignSystem.Color.Gray_03
                     )
             }
             .frame(maxWidth: .infinity, alignment: .leading)
