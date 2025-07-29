@@ -153,7 +153,7 @@ public struct RecordDetailBottomSheet: View {
             .padding(.all, 8)
             .frame(maxWidth: .infinity)
             .background(DesignSystem.Color.Prime5)
-            .cornerRadius(8)
+            .cornerRadius(12)
         }
     }
     
@@ -171,24 +171,24 @@ public struct RecordDetailBottomSheet: View {
                         ZStack(alignment: .center) {
                             if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                 Text("\(location)에서")
-                                    .font(.system(size:20, weight:.semibold))
+                                    .font(DesignSystem.Font.LargeTitle.semibold)
                                     .foregroundColor(DesignSystem.Color.Gray_black.opacity(0.5))
                             }
 
                             TextField("", text: $title)
-                                .font(.system(size: 20, weight: .semibold))
+                                .font(DesignSystem.Font.LargeTitle.semibold)
                                 .multilineTextAlignment(.center)
-                                .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
+                                .foregroundColor(DesignSystem.Color.Gray_black)
                         }
                     } else {
                         Text(title)
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(Color(red: 0.1, green: 0.12, blue: 0.15))
+                            .font(DesignSystem.Font.LargeTitle.semibold)
+                            .foregroundColor(DesignSystem.Color.Gray_black)
                     }
                 }
 
                 Text(date)
-                    .font(.system(size:14, weight:.semibold))
+                    .font(DesignSystem.Font.Headline.regular)
                     .foregroundColor(DesignSystem.Color.Gray_02)
             }
         }
@@ -207,8 +207,8 @@ public struct RecordDetailBottomSheet: View {
                 }
             } label: {
                 Image(systemName: "ellipsis")
-                    .font(.system(size: 14, weight: .semibold))
-                    .frame(width: 32, height: 32)
+                    .font(.system(size: 14, weight: .medium))
+                    .frame(width: 30, height: 30)
                     .background(DesignSystem.Color.Gray_Button)
                     .foregroundColor(DesignSystem.Color.Gray_black.opacity(0.25))
                     .cornerRadius(99)

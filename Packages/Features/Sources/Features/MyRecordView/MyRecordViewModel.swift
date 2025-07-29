@@ -15,7 +15,7 @@ struct MyRecordModel: Identifiable {
     
     var formattedDate: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy.MM.dd"
+        formatter.dateFormat = "yyyy년 M월 dd일"
         return formatter.string(from: createdAt)
     }
     
