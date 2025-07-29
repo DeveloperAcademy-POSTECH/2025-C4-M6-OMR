@@ -10,7 +10,6 @@ import PhotosUI
 import Domain
 import DesignSystem
 
-
 public struct RecordDetailBottomSheet: View {
     @StateObject private var viewModel: RecordDetailViewModel
     
@@ -148,11 +147,11 @@ public struct RecordDetailBottomSheet: View {
                     .font(.headline)
                 Text(flowerMeaning)
                     .font(.subheadline)
-                    .foregroundColor(DesignSystem.Color.Prime2)
+                    .foregroundColor(Color(red: 0.43, green: 0.65, blue: 0.96))
             }
             .padding(.all, 8)
             .frame(maxWidth: .infinity)
-            .background(DesignSystem.Color.Prime5)
+            .background(Color(red: 0.9, green: 0.94, blue: 1).opacity(0.47))
             .cornerRadius(8)
         }
     }
@@ -171,8 +170,8 @@ public struct RecordDetailBottomSheet: View {
                         ZStack(alignment: .center) {
                             if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                 Text("\(location)에서")
-                                    .font(.system(size:20, weight:.semibold))
-                                    .foregroundColor(DesignSystem.Color.Gray_black.opacity(0.5))
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundColor(.gray.opacity(0.5))
                             }
 
                             TextField("", text: $title)
@@ -188,8 +187,8 @@ public struct RecordDetailBottomSheet: View {
                 }
 
                 Text(date)
-                    .font(.system(size:14, weight:.semibold))
-                    .foregroundColor(DesignSystem.Color.Gray_02)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Color(red: 0.57, green: 0.63, blue: 0.71))
             }
         }
     }
@@ -201,7 +200,7 @@ public struct RecordDetailBottomSheet: View {
         
         var body: some View {
             Menu {
-                Button("수정", action: onEdit)
+                Button("기록 수정", action: onEdit)
                 Button(role: .destructive, action: onDelete) {
                     Text("삭제")
                 }
@@ -209,8 +208,8 @@ public struct RecordDetailBottomSheet: View {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 14, weight: .semibold))
                     .frame(width: 32, height: 32)
-                    .background(DesignSystem.Color.Gray_Button)
-                    .foregroundColor(DesignSystem.Color.Gray_black.opacity(0.25))
+                    .background(Color(red: 0.45, green: 0.51, blue: 0.59).opacity(0.16))
+                    .foregroundColor(Color(red: 0.45, green: 0.51, blue: 0.59))
                     .cornerRadius(99)
             }
         }
@@ -224,10 +223,10 @@ public struct RecordDetailBottomSheet: View {
             Button(action: action) {
                 Text("수정 완료")
                     .font(.headline.bold())
-                    .foregroundColor(isDisabled ? DesignSystem.Color.Gray_Text2 : DesignSystem.Color.Gray_white)
+                    .foregroundColor(isDisabled ? Color(red: 0.56, green: 0.56, blue: 0.56) : .white)
                     .frame(height: 52)
                     .frame(maxWidth: .infinity)
-                    .background(isDisabled ? DesignSystem.Color.Gray_Button2 : DesignSystem.Color.Prime2)
+                    .background(isDisabled ? Color(red: 0.88, green: 0.9, blue: 0.93).opacity(0.39) : Color(red: 0.43, green: 0.65, blue: 0.96))
                     .cornerRadius(12)
             }
             .disabled(isDisabled)
