@@ -83,10 +83,12 @@ public final class RecordDetailViewModel: ObservableObject {
             for photo in photos {
                 group.addTask {
                     // FileStoreManager를 거치지 않고 URL에서 직접 로드 시도
-                    guard let data = try? Data(contentsOf: photo.url) else {
+                    do {
+                        let (data, _) = try await URLSession.shared.data(from: photo.url)
+                        return UIImage(data: data)
+                    } catch {
                         return nil
                     }
-                    return UIImage(data: data)
                 }
             }
             
@@ -111,12 +113,23 @@ public final class RecordDetailViewModel: ObservableObject {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy년 M월 d일"
         
+        let locationString = entity.record.address.fullAddress
+        
+        let titleString: String
+        // entity.record.title이 nil이 아니면서, 공백을 제외한 실제 내용이 있을 경우
+        if let originalTitle = entity.record.title, !originalTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            titleString = originalTitle
+        } else {
+            // 그 외의 경우 (nil이거나 빈 문자열일 때) location을 사용
+            titleString = "\(locationString)에서"
+        }
+        
         return RecordDetailUIModel(
-            title: (entity.record.title ?? "").isEmpty ? "제목 없음" : entity.record.title!,
+            title: titleString,
             flowerName: entity.marker.displayName,
             flowerMeaning: entity.marker.floriography,
-            location: entity.record.address.fullAddress, // 실제 주소로 변경
-            date: dateFormatter.string(from: entity.record.date), // 실제 날짜로 변경
+            location: locationString,
+            date: dateFormatter.string(from: entity.record.date),
             images: images
         )
     }
