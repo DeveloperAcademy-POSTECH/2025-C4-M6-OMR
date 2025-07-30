@@ -173,14 +173,21 @@ public final class RecordDetailViewModel: ObservableObject {
 
     // MARK: - Image Handling
 
-   func addImages(from assets: [PHAsset], using albumViewModel: CustomAlbumViewModel) {
+    func addImages(from assets: [PHAsset], using albumViewModel: CustomAlbumViewModel) {
         guard detail != nil else { return }
         
         isLoading = true
         Task {
             var newImages: [UIImage] = []
+            
             for asset in assets {
-                if let image = await albumViewModel.fetchImage(for: asset, size: PHImageManagerMaximumSize) {
+                // 레코드 상세에 추가하는 이미지이므로 최고 품질로 요청
+                if let image = await albumViewModel.fetchImage(
+                    for: asset,
+                    targetSize: PHImageManagerMaximumSize, // 원본에 가까운 최고 해상도 요청
+                    preferCached: false, // 최고 품질이므로 캐시 무시하고 새로 요청
+                    highQuality: true    // 최고 품질로 요청
+                ) {
                     newImages.append(image)
                 }
             }

@@ -101,7 +101,7 @@ struct ImageCarouselView: View {
         }
         .scrollTargetBehavior(.viewAligned)
         .frame(height: fullSize)
-        .sheet(isPresented: $isCustomAlbumPresented) {
+        .fullScreenCover(isPresented: $isCustomAlbumPresented) {
             CustomAlbumView(viewModel: albumViewModel)
         }
         .onAppear {

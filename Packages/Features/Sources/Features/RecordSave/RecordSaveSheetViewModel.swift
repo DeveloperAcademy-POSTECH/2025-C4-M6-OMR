@@ -103,10 +103,14 @@ public final class RecordSaveSheetViewModel: ObservableObject {
         Task {
             self.isLoading = true
             var images: [UIImage] = []
+            
             for asset in assets {
+                // 새로 통합된 fetchImage 메서드 사용 - 최종 선택이므로 고화질로 요청
                 if let image = await albumViewModel.fetchImage(
                     for: asset,
-                    size: CGSize(width: 400, height: 400)
+                    targetSize: CGSize(width: 400, height: 400),
+                    preferCached: false, // 최종 저장용이므로 캐시 무시하고 새로 요청
+                    highQuality: true    // 고화질로 요청
                 ) {
                     images.append(image)
                 }
@@ -133,14 +137,7 @@ public final class RecordSaveSheetViewModel: ObservableObject {
     
     // MARK: - Pass-through Methods to AlbumViewModel
     
-    /// View의 요청을 AlbumViewModel에 전달하는 역할
-    public func prepareForAllPhotos() {
-        albumViewModel.prepareForAllPhotos()
-    }
     
-    public func fetchImage(for asset: PHAsset, size: CGSize) async -> UIImage? {
-        return await albumViewModel.fetchImage(for: asset, size: size)
-    }
 }
 
 public struct SelectedFlowerModel {
@@ -148,7 +145,7 @@ public struct SelectedFlowerModel {
     public let name: String
     public let meaning: String
     public let imageName: String
-
+    
     public init(
         id: UUID = UUID(),
         name: String,
@@ -166,7 +163,7 @@ public struct Record {
     public let id: UUID
     public let flower: SelectedFlowerModel
     public let imageFileNames: [String]
-
+    
     public init(
         id: UUID = UUID(),
         flower: SelectedFlowerModel,

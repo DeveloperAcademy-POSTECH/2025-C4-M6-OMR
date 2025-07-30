@@ -56,7 +56,6 @@ public struct PhotoSelectionView: View {
     @ViewBuilder
     private var photoLibraryButton: some View {
         Button(action: {
-            viewModel.prepareForAllPhotos()
             showCustomAlbum = true
         }) {
             HStack {

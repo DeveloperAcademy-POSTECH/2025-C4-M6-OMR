@@ -13,21 +13,12 @@ struct AlbumGridItemView: View {
     let asset: PHAsset
     let isSelected: Bool
     let selectedIndex: Int?
-    let viewModel: CustomAlbumViewModel
+    @ObservedObject var viewModel: CustomAlbumViewModel
     let cellSize: CGFloat
-
-    @State private var image: UIImage?
     
-    init(asset: PHAsset, isSelected: Bool, selectedIndex: Int?, viewModel: CustomAlbumViewModel, cellSize: CGFloat) {
-        self.asset = asset
-        self.isSelected = isSelected
-        self.selectedIndex = selectedIndex
-        self.viewModel = viewModel
-        self.cellSize = cellSize
-        // State 변수를 ViewModel의 캐시 값으로 초기화합니다.
-        _image = State(initialValue: viewModel.getCachedImage(for: asset))
-    }
-
+    @State private var image: UIImage?
+    @State private var isImageLoaded = false // 이미지 로딩 완료 여부 추적
+    
     var body: some View {
         ZStack {
             if let img = image {
@@ -42,23 +33,41 @@ struct AlbumGridItemView: View {
         .clipped()
         .contentShape(Rectangle())
         .overlay(selectionOverlay)
-        .onAppear {
-            if image == nil {
-                Task {
-                    let thumbnailSize = CGSize(width: cellSize * UIScreen.main.scale, height: cellSize * UIScreen.main.scale)
-                    self.image = await viewModel.fetchImage(for: asset, size: thumbnailSize)
-                }
+        .task(id: asset.localIdentifier) {
+            // 이미 로딩된 이미지가 있으면 다시 로딩하지 않음
+            guard !isImageLoaded else { return }
+            
+            let imageSize = CGSize(width: cellSize * UIScreen.main.scale, height: cellSize * UIScreen.main.scale)
+            
+            // 1단계: 캐시된 이미지 먼저 시도 (빠른 표시)
+            if let cachedImage = await viewModel.fetchImage(
+                for: asset,
+                targetSize: imageSize,
+                preferCached: true,
+                highQuality: false
+            ) {
+                self.image = cachedImage
+            }
+            
+            // 2단계: 고화질 이미지 로딩 (앨범에서도 고화질 사용)
+            if let highQualityImage = await viewModel.fetchImage(
+                for: asset,
+                targetSize: imageSize,
+                preferCached: false,
+                highQuality: true
+            ) {
+                self.image = highQualityImage
+                self.isImageLoaded = true // 고화질 로딩 완료 표시
             }
         }
-
     }
-
+    
     @ViewBuilder
     private var selectionOverlay: some View {
         if isSelected, let idx = selectedIndex {
             ZStack(alignment: .topTrailing) {
                 Color.black.opacity(0.4)
-
+                
                 Text("\(idx + 1)")
                     .font(.caption.bold())
                     .foregroundColor(.white)
