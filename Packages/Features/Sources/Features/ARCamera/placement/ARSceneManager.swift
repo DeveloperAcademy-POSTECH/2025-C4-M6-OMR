@@ -971,6 +971,10 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     }
     
     func removePlacementObject() {
+        if let arView = arView, let existingFlower = currentFlowerAnchor {
+                    arView.scene.removeAnchor(existingFlower)
+                    currentFlowerAnchor = nil
+                }
         if let arView = arView {
             placementState.removeFrom(arView: arView)
         }
