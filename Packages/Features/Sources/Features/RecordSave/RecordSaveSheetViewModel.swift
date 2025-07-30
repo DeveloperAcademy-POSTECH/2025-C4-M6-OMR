@@ -90,7 +90,8 @@ public final class RecordSaveSheetViewModel: ObservableObject {
             }
             
             let payload = FinalRecordPayload(
-                imageURLs: savedFileURLs, 
+                imageURLs: savedFileURLs,
+                address: self.address,
                 description: ""
             )
             

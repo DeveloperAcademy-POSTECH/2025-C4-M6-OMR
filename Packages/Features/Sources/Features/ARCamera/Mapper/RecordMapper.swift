@@ -56,7 +56,7 @@ enum RecordMapper {
                 longitude: placementData.position.longitude
             ),
             // Address 모델의 실제 프로퍼티에 맞게 수정
-            address: Domain.Address(fullAddress: )
+            address: Domain.Address(fullAddress: payload.address),
             date: placementData.placedAt,
             photos: photos, // ✅ 변환된 photos 배열 전달
             isPublic: true
