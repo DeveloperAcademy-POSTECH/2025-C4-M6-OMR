@@ -423,10 +423,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             let dynamicScale = max(0.3, min(0.5, 0.8 / distance)) //꽃 크기 조정 가능
             flowerClone.transform.scale = SIMD3<Float>(dynamicScale, dynamicScale, dynamicScale)
             
-            // 🧭 currentUserHeading을 기준으로 꽃 방향 설정
-            let flowerRotation = calculateFlowerRotationFromHeading()
-            flowerClone.transform.rotation = flowerRotation
-            
             addNaturalSunlight(to: flowerClone, cameraPosition: cameraPosition)
             addSubtleWindEffect(to: flowerClone)
             
@@ -446,49 +442,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         removePlacementAnchor() // 앵커 제거
         onPlacementStateChanged?(placementState.status)
     }
-    
-    // MARK: - 나침반 기준 꽃 방향 계산
-    private func calculateFlowerRotationFromHeading() -> simd_quatf {
-        guard let userHeading = currentUserHeading else {
-            print("⚠️ currentUserHeading이 nil입니다. 기본 방향 사용")
-            return simd_quatf(angle: 0, axis: SIMD3<Float>(0, 1, 0))
-        }
-        
-        // 🧭 사용자의 현재 나침반 방향 (자북 기준, 도 단위)
-        let userHeadingDegrees = userHeading.trueHeading
-        print("🧭 현재 사용자 헤딩: \(String(format: "%.1f", userHeadingDegrees))도")
-        
-        // 🌸 꽃이 바라볼 방향 설정 (사용자와 같은 방향 또는 반대 방향)
-        let flowerTargetHeading = getFlowerTargetHeading(userHeading: userHeadingDegrees)
-        print("🌸 꽃 목표 방향: \(String(format: "%.1f", flowerTargetHeading))도")
-        
-        // 🔄 도 단위를 라디안으로 변환
-        let flowerHeadingRadians = Float(flowerTargetHeading * .pi / 180.0)
-        
-        // 🎯 ARKit 좌표계에서의 회전 계산
-        // ARKit: Z축이 뒤쪽, X축이 오른쪽
-        // 나침반: 0도가 북쪽, 시계방향으로 증가
-        
-        // 나침반 방향을 ARKit 좌표계로 변환
-        // 나침반 0도(북쪽) = ARKit에서 -Z 방향
-        // 나침반 90도(동쪽) = ARKit에서 +X 방향
-        let arKitRotationAngle = -flowerHeadingRadians + Float.pi / 2
-        
-        // Y축 중심 회전 (수평면에서만 회전)
-        let rotation = simd_quatf(angle: arKitRotationAngle, axis: SIMD3<Float>(0, 1, 0))
-        
-        return rotation
-    }
-    
-    // MARK: - 꽃이 바라볼 목표 방향 결정
-    private func getFlowerTargetHeading(userHeading: Double) -> Double {
-        
-        // 사용자 반대 방향 (사용자를 바라보는 방향)
-        let oppositeDirection = userHeading >= 180 ? userHeading - 180 : userHeading + 180
-        
-        return oppositeDirection  // 사용자를 바라보게 하려면
-    }
-    
     /// 현재 배치된 위치의 GPS 좌표를 반환합니다.
     /// - Returns: 배치된 위치의 GPS 좌표, 배치되지 않았거나 변환 실패 시 nil
     func getCurrentPlacementCoordinate() -> CLLocationCoordinate2D? {
