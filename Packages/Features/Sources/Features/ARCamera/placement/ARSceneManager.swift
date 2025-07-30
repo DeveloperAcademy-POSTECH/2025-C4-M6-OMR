@@ -42,7 +42,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     nonisolated(unsafe) private var lastRaycastTime: TimeInterval = 0
     private let raycastInterval: TimeInterval = 1.0 / 20.0 // 20 FPS로 레이캐스트 주기 설정
     nonisolated(unsafe) private var targetPosition: SIMD3<Float>?
-
+    
     // MARK: - Callbacks
     var onRecordTapped: ((ARRecordModel) -> Void)?
     var onPlacementStateChanged: ((ARPlacementState.Status) -> Void)?
@@ -57,7 +57,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     // 🆕 빠른 카메라 움직임 감지
     private var lastCameraPosition: SIMD3<Float>?
     private var lastUpdateTime: TimeInterval = 0
-
+    
     private func shouldForceUpdate(currentCameraPosition: SIMD3<Float>) -> Bool {
         let currentTime = CACurrentMediaTime()
         
@@ -79,7 +79,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         // 빠른 움직임 감지 (초당 30cm 이상 이동)
         return velocity > 0.1
     }
-
+    
     
     enum RaycastStatus {
         case idle
@@ -214,17 +214,17 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         let directionalLight = DirectionalLight()
         directionalLight.light.intensity = 7000  //
         directionalLight.light.color = UIColor(red: 1.0, green: 0.96, blue: 0.85, alpha: 1.0) // 햇빛 느낌의 따뜻한 색
-
+        
         // 햇빛이 약간 비스듬하게 비추는 느낌 (예: 남동쪽 방향에서)
         directionalLight.look(at: [0, -1, -0.5], from: [0, 1, 0.5], relativeTo: flowerEntity)
-
+        
         // 🌤️ 부드러운 전체 조명: 그림자 어두움을 줄이기 위해 Ambient 느낌 추가
         let ambientLight = PointLight()
         ambientLight.light.intensity = 3000
         ambientLight.light.color = UIColor(red: 1.0, green: 0.97, blue: 0.9, alpha: 1.0)
         ambientLight.light.attenuationRadius = 2.0
         ambientLight.position = [0, 0.5, 0]
-
+        
         // 조명들을 꽃에 추가
         flowerEntity.addChild(directionalLight)
         flowerEntity.addChild(ambientLight)
@@ -240,7 +240,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         // 🌤️ 하늘 산란광: 부드러운 전체 조명 (하늘에서 오는 간접광)
         let skyLight = createSkyAmbientLight(color: sunlightColor)
         
-    
+        
         
         // 📐 카메라 위치 기반 보조 조명 (너무 어두운 부분 방지)
         let fillLight = createCameraFillLight(cameraPosition: cameraPosition, flowerPosition: flowerEntity.position)
@@ -313,7 +313,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         return skyLight
     }
     
-   
+    
     
     // MARK: - 카메라 보조 조명 (자연스러운 fill light)
     private func createCameraFillLight(cameraPosition: SIMD3<Float>, flowerPosition: SIMD3<Float>) -> PointLight {
@@ -446,7 +446,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         removePlacementAnchor() // 앵커 제거
         onPlacementStateChanged?(placementState.status)
     }
-
+    
     // MARK: - 나침반 기준 꽃 방향 계산
     private func calculateFlowerRotationFromHeading() -> simd_quatf {
         guard let userHeading = currentUserHeading else {
@@ -479,24 +479,14 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         
         return rotation
     }
-
+    
     // MARK: - 꽃이 바라볼 목표 방향 결정
     private func getFlowerTargetHeading(userHeading: Double) -> Double {
-        // 옵션 1: 사용자와 같은 방향 (사용자가 보는 방향)
-        let sameDirection = userHeading
         
-        // 옵션 2: 사용자 반대 방향 (사용자를 바라보는 방향)
+        // 사용자 반대 방향 (사용자를 바라보는 방향)
         let oppositeDirection = userHeading >= 180 ? userHeading - 180 : userHeading + 180
         
-        // 옵션 3: 고정 방향 (예: 항상 북쪽)
-        let fixedDirection = 0.0  // 북쪽
-        
-        // 🌸 원하는 설정 선택 (현재는 사용자와 같은 방향)
-        return sameDirection
-        
-        // 다른 옵션을 사용하려면 위의 return을 주석처리하고 아래 중 하나 선택:
-         return oppositeDirection  // 사용자를 바라보게 하려면
-        // return fixedDirection     // 항상 북쪽을 바라보게 하려면
+        return oppositeDirection  // 사용자를 바라보게 하려면
     }
     
     /// 현재 배치된 위치의 GPS 좌표를 반환합니다.
@@ -655,7 +645,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     {
         Entity.loadModelAsync(named: modelName, in: .module)
             .catch { error -> AnyPublisher<ModelEntity, Error> in
-
+                
                 print("Failed to load model '\(modelName)': \(error)")
                 return Entity.loadModelAsync(named: modelName)
                     .eraseToAnyPublisher()
@@ -901,7 +891,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             transform.columns.3.z
         )
     }
-
+    
     private func extractForwardFromTransform(_ transform: simd_float4x4) -> SIMD3<Float> {
         return -SIMD3<Float>(
             transform.columns.2.x,
@@ -909,7 +899,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             transform.columns.2.z
         )
     }
-
+    
     
     
     // MARK: - Placement Anchor Creation (수정된 버전)
@@ -954,18 +944,18 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         )
         
         let animationResource = try? AnimationResource.generate(with: scaleAnimation)
-       
+        
         
         // 그림자 효과
         let shadowMesh = MeshResource.generatePlane(width: 0.25, depth: 0.25,cornerRadius: 50)
-       
-  
-
+        
+        
+        
         var shadowMaterial = UnlitMaterial()
         shadowMaterial.baseColor = MaterialColorParameter.color(UIColor.red.withAlphaComponent(0.3))
         
-     
-   
+        
+        
         let shadow = ModelEntity(mesh: shadowMesh, materials: [shadowMaterial])
         shadow.position.y = -0.12
         
@@ -995,22 +985,22 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     
     func makeDashedCircle(radius: Float, dotCount: Int, dotSize: Float, color: UIColor) -> Entity {
         let parent = Entity()
-
+        
         for i in 0..<dotCount {
             let angle = (Float(i) / Float(dotCount)) * 2 * Float.pi
             let x = cos(angle) * radius
             let z = sin(angle) * radius
-
+            
             let dotMesh = MeshResource.generateSphere(radius: dotSize)
             var dotMaterial = UnlitMaterial()
             dotMaterial.baseColor = .color(color)
-
+            
             let dotEntity = ModelEntity(mesh: dotMesh, materials: [dotMaterial])
             dotEntity.position = [x, 0, z]
-
+            
             parent.addChild(dotEntity)
         }
-
+        
         return parent
     }
     
