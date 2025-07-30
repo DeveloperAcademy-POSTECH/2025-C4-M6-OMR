@@ -19,7 +19,6 @@ public struct ARCameraView: View {
         // ARCameraView가 생성되는 시점의 의존성을 직접 주입받습니다.
         @Dependency(\.fetchMyRecordsUseCase) var fetchMyRecordsUseCase
         @Dependency(\.saveRecordUseCase) var saveRecordUseCase
-        @Dependency(\.initializeAppDataUseCase) var initializeAppDataUseCase
         @Dependency(\.fetchAllMarkersUseCase) var fetchAllMarkersUseCase
 
         // 1. BottomSheetCoordinator를 먼저 생성합니다.
@@ -31,7 +30,6 @@ public struct ARCameraView: View {
         let viewModel = ARCameraViewModel(
             fetchMyRecordsUseCase: fetchMyRecordsUseCase,
             saveRecordUseCase: saveRecordUseCase,
-            initializeAppDataUseCase: initializeAppDataUseCase,
             fetchAllMarkersUseCase: fetchAllMarkersUseCase,
             location: location,
             bottomSheetCoordinator: coordinator
