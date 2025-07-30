@@ -34,7 +34,7 @@ public final class CustomAlbumViewModel: ObservableObject {
     private let thumbnailOptions: PHImageRequestOptions = {
         let options = PHImageRequestOptions()
         options.deliveryMode = .fastFormat
-        options.isNetworkAccessAllowed = false // 썸네일은 로컬만
+        options.isNetworkAccessAllowed = false
         options.isSynchronous = false
         return options
     }()
@@ -165,50 +165,45 @@ public final class CustomAlbumViewModel: ObservableObject {
         highQuality: Bool = false
     ) async -> UIImage? {
         
-        if preferCached {
+        // 캐시 확인 (저화질 요청이고 캐시 우선인 경우)
+        if preferCached && !highQuality {
             if let cachedImage = await requestCachedImageAsync(for: asset, targetSize: targetSize) {
-                // 고화질이 필요하지 않으면 캐시된 이미지 반환
-                if !highQuality {
-                    return cachedImage
-                }
-                // 고화질이 필요한 경우에도 일단 캐시된 이미지를 먼저 반환할 수 있도록
+                return cachedImage
             }
         }
         
-        // 새로운 이미지 요청
+        // 새로운 이미지 요청 (캐시에 없거나 고화질 필요한 경우)
         let options = highQuality ? highQualityOptions : thumbnailOptions
         
         return await withCheckedContinuation { continuation in
-            var isResumed = false
             cachingImageManager.requestImage(
                 for: asset,
                 targetSize: targetSize,
                 contentMode: .aspectFill,
                 options: options
             ) { image, info in
-                guard !isResumed else { return }
-                
                 let isError = info?[PHImageErrorKey] != nil
                 let isCancelled = (info?[PHImageCancelledKey] as? Bool) ?? false
                 
                 if let image {
                     continuation.resume(returning: image)
-                    isResumed = true
                 } else if isError || isCancelled {
                     continuation.resume(returning: nil)
-                    isResumed = true
+                } else {
+                    continuation.resume(returning: nil)
                 }
             }
         }
     }
     
-    /// 캐시에서 이미지를 비동기적으로 가져옴
+    /// 캐시에서 이미지를 비동기적으로 페칭 (실제 캐시된 이미지만 반환)
     private func requestCachedImageAsync(for asset: PHAsset, targetSize: CGSize) async -> UIImage? {
         return await withCheckedContinuation { continuation in
             let options = PHImageRequestOptions()
-            options.isSynchronous = false // 비동기로 변경
+            options.isSynchronous = false
             options.deliveryMode = .fastFormat
-            options.isNetworkAccessAllowed = false // 캐시된 이미지만
+            options.isNetworkAccessAllowed = false
+            options.resizeMode = .fast
             
             cachingImageManager.requestImage(
                 for: asset,
@@ -216,8 +211,17 @@ public final class CustomAlbumViewModel: ObservableObject {
                 contentMode: .aspectFill,
                 options: options
             ) { image, info in
-                // 캐시에서만 가져오므로 즉시 완료
-                continuation.resume(returning: image)
+                // info 딕셔너리를 확인하여 실제 캐시된 이미지인지 검증
+                let isFromCloud = (info?[PHImageResultIsInCloudKey] as? Bool) ?? false
+                let isError = info?[PHImageErrorKey] != nil
+                
+                // 캐시된 이미지만 반환 (클라우드에서 가져오거나 에러가 있으면 nil)
+                if let image = image, !isFromCloud, !isError {
+                    continuation.resume(returning: image)
+                } else {
+                    // 캐시에 없거나 클라우드에서 가져와야 하는 경우 nil 반환
+                    continuation.resume(returning: nil)
+                }
             }
         }
     }
