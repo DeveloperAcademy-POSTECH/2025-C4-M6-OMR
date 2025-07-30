@@ -24,13 +24,19 @@ public class BottomSheetCoordinator: ObservableObject {
     @Published var flowerSelectionViewModel: FlowerSelectionViewModel
     @Published var recordDetailViewModel: RecordDetailViewModel?
     @Published var saveSheetViewModel: RecordSaveSheetViewModel?
+    
+    private let fetchRecordDetailUseCase: FetchRecordDetailUseCase
 
     // MARK: - Delegate
     weak var delegate: BottomSheetCoordinatorDelegate?
 
     var onCancelPlacement: () -> Void = {}
 
-    init(fetchAllMarkersUseCase: FetchAllMarkersUseCase) {
+    init(
+        fetchAllMarkersUseCase: FetchAllMarkersUseCase,
+        fetchRecordDetailUseCase: FetchRecordDetailUseCase
+    ) {
+        self.fetchRecordDetailUseCase = fetchRecordDetailUseCase
         self.flowerSelectionViewModel = FlowerSelectionViewModel(
             fetchAllMarkersUseCase: fetchAllMarkersUseCase
         )
@@ -58,12 +64,16 @@ public class BottomSheetCoordinator: ObservableObject {
         print("📱 activeSheet = .flowerSelection 설정됨")
     }
 
+    // TODO record Id로 받아오기 -> usecase로 조회해오기
     func showRecordDetail(record: ARRecordModel) {
         print("📱 showRecordDetail 호출됨: \(record.title)")
         selectedRecord = record
 
         // 기본 RecordDetailViewModel 생성 후 데이터 설정
-        let viewModel = RecordDetailViewModel()
+        let viewModel = RecordDetailViewModel(
+            id: record.id,
+            fetchRecordDetailUseCase: fetchRecordDetailUseCase
+        )
 
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy년 M월 d일"

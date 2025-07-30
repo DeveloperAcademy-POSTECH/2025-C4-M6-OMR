@@ -24,6 +24,7 @@ public final class RecordDetailViewModel: ObservableObject {
     private var originalDetail: RecordDetailUIModel?
     // Combine 구독 관리를 위한 cancellables
     private var cancellables: Set<AnyCancellable> = []
+    private let fetchRecordDetailUseCase: FetchRecordDetailUseCase
 
     // MARK: - Computed Properties
     public var isSaveButtonDisabled: Bool {
@@ -75,13 +76,17 @@ public final class RecordDetailViewModel: ObservableObject {
 //        }
 //    }
     
-    public init(id: UUID) {
-        fetchRecordDetails(id: id)
+    public init(
+        id: UUID,
+        fetchRecordDetailUseCase: FetchRecordDetailUseCase
+    ) {
+        self.fetchRecordDetailUseCase = fetchRecordDetailUseCase
+        fetchRecordDetail(id: id)
     }
     
     // ARCamera 연동을 위한 추가 초기화
     public convenience init(arRecord: ARRecordModel) {
-        self.init()
+//        self.init()
 
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy년 M월 d일"
@@ -111,33 +116,83 @@ public final class RecordDetailViewModel: ObservableObject {
         self.originalDetail = detail
     }
     
-    /// id 기반으로 RecordDetailUIModel 생성 및 detail 세팅
-    func fetchRecordDetails(id: UUID) {
-        let motes = MockDataProvider.mockObjects()
+    
+    public func fetchRecordDetail(id: UUID) {
         
-        guard let mote = motes.first(where: { $0.id == id }) else {
-            print("❌ 해당 ID의 Mote를 찾을 수 없습니다.")
-            return
-        }
+        isLoading = true
 
+        Task {
+            do {
+                let entity = try await fetchRecordDetailUseCase(id: id)
+                let uiModel = mapToUIModel(entity: entity)
+                
+                await MainActor.run {
+                    self.detail = uiModel
+                    self.originalDetail = uiModel
+                    self.isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.isLoading = false
+                    print("RecordDetailViewModel fetch error: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
+    private func mapToUIModel(entity: RecordDetail) -> RecordDetailUIModel {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy년 M월 d일"
 
-        let images: [UIImage] = mote.images.compactMap {
-            UIImage(named: $0) ?? UIImage(systemName: "photo")
+        // 이미지 URL을 UIImage로 변환 (비동기 로딩 대신 placeholder 사용 가능)
+        // 여기서는 단순히 UIImage(systemName:)으로 더미 이미지 처리
+        let images: [UIImage] = entity.record.photos.compactMap { photo in
+            if let url = URL(string: photo.url.absoluteString),
+               let data = try? Data(contentsOf: url),
+               let image = UIImage(data: data) {
+                return image
+            } else {
+                return UIImage(systemName: "photo") // 로딩 실패 시 기본 이미지
+            }
         }
 
-        self.detail = RecordDetailUIModel(
-            title: mote.title,
-            flowerName: mote.flower.name,
-            flowerMeaning: mote.flower.floriography,
-            location: mote.address,
-            date: dateFormatter.string(from: mote.createdAt),
+        return RecordDetailUIModel(
+            title: entity.record.title ?? "",
+            flowerName: entity.marker.displayName,
+            flowerMeaning: entity.marker.floriography,
+            location: entity.record.address.fullAddress, // 주소 매핑
+            date: dateFormatter.string(from: entity.record.date),
             images: images
         )
-        
-        self.originalDetail = self.detail
     }
+
+    /// id 기반으로 RecordDetailUIModel 생성 및 detail 세팅
+//    func fetchRecordDetails(id: UUID) {
+//        let motes = MockDataProvider.mockObjects()
+//        
+//        guard let mote = motes.first(where: { $0.id == id }) else {
+//            print("❌ 해당 ID의 Mote를 찾을 수 없습니다.")
+//            return
+//        }
+//
+//        let dateFormatter = DateFormatter()
+//        dateFormatter.dateFormat = "yyyy년 M월 d일"
+//
+//        let images: [UIImage] = mote.images.compactMap {
+//            UIImage(named: $0) ?? UIImage(systemName: "photo")
+//        }
+//
+//        self.detail = RecordDetailUIModel(
+//            title: mote.title,
+//            flowerName: mote.flower.name,
+//            flowerMeaning: mote.flower.floriography,
+//            location: mote.address,
+//            date: dateFormatter.string(from: mote.createdAt),
+//            images: images
+//        )
+//        
+//        self.originalDetail = self.detail
+//    }
 
     // MARK: - User Actions
 
