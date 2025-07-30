@@ -26,7 +26,7 @@ struct MoteItemView: View {
                 .padding(.trailing,10)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("\(mote.title.isEmpty ? "제목 없음" : mote.title)")
+                Text("\(mote.title.isEmpty ? "\(mote.address)에서" : mote.title)")
                     .font(DesignSystem.Font.Title3.semibold)
                     .foregroundColor(DesignSystem.Color.Gray_black)
 

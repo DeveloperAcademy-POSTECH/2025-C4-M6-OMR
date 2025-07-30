@@ -17,6 +17,6 @@ public struct InitializeAppDataUseCase: Sendable {
         try await userRepository.initializeDefaultUser()
         try await markerRepository.initializeDefaultMarkers()
         let markers = try await markerRepository.fetchAll()
-        print("InitializeAppDataUseCase Markers: \(markers)")
+//        print("InitializeAppDataUseCase Markers: \(markers)")
     }
 }

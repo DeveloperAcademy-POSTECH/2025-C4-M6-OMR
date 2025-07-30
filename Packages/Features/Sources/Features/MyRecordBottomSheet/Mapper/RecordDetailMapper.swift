@@ -13,7 +13,7 @@ struct RecordDetailMapper {
         return Mote(
             id: detail.record.id,
             userId: detail.author.id,
-            title: detail.record.title,
+            title: detail.record.title ?? "",
             images: detail.record.photos.map { $0.url.absoluteString },
             createdAt: detail.record.date,
             latitude: detail.record.coordinate.latitude,
@@ -22,7 +22,9 @@ struct RecordDetailMapper {
             flower: EmotionObject(
                 id: detail.marker.id,
                 name: detail.marker.displayName,
-                icon: detail.marker.iconName
+                floriography: detail.marker.floriography,
+                thumbnail: detail.marker.smallThumbnailImageName,
+                objetImage: detail.marker.largeThumbnailImageName
             ),
             isPublic: detail.record.isPublic
         )

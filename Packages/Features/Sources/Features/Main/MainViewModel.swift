@@ -35,7 +35,7 @@ public final class MainViewModel: ObservableObject {
         Task {
             do {
                 let recordDetails = try await fetchMyRecordsUseCase()
-                print("✅ fetchMyRecordsUseCase success: \(recordDetails)")
+//                print("✅ fetchMyRecordsUseCase success: \(recordDetails)")
                 
                 // 초기 데이터 설정
                 await MainActor.run {
@@ -79,14 +79,12 @@ public final class MainViewModel: ObservableObject {
             do {
                 // 모든 레코드 가져오기
                 let allRecords = try await fetchMyRecordsUseCase()
-                print("📦 Fetched \(allRecords.count) records")
                 
                 // 거리 계산해서 필터링
                 var nearbyRecords: [RecordDetail] = []
                 
                 for (index, recordDetail) in allRecords.enumerated() {
                     let recordCoordinate = recordDetail.record.coordinate
-                    print("📍 Record \(index): lat=\(recordCoordinate.latitude), lng=\(recordCoordinate.longitude)")
                     
                     let distance = haversineDistance(
                         lat1: center.coordinate.latitude,
@@ -95,13 +93,10 @@ public final class MainViewModel: ObservableObject {
                         lon2: recordCoordinate.longitude
                     )
                     
-                    print("📏 Distance: \(Int(distance))m")
                     
                     if distance <= radius {
                         nearbyRecords.append(recordDetail)
-                        print("✅ Record \(index) is within radius")
                     } else {
-                        print("❌ Record \(index) is outside radius")
                     }
                 }
                 
@@ -112,8 +107,6 @@ public final class MainViewModel: ObservableObject {
                     self.isLoading = false
                 }
                 
-                print("🔍 Total records: \(allRecords.count)")
-                print("📍 Nearby records (within \(radius)m): \(nearbyRecords.count)")
                 
             } catch {
                 await MainActor.run {
