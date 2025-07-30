@@ -51,6 +51,7 @@ enum RecordMapper {
             id: UUID(),
             authorID: UUID(),  // TODO: 실제 사용자 ID로 교체
             markerTypeID: placementData.flower.id,
+            title: "\(payload.address)에서",
             coordinate: Domain.Coordinate(
                 latitude: finalLatitude,
                 longitude: finalLongitude

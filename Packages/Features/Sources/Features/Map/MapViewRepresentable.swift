@@ -129,7 +129,9 @@ struct MapViewRepresentable: UIViewRepresentable {
             annotationView.annotation = annotation
             annotationView.canShowCallout = false
             annotationView.clusteringIdentifier = "customPinCluster"
-            annotationView.frame.size = CGSize(width: 40, height: 40)
+
+            let viewSize = CGSize(width: 60, height: 60)  // 기존보다 크게 설정
+            annotationView.frame.size = viewSize
 
             if annotationView.viewWithTag(1001) == nil {
                 annotationView.addSubview(makeTitleLabel())
@@ -139,15 +141,19 @@ struct MapViewRepresentable: UIViewRepresentable {
                let imageName = parent.viewModel.objectSummaries.first(where: { $0.id == objectAnnotation.id })?.flowerImage,
                let rawImage = DesignSystemAssets.uiImage(named: imageName),
                let resized = rawImage.resize(to: CGSize(width: 40, height: 40)) {
+                // 이미지 크기는 그대로 40x40, 중앙 배치
                 annotationView.image = resized
-            } else {
-                annotationView.image = UIImage(systemName: "photo")?.resize(to: CGSize(width: 40, height: 40))
+
+                let imageView = UIImageView(image: resized)
+                imageView.center = CGPoint(x: viewSize.width / 2, y: viewSize.height / 2)
+                imageView.frame = CGRect(x: (viewSize.width - 40) / 2, y: (viewSize.height - 40) / 2, width: 40, height: 40)
+                annotationView.addSubview(imageView)
+                annotationView.image = nil  // 기본 image는 제거 (이미지뷰로 대체)
             }
 
             if let titleLabel = annotationView.viewWithTag(1001) as? UILabel {
                 let text = annotation.title ?? ""
                 let font = DesignSystem.Font.UIKit.Headline.medium
-
                 let strokeTextAttributes: [NSAttributedString.Key: Any] = [
                     .strokeColor: DesignSystem.Color.UIKit.Gray_white,
                     .foregroundColor: DesignSystem.Color.UIKit.Gray_black,
@@ -160,6 +166,7 @@ struct MapViewRepresentable: UIViewRepresentable {
                 titleLabel.frame.size.width = titleLabel.frame.width + 10
                 titleLabel.center.x = annotationView.bounds.width / 2
             }
+
             return annotationView
         }
 
