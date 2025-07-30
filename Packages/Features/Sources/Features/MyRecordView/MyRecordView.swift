@@ -5,8 +5,8 @@
 //  Created by Jimin on 7/20/25.
 //
 
-import SwiftUI
 import DesignSystem
+import SwiftUI
 
 struct MyRecordView: View {
     @StateObject private var viewModel = MyRecordViewModel()
@@ -17,6 +17,7 @@ struct MyRecordView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
+
                 HStack {
                     Button(action: {
                         if !nav.path.isEmpty {
@@ -30,6 +31,7 @@ struct MyRecordView: View {
                     Spacer()
                 }
                 .padding(.top, 15)
+                .padding(.horizontal, 20)
 
                 Text("전체")
                     .font(DesignSystem.Font.NavigationTitle.bold)
@@ -37,7 +39,7 @@ struct MyRecordView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 30)
                     .padding(.bottom, 20)
-
+                    .padding(.horizontal, 20)
 
                 RecordList(
                     records: viewModel.records,
@@ -45,11 +47,14 @@ struct MyRecordView: View {
                         selectedRecordID = IdentifiableUUID(id: id)
                     }
                 )
+                .padding(.horizontal, 20)
             }
-            .padding(.horizontal, 20)
+            .background(DesignSystem.Color.BgScreen)
             .navigationBarHidden(true)
             .sheet(item: $selectedRecordID) { identifiableID in
-                RecordDetailBottomSheet(viewModel: RecordDetailViewModel(id: identifiableID.id))
+                RecordDetailBottomSheet(
+                    viewModel: RecordDetailViewModel(id: identifiableID.id)
+                )
             }
         }
     }
@@ -58,8 +63,6 @@ struct MyRecordView: View {
 struct IdentifiableUUID: Identifiable, Equatable {
     let id: UUID
 }
-
-
 
 #Preview {
     MyRecordView()

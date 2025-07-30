@@ -18,6 +18,7 @@ struct MyRecordBottomSheet: View {
             VStack(alignment: .leading) {
                 Text("내 꽃")
                     .font(DesignSystem.Font.Title1.semibold)
+                    .foregroundColor(DesignSystem.Color.Gray_black)
                     .padding(.bottom, 4)
 
                 Text("\(viewModel.allMotes.count)개의 꽃")
