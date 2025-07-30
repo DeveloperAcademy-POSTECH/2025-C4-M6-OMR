@@ -36,7 +36,6 @@ public struct LiveARCameraViewModelFactory: ARCameraViewModelFactory {
         return ARCameraViewModel(
             fetchMyRecordsUseCase: fetchMyRecordsUseCase,
             saveRecordUseCase: saveRecordUseCase,
-            initializeAppDataUseCase: initializeAppDataUseCase,
             fetchAllMarkersUseCase: fetchAllMarkersUseCase,
             location: location,
             bottomSheetCoordinator: bottomSheetCoordinator

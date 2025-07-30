@@ -72,7 +72,14 @@ public extension DesignSystem {
             SwiftUI.Color("Gray_IC", bundle: .module)
         }
         
-
+        public static var Background: SwiftUI.Color {
+            SwiftUI.Color("Background", bundle: .module)
+        }
+        
+        public static var BgScreen: SwiftUI.Color {
+            SwiftUI.Color("BgScreen", bundle: .module)
+        }
+        
     }
 }
 

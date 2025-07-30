@@ -14,7 +14,7 @@ public struct FetchMyRecordsUseCase: Sendable {
     ) async throws -> [RecordDetail] {
         print("FetchMyRecordsUseCase: \(filter?.center)")
         let records = try await recordRepository.fetchMyRecords(in: filter)
-        print("record list: \(records)")
+//        print("record list: \(records)")
 
         // TaskGroup을 사용해 병렬로 RecordDetail을 조회
         return try await withThrowingTaskGroup(of: RecordDetail.self) { group in

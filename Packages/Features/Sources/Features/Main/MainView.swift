@@ -69,7 +69,7 @@ struct MainView: View {
                 }
 
                 previousLocation = location
-                viewModel.loadNearbyMotesMock(center: location, radius: 1000)
+                viewModel.loadNearbyRecords(center: location, radius: 1000)
             }
         }
     }
@@ -158,7 +158,8 @@ extension MainView {
         if distance < updateThresholdMeters { return }
 
         previousLocation = location
-        viewModel.loadNearbyMotesMock(center: location, radius: 1000)
+        viewModel.loadNearbyRecords(center: location, radius: 1000)
+        print("\(viewModel.nearbyCount) 입니다.")
     }
 }
 

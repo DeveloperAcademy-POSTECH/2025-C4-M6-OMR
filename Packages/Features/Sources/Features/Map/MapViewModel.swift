@@ -8,26 +8,16 @@ import Dependencies
 final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     // MARK: - Published Properties
-    
     @Published var objectSummaries: [ObjectSummary] = []
-    
-    /// 핀(Annotation)을 탭했을 때 선택된 객체의 정보를 담는 프로퍼티
     @Published var selectObjectDetail: ObjectSummary? = nil
-    
-    
     @Published var cameraPosition: CLLocationCoordinate2D? = nil
-    
-    // MARK: - Properties
-    
+    @Published var isLoading: Bool = false
+    @Published var errorMessage: String? = nil
+
     private let locationManager = CLLocationManager()
     
     private let fetchMyRecordsUseCase: FetchMyRecordsUseCase
-    
-    // TODO: 향후 의존성 주입(DI) 컨테이너를 통해 UseCase를 주입
-    // private let fetchUseCase: FetchNearbyMotesUseCase
-    
-    // MARK: - Initialization
-    
+
     init(fetchMyRecordsUseCase: FetchMyRecordsUseCase) {
         self.fetchMyRecordsUseCase = fetchMyRecordsUseCase
         super.init()
@@ -35,59 +25,50 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
     }
+   
     
     // MARK: - Methods
     
-    // 지도에 표시할 오브젝트 데이터를 가져옴
-    
     func fetchMapObjects() {
+
+
+        isLoading = true
+        errorMessage = nil
+
         Task {
             do {
-                // ✅ UseCase를 통해 실제 기록 데이터를 가져옵니다.
-                let records = try await fetchMyRecordsUseCase()
+                let motes = try await fetchMyRecordsUseCase()
                 
-                // ✅ 가져온 Record를 ObjectSummary로 매핑합니다.
-                self.objectSummaries = records.map { record in
-                    ObjectSummary(
-                        id: record.record.id,
-                        title: record.record.title ?? "제목 없음",
-                        latitude: record.record.coordinate.latitude,
-                        longitude: record.record.coordinate.longitude,
-                        // Marker 정보에서 이미지를 가져와야 할 수 있습니다.
-                        flowerImage: record.marker.imageName
+                let summaries = motes.map { mote in
+                    print("🌸 flowerImage name:", mote.marker.smallThumbnailImageName)
+                    return ObjectSummary(
+                        id: mote.record.id,
+                        title: mote.record.title ?? "",
+                        latitude: mote.record.coordinate.latitude,
+                        longitude: mote.record.coordinate.longitude,
+                        flowerImage: mote.marker.smallThumbnailImageName
                     )
                 }
+                self.objectSummaries = summaries 
+                self.isLoading = false
             } catch {
-                print(" 지도 기록 가져오기 실패: \(error.localizedDescription)")
+                self.errorMessage = "지도를 불러오지 못했어요: \(error.localizedDescription)"
+                self.isLoading = false
             }
         }
     }
-    
-    
-    // 지도에서 핀(Annotation)이 탭되었을 때 호출
+
     func objectPinTapped(id: UUID) {
-        Task {
-            
-            if let TappedObject = objectSummaries.first(where: { $0.id == id }) {
-                self.selectObjectDetail = TappedObject
-                
-                // 선택된 객체 정보 출력
-                print("🎯 선택된 오브제:")
-                print("🆔 ID: \(TappedObject.id)")
-                print("📍 위치: (\(TappedObject.latitude), \(TappedObject.longitude))")
-                print("📝 제목: \(TappedObject.title)")
-                print("꽃 이미지: \(TappedObject.flowerImage)")
-                
-                // 선택된 객체의 위치로 카메라 이동
-                self.cameraPosition = CLLocationCoordinate2D(
-                    latitude: TappedObject.latitude,
-                    longitude: TappedObject.longitude
-                )
-            }
-        }
+        guard let tapped = objectSummaries.first(where: { $0.id == id }) else { return }
+
+        self.selectObjectDetail = tapped
+        self.cameraPosition = CLLocationCoordinate2D(
+            latitude: tapped.latitude,
+            longitude: tapped.longitude
+        )
     }
-    
 }
+
 
 // 임시 ObjectSummary 구조체 정의
 public struct ObjectSummary: Identifiable {
