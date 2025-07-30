@@ -212,7 +212,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     private func addLightingToFlower(_ flowerEntity: ModelEntity) {
         // 🌞 방향성 조명: 햇빛 역할
         let directionalLight = DirectionalLight()
-        directionalLight.light.intensity = 10000  // 더 강하게
+        directionalLight.light.intensity = 7000  //
         directionalLight.light.color = UIColor(red: 1.0, green: 0.96, blue: 0.85, alpha: 1.0) // 햇빛 느낌의 따뜻한 색
 
         // 햇빛이 약간 비스듬하게 비추는 느낌 (예: 남동쪽 방향에서)
@@ -220,7 +220,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
 
         // 🌤️ 부드러운 전체 조명: 그림자 어두움을 줄이기 위해 Ambient 느낌 추가
         let ambientLight = PointLight()
-        ambientLight.light.intensity = 5000
+        ambientLight.light.intensity = 3000
         ambientLight.light.color = UIColor(red: 1.0, green: 0.97, blue: 0.9, alpha: 1.0)
         ambientLight.light.attenuationRadius = 2.0
         ambientLight.position = [0, 0.5, 0]
@@ -229,14 +229,115 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         flowerEntity.addChild(directionalLight)
         flowerEntity.addChild(ambientLight)
     }
-
-    func confirmPlacement() {
+    
+    private func addNaturalSunlight(to flowerEntity: ModelEntity, cameraPosition: SIMD3<Float>) {
+        // 🌅 시간대별 햇빛 색상 (더 미묘하고 자연스럽게)
+        let sunlightColor = getSunlightColorForCurrentTime()
+        
+        // 🌞 주 햇빛: 부드럽고 자연스러운 방향성 조명
+        let mainSunlight = createMainSunlight(color: sunlightColor)
+        
+        // 🌤️ 하늘 산란광: 부드러운 전체 조명 (하늘에서 오는 간접광)
+        let skyLight = createSkyAmbientLight(color: sunlightColor)
+        
+    
+        
+        // 📐 카메라 위치 기반 보조 조명 (너무 어두운 부분 방지)
+        let fillLight = createCameraFillLight(cameraPosition: cameraPosition, flowerPosition: flowerEntity.position)
+        
+        // 조명들을 꽃에 추가
+        flowerEntity.addChild(mainSunlight)
+        flowerEntity.addChild(skyLight)
+        flowerEntity.addChild(fillLight)
+        
+        print("🌸 자연스러운 햇빛 조명 적용 완료")
+    }
+    
+    // MARK: - 시간대별 햇빛 색상
+    private func getSunlightColorForCurrentTime() -> UIColor {
+        let hour = Calendar.current.component(.hour, from: Date())
+        
+        switch hour {
+        case 6..<8:   // 새벽 - 차가운 푸른빛
+            return UIColor(red: 0.9, green: 0.95, blue: 1.0, alpha: 1.0)
+        case 8..<10:  // 아침 - 따뜻한 황금빛
+            return UIColor(red: 1.0, green: 0.94, blue: 0.8, alpha: 1.0)
+        case 10..<16: // 낮 - 자연스러운 흰색
+            return UIColor(red: 1.0, green: 0.98, blue: 0.95, alpha: 1.0)
+        case 16..<18: // 오후 - 따뜻한 오렌지
+            return UIColor(red: 1.0, green: 0.9, blue: 0.7, alpha: 1.0)
+        case 18..<20: // 저녁 - 붉은 노을
+            return UIColor(red: 1.0, green: 0.8, blue: 0.6, alpha: 1.0)
+        default:      // 밤 - 달빛 (차가운 푸른빛)
+            return UIColor(red: 0.7, green: 0.8, blue: 1.0, alpha: 1.0)
+        }
+    }
+    
+    // MARK: - 주 햇빛 (자연스러운 방향성 조명)
+    private func createMainSunlight(color: UIColor) -> DirectionalLight {
+        let sunlight = DirectionalLight()
+        
+        // 🌞 강도를 낮추고 더 자연스럽게
+        sunlight.light.intensity = 7000  // 기존 7000에서 대폭 감소
+        sunlight.light.color = color
+        
+        // ☀️ 현실적인 햇빛 각도 (45도 각도에서 약간 측면에서)
+        // 너무 직접적이지 않고 자연스러운 각도
+        let sunDirection = normalize(SIMD3<Float>(0.3, -0.8, -0.5))  // 더 부드러운 각도
+        
+        // 햇빛 방향 설정 (look(at:from:) 대신 transform 직접 설정)
+        var transform = Transform()
+        transform.rotation = simd_quatf(from: SIMD3<Float>(0, 0, -1), to: sunDirection)
+        sunlight.transform = transform
+        
+        return sunlight
+    }
+    
+    // MARK: - 하늘 산란광 (부드러운 전체 조명)
+    private func createSkyAmbientLight(color: UIColor) -> PointLight {
+        let skyLight = PointLight()
+        
+        // 🌤️ 하늘에서 오는 부드러운 간접광
+        skyLight.light.intensity = 3000
+        skyLight.light.color = UIColor(
+            red: color.cgColor.components?[0] ?? 1.0,
+            green: (color.cgColor.components?[1] ?? 1.0) + 0.05,  // 하늘빛 약간 추가
+            blue: (color.cgColor.components?[2] ?? 1.0) + 0.1,   // 파란빛 약간 추가
+            alpha: 1.0
+        )
+        
+        // 위쪽에서 넓게 퍼지는 조명
+        skyLight.light.attenuationRadius = 30.0  // 더 넓은 범위
+        skyLight.position = [0, 1.5, 0]  // 꽃 위쪽
+        
+        return skyLight
+    }
+    
+   
+    
+    // MARK: - 카메라 보조 조명 (자연스러운 fill light)
+    private func createCameraFillLight(cameraPosition: SIMD3<Float>, flowerPosition: SIMD3<Float>) -> PointLight {
+        let fillLight = PointLight()
+        
+        // 📷 카메라 쪽에서 오는 매우 약한 보조 조명 (너무 어두운 부분 방지)
+        fillLight.light.intensity = 3000  // 매우 약함
+        fillLight.light.color = UIColor(red: 1.0, green: 0.98, blue: 0.96, alpha: 1.0)  // 중성적인 색
+        fillLight.light.attenuationRadius = 2.0
+        
+        // 카메라와 꽃 사이의 중간 지점에 배치
+        let midPoint = (cameraPosition + flowerPosition) * 0.5
+        fillLight.position = [midPoint.x, midPoint.y + 0.2, midPoint.z]
+        
+        return fillLight
+    }
+    
+    // MARK: - 개선된 꽃 배치 시 조명 적용
+    func confirmPlacementWithNaturalLighting() {
         guard placementState.canConfirm,
               let arView = arView,
               let position = placementAnchor?.position,
               let currentFrame = arView.session.currentFrame else { return }
         
-        // 인디케이터 위치에 꽃 생성
         if let entity = placementState.entity {
             let flowerAnchor = AnchorEntity(world: position)
             let flowerClone = entity.clone(recursive: true)
@@ -248,25 +349,86 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             // 🌸 꽃 크기 조정
             let distanceVector = cameraPosition - flowerPosition
             let distance = simd_length(distanceVector)
+            let dynamicScale = max(0.3, min(0.5, 0.8 / distance))
+            flowerClone.transform.scale = SIMD3<Float>(dynamicScale, dynamicScale, dynamicScale)
+            
+            // 꽃 회전 설정
+            let directionToCamera = normalize(cameraPosition - flowerPosition)
+            let horizontalDirection = normalize(SIMD3<Float>(directionToCamera.x, 0, directionToCamera.z))
+            let angle = atan2(horizontalDirection.x, -horizontalDirection.z)
+            let rotation = simd_quatf(angle: angle, axis: SIMD3<Float>(0, 1, 0))
+            flowerClone.transform.rotation = rotation
+            
+            // 🌞 자연스러운 햇빛 조명 적용
+            addNaturalSunlight(to: flowerClone, cameraPosition: cameraPosition)
+            
+            flowerAnchor.addChild(flowerClone)
+            arView.scene.addAnchor(flowerAnchor)
+            
+            // 현재 꽃 앵커 추적
+            self.currentFlowerAnchor = flowerAnchor
+            
+            print("🌸 자연스러운 조명과 함께 꽃 배치 완료")
+        }
+        
+        placementState.confirm()
+        removePlacementAnchor()
+        onPlacementStateChanged?(placementState.status)
+    }
+    private func addSubtleWindEffect(to flowerEntity: ModelEntity) {
+        // 매우 미묘한 흔들림 효과
+        let swayAmount: Float = 0.02  // 2cm 정도의 미묘한 움직임
+        let swayDuration: Float = 3.0 + Float.random(in: -0.5...0.5)  // 랜덤한 주기
+        
+        // X축과 Z축으로 미묘하게 흔들리는 애니메이션
+        let swayTransform = Transform(
+            scale: SIMD3<Float>(1, 1, 1),
+            rotation: simd_quatf(angle: swayAmount, axis: SIMD3<Float>(1, 0, 1)),
+            translation: SIMD3<Float>(0, 0, 0)
+        )
+        
+        let swayAnimation = FromToByAnimation(
+            name: "windSway",
+            from: Transform.identity,
+            to: swayTransform,
+            duration: TimeInterval(swayDuration),
+            timing: .easeInOut,
+            isAdditive: true
+        )
+        
+        if let animationResource = try? AnimationResource.generate(with: swayAnimation) {
+            flowerEntity.playAnimation(animationResource.repeat())
+        }
+    }
+    
+    
+    func confirmPlacement() {
+        guard placementState.canConfirm,
+              let arView = arView,
+              let position = placementAnchor?.position,
+              let currentFrame = arView.session.currentFrame else { return }
+        
+        // 인디케이터 위치에 꽃 생성
+        if let entity = placementState.entity {
+            let flowerAnchor = AnchorEntity(world: position)
+            let flowerClone = entity.clone(recursive: true)
+            
+            // 🌸 카메라 위치 (크기 조정용)
+            let cameraPosition = extractPositionFromTransform(currentFrame.camera.transform)
+            let flowerPosition = position
+            
+            // 🌸 꽃 크기 조정
+            let distanceVector = cameraPosition - flowerPosition
+            let distance = simd_length(distanceVector)
             let dynamicScale = max(0.3, min(0.5, 0.8 / distance)) //꽃 크기 조정 가능
             flowerClone.transform.scale = SIMD3<Float>(dynamicScale, dynamicScale, dynamicScale)
             
-            // 꽃에서 카메라로의 방향 벡터 계산
-            let directionToCamera = normalize(cameraPosition - flowerPosition)
+            // 🧭 currentUserHeading을 기준으로 꽃 방향 설정
+            let flowerRotation = calculateFlowerRotationFromHeading()
+            flowerClone.transform.rotation = flowerRotation
             
-            // Y축 회전만 적용 (꽃이 기울어지지 않고 수평면에서만 회전)
-            let horizontalDirection = normalize(SIMD3<Float>(directionToCamera.x, 0, directionToCamera.z))
-            
-            // 기본 앞 방향 (0, 0, -1)에서 목표 방향으로의 회전 계산
-            let defaultForward = SIMD3<Float>(0, 0, -1)
-            let angle = atan2(horizontalDirection.x, -horizontalDirection.z)
-            
-            // Y축 회전만 적용 (수평 회전만)
-            let rotation = simd_quatf(angle: angle, axis: SIMD3<Float>(0, 1, 0))
-            
-            // 꽃 엔티티에 회전 적용
-            flowerClone.transform.rotation = rotation
-            addLightingToFlower(flowerClone)
+            addNaturalSunlight(to: flowerClone, cameraPosition: cameraPosition)
+            addSubtleWindEffect(to: flowerClone)
             
             flowerAnchor.addChild(flowerClone)
             arView.scene.addAnchor(flowerAnchor)
@@ -277,13 +439,64 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             // 배치된 좌표 정보 로그 출력
             logPlacementCoordinates(arPosition: position)
             
-            print("🌸 꽃이 카메라를 향하도록 회전 적용: \(String(format: "%.1f", angle * 180 / Float.pi))도")
-            print("🌸 꽃 크기 동적 조정: \(String(format: "%.1f", dynamicScale * 100))% (거리: \(String(format: "%.2f", distance))m - 멀어질수록 작아짐)")
+            print("🌸 꽃 크기 동적 조정: \(String(format: "%.1f", dynamicScale * 100))% (거리: \(String(format: "%.2f", distance))m)")
         }
         
         placementState.confirm()
         removePlacementAnchor() // 앵커 제거
         onPlacementStateChanged?(placementState.status)
+    }
+
+    // MARK: - 나침반 기준 꽃 방향 계산
+    private func calculateFlowerRotationFromHeading() -> simd_quatf {
+        guard let userHeading = currentUserHeading else {
+            print("⚠️ currentUserHeading이 nil입니다. 기본 방향 사용")
+            return simd_quatf(angle: 0, axis: SIMD3<Float>(0, 1, 0))
+        }
+        
+        // 🧭 사용자의 현재 나침반 방향 (자북 기준, 도 단위)
+        let userHeadingDegrees = userHeading.trueHeading
+        print("🧭 현재 사용자 헤딩: \(String(format: "%.1f", userHeadingDegrees))도")
+        
+        // 🌸 꽃이 바라볼 방향 설정 (사용자와 같은 방향 또는 반대 방향)
+        let flowerTargetHeading = getFlowerTargetHeading(userHeading: userHeadingDegrees)
+        print("🌸 꽃 목표 방향: \(String(format: "%.1f", flowerTargetHeading))도")
+        
+        // 🔄 도 단위를 라디안으로 변환
+        let flowerHeadingRadians = Float(flowerTargetHeading * .pi / 180.0)
+        
+        // 🎯 ARKit 좌표계에서의 회전 계산
+        // ARKit: Z축이 뒤쪽, X축이 오른쪽
+        // 나침반: 0도가 북쪽, 시계방향으로 증가
+        
+        // 나침반 방향을 ARKit 좌표계로 변환
+        // 나침반 0도(북쪽) = ARKit에서 -Z 방향
+        // 나침반 90도(동쪽) = ARKit에서 +X 방향
+        let arKitRotationAngle = -flowerHeadingRadians + Float.pi / 2
+        
+        // Y축 중심 회전 (수평면에서만 회전)
+        let rotation = simd_quatf(angle: arKitRotationAngle, axis: SIMD3<Float>(0, 1, 0))
+        
+        return rotation
+    }
+
+    // MARK: - 꽃이 바라볼 목표 방향 결정
+    private func getFlowerTargetHeading(userHeading: Double) -> Double {
+        // 옵션 1: 사용자와 같은 방향 (사용자가 보는 방향)
+        let sameDirection = userHeading
+        
+        // 옵션 2: 사용자 반대 방향 (사용자를 바라보는 방향)
+        let oppositeDirection = userHeading >= 180 ? userHeading - 180 : userHeading + 180
+        
+        // 옵션 3: 고정 방향 (예: 항상 북쪽)
+        let fixedDirection = 0.0  // 북쪽
+        
+        // 🌸 원하는 설정 선택 (현재는 사용자와 같은 방향)
+        return sameDirection
+        
+        // 다른 옵션을 사용하려면 위의 return을 주석처리하고 아래 중 하나 선택:
+         return oppositeDirection  // 사용자를 바라보게 하려면
+        // return fixedDirection     // 항상 북쪽을 바라보게 하려면
     }
     
     /// 현재 배치된 위치의 GPS 좌표를 반환합니다.
