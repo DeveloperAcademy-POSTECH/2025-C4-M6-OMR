@@ -18,12 +18,18 @@ final class MyRecordBottomSheetViewModel: ObservableObject {
     }
 
     func loadAllMotes() {
+        print("CustomLocationViewModel: loadAllMotes")
         isLoading = true
         Task {
             let motes = try await fetchMyRecordsUseCase()
             await MainActor.run {
-                self.allMotes = RecordDetailMapper.toMote(from: motes) 
+                self.allMotes = motes.map { RecordDetailMapper.toMote(from: $0) }
+                print("loadAllMotes: \(self.allMotes)")
                 isLoading = false
+            }
+            print("All Motes:")
+            self.allMotes.forEach {
+                print("Mote \($0.flower.name): lat = \($0.latitude), lon = \($0.longitude)")
             }
         }
     }
@@ -53,7 +59,7 @@ final class MyRecordBottomSheetViewModel: ObservableObject {
                     longitude: mote.longitude
                 )
                 let distance = currentLocation.distance(from: moteLocation)
-                //                print("mote: \(mote.title), distance: \(distance)")  // 거리 출력
+                print("mote: \(mote.title), distance: \(distance)")  // 거리 출력
                 return distance <= radiusInMeters
             }
 

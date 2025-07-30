@@ -9,6 +9,7 @@ import CoreLocation
 import DesignSystem
 import MapKit
 import SwiftUI
+import Dependencies
 
 // MARK: - Detent Enum
 
@@ -35,7 +36,6 @@ struct CustomModalView: View {
     @Binding var isSheetVisible: Bool
     @Binding var totalCount: Int
 
-    @StateObject private var viewModel = MyRecordBottomSheetViewModel
     @ObservedObject var locationManager: LocationManager
     @EnvironmentObject private var nav: NavigationViewModel
 
@@ -52,15 +52,30 @@ struct CustomModalView: View {
 
     @State private var selectedRecordID: IdentifiableUUID? = nil
     
-    @Dependency(\.fetchMyRecordsUseCase) private var fetchMyRecordsUseCase
+    @StateObject private var viewModel: MyRecordBottomSheetViewModel
+    public init(
+        sheetDetent: Binding<Detent>,
+        isSheetVisible: Binding<Bool>,
+        totalCount: Binding<Int>,
+        locationManager: LocationManager,
+        detentOffsets: (large: CGFloat, low: CGFloat),
+        bottomSafeArea: CGFloat
+    ) {
+        self._sheetDetent = sheetDetent
+        self._isSheetVisible = isSheetVisible
+        self._totalCount = totalCount
+        self.locationManager = locationManager
+        self.detentOffsets = detentOffsets
+        self.bottomSafeArea = bottomSafeArea
 
-    init() {
+        @Dependency(\.fetchMyRecordsUseCase) var fetchMyRecordsUseCase
         self._viewModel = StateObject(
             wrappedValue: MyRecordBottomSheetViewModel(
                 fetchMyRecordsUseCase: fetchMyRecordsUseCase
             )
         )
     }
+
 
     var body: some View {
         let isLarge = (sheetDetent == .large)
@@ -272,6 +287,8 @@ struct CustomModalView: View {
 
         .onReceive(locationManager.$currentLocation.compactMap { $0 }) {
             location in
+            viewModel.loadAllMotes()
+            locationManager.requestLocationAgain()
             viewModel.filterMotesByLocation(currentLocation: location)
         }
         .onAppear {
