@@ -141,23 +141,56 @@ public class ARCameraViewModel: NSObject, ObservableObject {
     func setupARView(_ arView: ARView) {
         arSceneManager.setup(arView: arView)
         locationManager.delegate = self
-        locationManager.requestWhenInUseAuthorization()
-        locationManager.startUpdatingHeading()
     }
 
     func startARSession() {
         print("🚀 AR 세션 시작")
 
-        // 위치 서비스 시작
-        locationManager.delegate = self
-        locationManager.requestWhenInUseAuthorization()
-        locationManager.startUpdatingHeading()
-        locationManager.startUpdatingLocation()
+        // ✅ 권한 상태 확인 후 위치 서비스 시작 (한 번만)
+        checkLocationPermissionAndStart()
 
         // 데이터 로드 및 배치
         Task {
             await fetchAndPlaceRecords()
         }
+    }
+
+    // MARK: - Location Permission Management
+    
+    /// 위치 권한을 확인하고 안전하게 위치 서비스를 시작합니다.
+    private func checkLocationPermissionAndStart() {
+        let authStatus = locationManager.authorizationStatus
+        
+        switch authStatus {
+        case .authorizedWhenInUse, .authorizedAlways:
+            // ✅ 권한이 있으면 위치 서비스 시작
+            startLocationServices()
+            
+        case .notDetermined:
+            // ✅ 권한이 결정되지 않았으면 요청
+            locationManager.requestWhenInUseAuthorization()
+            
+        case .denied, .restricted:
+            // ❌ 권한이 거부되었으면 에러 메시지 표시
+            statusMessage = "위치 권한이 필요합니다. 설정에서 위치 접근을 허용해주세요."
+            
+        @unknown default:
+            // ❓ 알 수 없는 상태면 권한 요청
+            locationManager.requestWhenInUseAuthorization()
+        }
+    }
+    
+    /// 실제로 위치 서비스를 시작합니다.
+    private func startLocationServices() {
+        guard locationManager.authorizationStatus == .authorizedWhenInUse || 
+              locationManager.authorizationStatus == .authorizedAlways else {
+            print("❌ 위치 권한이 없어서 위치 서비스를 시작할 수 없습니다.")
+            return
+        }
+        
+        print("✅ 위치 서비스 시작")
+        locationManager.startUpdatingHeading()
+        locationManager.startUpdatingLocation()
     }
 
     // MARK: - AR Actions
@@ -410,71 +443,6 @@ public class ARCameraViewModel: NSObject, ObservableObject {
         )
     }
 
-    // MARK: - Mock Data Generation
-    private func makeMockDomainRecords() -> [Domain.Record] {
-        print("📊 Mock 데이터 생성 시작")
-
-        let titles = ["행복했던 강아지와의 산책", "맛있는 점심", "개발 공부"]
-        let distances: [Double] = [1.0, 3.0, 5.0]  // 1m, 3m, 5m
-        let bearings: [Double] = [0.0, 120.0, 240.0]  // 북쪽, 남동쪽, 남서쪽
-
-        var records: [Domain.Record] = []
-
-        for i in 0..<titles.count {
-            let title = titles[i]
-            let distance = distances[i]
-            let bearing = bearings[i]
-
-            // TransformUseCase를 사용하여 유효한 좌표 생성
-            let targetCoordinate = transformUseCase.generateValidTestCoordinate(
-                from: self.location.coordinate,
-                distance: distance,
-                bearing: bearing
-            )
-
-            let record = Domain.Record(
-                id: UUID(),
-                authorID: UUID(),
-                markerTypeID: UUID(),
-                title: title,
-                coordinate: Domain.Coordinate(
-                    latitude: targetCoordinate.latitude,
-                    longitude: targetCoordinate.longitude
-                ),
-                address: Domain.Address(fullAddress: "포항공과대학교"),
-                date: Date().addingTimeInterval(
-                    -Double.random(in: 0...3 * 24 * 3600)
-                ),  // 최근 3일 내
-                photos: [],
-                isPublic: true
-            )
-
-            print("📍 Mock 레코드 생성: \(title) at \(targetCoordinate)")
-            records.append(record)
-        }
-
-        return records
-    }
-
-    private func generateRandomCoordinate(
-        center: CLLocationCoordinate2D,
-        radiusInMeters: Double
-    ) -> CLLocationCoordinate2D {
-        let radiusInDegrees = radiusInMeters / 111_111.0
-
-        let angle = Double.random(in: 0..<(2 * .pi))
-        let radius = sqrt(Double.random(in: 0..<1)) * radiusInDegrees
-
-        let newLatitude = center.latitude + radius * cos(angle)
-        let newLongitude =
-            center.longitude + radius * sin(angle)
-            / cos(center.latitude * .pi / 180.0)
-
-        return CLLocationCoordinate2D(
-            latitude: newLatitude,
-            longitude: newLongitude
-        )
-    }
 }
 
 // MARK: - BottomSheetCoordinatorDelegate
@@ -516,7 +484,40 @@ extension ARCameraViewModel: CLLocationManagerDelegate {
         didFailWithError error: Error
     ) {
         Task { @MainActor in
+            print("❌ 위치 정보 오류: \(error.localizedDescription)")
             statusMessage = "위치 정보 오류: \(error.localizedDescription)"
+            
+            // GPS 신호 문제인 경우 재시도 유도
+            if let clError = error as? CLError, clError.code == .locationUnknown {
+                statusMessage = "GPS 신호를 찾고 있습니다. 잠시 후 다시 시도해주세요."
+            }
+        }
+    }
+    
+    /// 권한 상태가 변경되었을 때 호출됩니다.
+    public nonisolated func locationManager(
+        _ manager: CLLocationManager,
+        didChangeAuthorization status: CLAuthorizationStatus
+    ) {
+        Task { @MainActor in
+            print("📍 위치 권한 상태 변경: \(status.rawValue)")
+            
+            switch status {
+            case .authorizedWhenInUse, .authorizedAlways:
+                print("✅ 위치 권한 승인됨")
+                startLocationServices()
+                
+            case .denied, .restricted:
+                print("❌ 위치 권한 거부됨")
+                statusMessage = "위치 권한이 필요합니다. 설정에서 위치 접근을 허용해주세요."
+                
+            case .notDetermined:
+                print("❓ 위치 권한 미결정")
+                statusMessage = "위치 권한을 확인하고 있습니다..."
+                
+            @unknown default:
+                print("❓ 알 수 없는 위치 권한 상태")
+            }
         }
     }
 }
