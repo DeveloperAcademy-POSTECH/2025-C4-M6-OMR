@@ -50,7 +50,10 @@ public final class CustomAlbumViewModel: ObservableObject {
     // MARK: - Initialization
     
     public init() {
-        fetchInitialData()
+        // ✅ 초기화 완료 후 비동기 데이터 로딩 시작
+        Task { @MainActor in
+            await fetchInitialData()
+        }
     }
     
     // MARK: - Caching Logic
@@ -123,39 +126,49 @@ public final class CustomAlbumViewModel: ObservableObject {
     // MARK: - Data Fetching
     
     /// ViewModel 초기화 시 호출되어, 사진첩 데이터를 가져옵니다.
-    private func fetchInitialData() {
+    @MainActor
+    private func fetchInitialData() async {
         isLoading = true
-        checkPermission { [weak self] hasPermission in
-            guard let self, hasPermission else {
-                DispatchQueue.main.async { self?.isLoading = false }
+        
+        do {
+            let hasPermission = await checkPermissionAsync()
+            guard hasPermission else {
+                isLoading = false
                 return
             }
             
-            DispatchQueue.global(qos: .userInitiated).async {
-                // --- 최근 사진 20개 가져오기 ---
-                let recentFetchOptions = PHFetchOptions()
-                recentFetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-                recentFetchOptions.fetchLimit = 20
-                
-                let recentResult = PHAsset.fetchAssets(with: .image, options: recentFetchOptions)
-                var recentAssets: [PHAsset] = []
-                recentResult.enumerateObjects { asset, _, _ in
-                    recentAssets.append(asset)
-                }
-                
-                // --- 모든 사진에 대한 FetchResult 가져오기 ---
-                let allFetchOptions = PHFetchOptions()
-                allFetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-                let allAssetsResult = PHAsset.fetchAssets(with: .image, options: allFetchOptions)
-                
-                // --- 메인 스레드에서 UI 업데이트 ---
-                DispatchQueue.main.async {
-                    self.recentPhotoAssets = recentAssets
-                    self.allPhotoAssetsResult = allAssetsResult
-                    self.isLoading = false
-                }
-            }
+            // PhotoKit API는 메인 스레드에서 호출 보장됨 (@MainActor)
+            await loadPhotoAssets()
+            
+        } catch {
+            print("Photo permission error: \(error)")
+            isLoading = false
         }
+    }
+    
+    /// 사진 에셋들을 로딩합니다.
+    @MainActor
+    private func loadPhotoAssets() async {
+        // --- 최근 사진 20개 가져오기 ---
+        let recentFetchOptions = PHFetchOptions()
+        recentFetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        recentFetchOptions.fetchLimit = 20
+        
+        let recentResult = PHAsset.fetchAssets(with: .image, options: recentFetchOptions)
+        var recentAssets: [PHAsset] = []
+        recentResult.enumerateObjects { asset, _, _ in
+            recentAssets.append(asset)
+        }
+        
+        // --- 모든 사진에 대한 FetchResult 가져오기 ---
+        let allFetchOptions = PHFetchOptions()
+        allFetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        let allAssetsResult = PHAsset.fetchAssets(with: .image, options: allFetchOptions)
+        
+        // --- UI 업데이트 (메인 액터에서 자동 보장) ---
+        self.recentPhotoAssets = recentAssets
+        self.allPhotoAssetsResult = allAssetsResult
+        self.isLoading = false
     }
     
     public func fetchImage(
@@ -246,22 +259,25 @@ public final class CustomAlbumViewModel: ObservableObject {
     
     // MARK: - Permissions
     
-    private func checkPermission(completion: @escaping (Bool) -> Void) {
+    /// 사진 권한을 비동기적으로 확인하고 요청합니다.
+    @MainActor
+    private func checkPermissionAsync() async -> Bool {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         self.authorizationStatus = status
         
         switch status {
         case .authorized, .limited:
-            completion(true)
+            return true
+            
         case .notDetermined:
-            PHPhotoLibrary.requestAuthorization(for: .readWrite) { newStatus in
-                DispatchQueue.main.async {
-                    self.authorizationStatus = newStatus
-                    completion(newStatus == .authorized || newStatus == .limited)
-                }
-            }
+            // async/await로 권한 요청
+            let newStatus = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
+            self.authorizationStatus = newStatus
+            return newStatus == .authorized || newStatus == .limited
+            
         default: // .denied, .restricted
-            completion(false)
+            return false
         }
     }
+
 }
