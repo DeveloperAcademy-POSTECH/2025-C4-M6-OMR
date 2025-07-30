@@ -4,22 +4,15 @@
 //
 //  Created by eunsong on 7/20/25.
 //
+import Dependencies
 import Foundation
 
 public struct FetchPublicRecordsUseCase: Sendable {
-    private let recordRepository: RecordRepository
-    private let userRepository: UserRepository
-    private let markerRepository: MarkerRepository
+    @Dependency(\.recordRepository) private var recordRepository
+    @Dependency(\.userRepository) private var userRepository
+    @Dependency(\.markerRepository) private var markerRepository
 
-    public init(
-        recordRepository: RecordRepository,
-        userRepository: UserRepository,
-        markerRepository: MarkerRepository
-    ) {
-        self.recordRepository = recordRepository
-        self.userRepository = userRepository
-        self.markerRepository = markerRepository
-    }
+    public init() { }
 
     /// 반경 내 공개된 타인 기록 조회
     public func callAsFunction(

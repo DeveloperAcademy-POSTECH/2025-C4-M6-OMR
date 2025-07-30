@@ -7,6 +7,7 @@
 
 import Combine
 import SwiftUI
+import Domain
 
 @MainActor
 public class BottomSheetCoordinator: ObservableObject {
@@ -29,12 +30,10 @@ public class BottomSheetCoordinator: ObservableObject {
 
     var onCancelPlacement: () -> Void = {}
 
-    private let flowerSelectionViewModelFactory: FlowerSelectionViewModelFactory
-
-    init(flowerSelectionViewModelFactory: FlowerSelectionViewModelFactory) {
-        self.flowerSelectionViewModelFactory = flowerSelectionViewModelFactory
-        self.flowerSelectionViewModel = flowerSelectionViewModelFactory.create()
-
+    init(fetchAllMarkersUseCase: FetchAllMarkersUseCase) {
+        self.flowerSelectionViewModel = FlowerSelectionViewModel(
+            fetchAllMarkersUseCase: fetchAllMarkersUseCase
+        )
         setupFlowerSelectionCallback()
     }
 

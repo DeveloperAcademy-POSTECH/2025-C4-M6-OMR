@@ -6,7 +6,7 @@ public struct FetchMyRecordsUseCase: Sendable {
     @Dependency(\.userRepository) private var userRepository
     @Dependency(\.markerRepository) private var markerRepository
 
-    public init() {}
+    public init() { }
 
     /// 내 기록 조회 (필터가 없으면 전체, 있으면 반경 내)
     public func callAsFunction(

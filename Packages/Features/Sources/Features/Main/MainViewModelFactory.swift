@@ -5,23 +5,26 @@
 //  Created by eunsong on 7/28/25.
 //
 import Dependencies
+import Domain
 import Foundation
 
 // MARK: - Factory Protocol
-@MainActor
 public protocol MainViewModelFactory: Sendable {
-    func create() -> MainViewModel
+    @MainActor func create() -> MainViewModel
 }
 
 // MARK: - Live Factory with Dependencies
 public struct LiveMainViewModelFactory: MainViewModelFactory {
+    public init() {}
+
     @MainActor
     public func create() -> MainViewModel {
+        // ✅ MoteApp의 withDependencies에서 자동 전파됨
         @Dependency(\.fetchMyRecordsUseCase) var fetchMyRecordsUseCase
         @Dependency(\.initializeAppDataUseCase) var initializeAppDataUseCase
 
-        // Debug logging
-        let _ = print("[Factory] Creating MainViewModel with use cases")
+        print("[Factory] Creating MainViewModel")
+        print("  - FetchMyRecordsUseCase: \(type(of: fetchMyRecordsUseCase))")
 
         return MainViewModel(
             fetchMyRecordsUseCase: fetchMyRecordsUseCase,

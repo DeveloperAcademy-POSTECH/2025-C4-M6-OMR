@@ -29,7 +29,7 @@ final class MyRecordBottomSheetViewModel: ObservableObject {
             let filtered = allMotes.filter { mote in
                 let moteLocation = CLLocation(latitude: mote.latitude, longitude: mote.longitude)
                 let distance = currentLocation.distance(from: moteLocation)
-                print("mote: \(mote.title), distance: \(distance)")  // 거리 출력
+//                print("mote: \(mote.title), distance: \(distance)")  // 거리 출력
                 return distance <= radiusInMeters
             }
 

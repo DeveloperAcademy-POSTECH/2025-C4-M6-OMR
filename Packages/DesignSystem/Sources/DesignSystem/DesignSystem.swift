@@ -10,13 +10,13 @@ public struct DesignSystem {
     /// 앱 시작 시 한 번만 호출하면 됩니다.
     public static func registerFonts() {
         // Bundle.module 디버깅
-        print("🔍 Bundle.module 경로: \(Bundle.module.bundlePath)")
-        print("🔍 Bundle.module 리소스들:")
+//        print("🔍 Bundle.module 경로: \(Bundle.module.bundlePath)")
+//        print("🔍 Bundle.module 리소스들:")
         if let resourcePath = Bundle.module.resourcePath {
             do {
                 let contents = try FileManager.default.contentsOfDirectory(atPath: resourcePath)
                 for item in contents {
-                    print("   - \(item)")
+//                    print("   - \(item)")
                 }
             } catch {
                 print("   ❌ 리소스 디렉토리 읽기 실패: \(error)")
@@ -50,7 +50,7 @@ public struct DesignSystem {
             return
         }
         
-        print("📁 폰트 파일 경로: \(fontURL.path)")
+//        print("📁 폰트 파일 경로: \(fontURL.path)")
         
         guard let fontData = try? Data(contentsOf: fontURL),
               let provider = CGDataProvider(data: fontData as CFData),
@@ -63,7 +63,7 @@ public struct DesignSystem {
         if !CTFontManagerRegisterGraphicsFont(font, &error) {
             print("⚠️ 폰트 등록 실패: \(fontName) - \(error?.takeRetainedValue().localizedDescription ?? "알 수 없는 오류")")
         } else {
-            print("✅ 폰트 등록 성공: \(fontName)")
+//            print("✅ 폰트 등록 성공: \(fontName)")
         }
     }
 }

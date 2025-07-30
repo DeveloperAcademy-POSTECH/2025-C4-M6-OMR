@@ -13,19 +13,33 @@ public struct ARCameraView: View {
     @Environment(\.dismiss) private var dismiss
     
     @State private var showPermissionAlert = false
-    
-    public init(
-        location: CLLocation,
-        factory: ARCameraViewModelFactory
-    ) {
-        @Dependency(\.bottomSheetCoordinatorFactory) var coordinatorFactory
-        let coordinator = coordinatorFactory.create()
-        //        let coordinator = BottomSheetCoordinator()
-        let viewModel = factory.create(
+    @StateObject private var bottomSheetCoordinator: BottomSheetCoordinator
+
+    public init(location: CLLocation) {
+        // ARCameraView가 생성되는 시점의 의존성을 직접 주입받습니다.
+        @Dependency(\.fetchMyRecordsUseCase) var fetchMyRecordsUseCase
+        @Dependency(\.saveRecordUseCase) var saveRecordUseCase
+        @Dependency(\.initializeAppDataUseCase) var initializeAppDataUseCase
+        @Dependency(\.fetchAllMarkersUseCase) var fetchAllMarkersUseCase
+
+        // 1. BottomSheetCoordinator를 먼저 생성합니다.
+        let coordinator = BottomSheetCoordinator(
+            fetchAllMarkersUseCase: fetchAllMarkersUseCase
+        )
+        
+        // 2. ARCameraViewModel을 생성하면서 필요한 모든 의존성을 주입합니다.
+        let viewModel = ARCameraViewModel(
+            fetchMyRecordsUseCase: fetchMyRecordsUseCase,
+            saveRecordUseCase: saveRecordUseCase,
+            initializeAppDataUseCase: initializeAppDataUseCase,
+            fetchAllMarkersUseCase: fetchAllMarkersUseCase,
             location: location,
             bottomSheetCoordinator: coordinator
         )
+        
+        // 3. StateObject들을 초기화합니다.
         _viewModel = StateObject(wrappedValue: viewModel)
+        _bottomSheetCoordinator = StateObject(wrappedValue: coordinator)
     }
     
     public var body: some View {

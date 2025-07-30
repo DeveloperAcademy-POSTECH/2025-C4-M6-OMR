@@ -9,11 +9,11 @@ import SwiftUI
 
 public struct AppDI {
     // MARK: - SwiftData & DataSource Setup
-    
+
     // 메인 큐용 ModelContext (UI 및 동기 작업용)
     @MainActor
     internal static let modelContext = ModelContext(AppModelContainer.shared)
-    
+
     internal static let localRecordDS = LocalRecordDataSource(
         container: AppModelContainer.shared
     )
@@ -48,29 +48,18 @@ public struct AppDI {
     // MARK: - Helper Methods
 
     private static func getCurrentUserID() async throws -> UUID {
-        UUID(uuidString: "00000000-0000-0000-0000-000000000000") ?? UUID()
+        UUID(uuidString: "00000000-0000-0000-0000-000000000001") ?? UUID()
     }
 
     // MARK: - Setup Method
 
     public static func setup() {
-        // 1. Configure Features module dependencies
-        Task { @MainActor in
-            let featuresDeps = FeaturesDependencies(
-                recordRepository: recordRepository,
-                userRepository: userRepository,
-                markerRepository: markerRepository
-            )
-            FeaturesDependencies.configure(with: featuresDeps)
-        }
+        print("[AppDI] Setup completed - Repository instances created")
+        print("  - RecordRepository: \(type(of: recordRepository))")
+        print("  - UserRepository: \(type(of: userRepository))")
+        print("  - MarkerRepository: \(type(of: markerRepository))")
 
-        // 2. Register global swift-dependencies (for non-navigation contexts)
-        withDependencies {
-            $0.recordRepository = recordRepository
-            $0.userRepository = userRepository
-            $0.markerRepository = markerRepository
-        } operation: {
-            // Empty - just setting up
-        }
+        // ✅ FeaturesDependencies 관련 코드 모두 제거
+        // withDependencies가 자동으로 전파하므로 별도 설정 불필요
     }
 }

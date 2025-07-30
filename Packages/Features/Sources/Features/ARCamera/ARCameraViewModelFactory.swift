@@ -4,9 +4,10 @@ import Domain
 import Foundation
 
 // MARK: - Factory Protocol
-@MainActor
+
 public protocol ARCameraViewModelFactory: Sendable {
     @available(iOS 18.0, *)
+    @MainActor
     func create(
         location: CLLocation,
         bottomSheetCoordinator: BottomSheetCoordinator
@@ -15,19 +16,22 @@ public protocol ARCameraViewModelFactory: Sendable {
 
 // MARK: - Live Factory with Dependencies
 public struct LiveARCameraViewModelFactory: ARCameraViewModelFactory {
+    public init() {}
+
     @available(iOS 18.0, *)
     @MainActor
     public func create(
         location: CLLocation,
         bottomSheetCoordinator: BottomSheetCoordinator
     ) -> ARCameraViewModel {
-        // Use @Dependency to get the current context's dependencies
+        // ✅ MoteApp의 withDependencies에서 자동 전파됨
         @Dependency(\.fetchMyRecordsUseCase) var fetchMyRecordsUseCase
         @Dependency(\.saveRecordUseCase) var saveRecordUseCase
         @Dependency(\.initializeAppDataUseCase) var initializeAppDataUseCase
         @Dependency(\.fetchAllMarkersUseCase) var fetchAllMarkersUseCase
-        // Debug logging
-        let _ = print("[Factory] Creating ARCameraViewModel with use cases")
+
+        print("[Factory] Creating ARCameraViewModel")
+        print("  - SaveRecordUseCase: \(type(of: saveRecordUseCase))")
 
         return ARCameraViewModel(
             fetchMyRecordsUseCase: fetchMyRecordsUseCase,

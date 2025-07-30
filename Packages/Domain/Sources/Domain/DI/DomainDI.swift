@@ -17,67 +17,59 @@ public struct MarkerRepositoryKey: DependencyKey, Sendable {
         UnimplementedMarkerRepository()
 }
 
-// MARK: - UseCase Keys
+// MARK: - UseCase Keys (✅ 지연 생성으로 변경)
 
 public struct FetchMyRecordsUseCaseKey: DependencyKey, Sendable {
-    public static let liveValue = FetchMyRecordsUseCase()
+    // ✅ Repository가 주입된 후에 생성되도록 지연 생성
+    public static var liveValue: FetchMyRecordsUseCase {
+        FetchMyRecordsUseCase()
+    }
 }
 
 public struct SaveRecordUseCaseKey: DependencyKey, Sendable {
-    public static let liveValue = SaveRecordUseCase()
+    public static var liveValue: SaveRecordUseCase {
+        SaveRecordUseCase()
+    }
 }
 
 public struct InitializeAppDataUseCaseKey: DependencyKey, Sendable {
-    public static let liveValue = InitializeAppDataUseCase()
+    public static var liveValue: InitializeAppDataUseCase {
+        InitializeAppDataUseCase()
+    }
 }
 
 public struct FetchAllMarkersUseCaseKey: DependencyKey, Sendable {
-    public static let liveValue = FetchAllMarkersUseCase()
+    public static var liveValue: FetchAllMarkersUseCase {
+        FetchAllMarkersUseCase()
+    }
 }
 
-///
-
+// 나머지 UseCase들도 동일하게 지연 생성
 public struct FetchPublicRecordsUseCaseKey: DependencyKey, Sendable {
     public static var liveValue: FetchPublicRecordsUseCase {
-        @Dependency(\.recordRepository) var recordRepository
-        @Dependency(\.userRepository) var userRepository
-        @Dependency(\.markerRepository) var markerRepository
-        return .init(
-            recordRepository: recordRepository,
-            userRepository: userRepository,
-            markerRepository: markerRepository
-        )
+        .init()
     }
 }
 
 public struct FetchRecordDetailUseCaseKey: DependencyKey, Sendable {
     public static var liveValue: FetchRecordDetailUseCase {
-        @Dependency(\.recordRepository) var recordRepository
-        @Dependency(\.userRepository) var userRepository
-        @Dependency(\.markerRepository) var markerRepository
-        return .init(
-            recordRepository: recordRepository,
-            userRepository: userRepository,
-            markerRepository: markerRepository
-        )
+        .init()
     }
 }
 
 public struct DeleteRecordUseCaseKey: DependencyKey, Sendable {
     public static var liveValue: DeleteRecordUseCase {
-        @Dependency(\.recordRepository) var recordRepository
-        return .init(repo: recordRepository)
+        .init()
     }
 }
 
 public struct UpdateRecordUseCaseKey: DependencyKey, Sendable {
     public static var liveValue: UpdateRecordUseCase {
-        @Dependency(\.recordRepository) var recordRepository
-        return .init(repo: recordRepository)
+        .init()
     }
 }
 
-// MARK: - DependencyValues Extension
+// MARK: - DependencyValues Extension (동일)
 
 extension DependencyValues {
     public var recordRepository: RecordRepository {
@@ -136,7 +128,7 @@ extension DependencyValues {
     }
 }
 
-// MARK: - Unimplemented Repository Placeholders
+// MARK: - Unimplemented Repository Placeholders (동일)
 
 private struct UnimplementedRecordRepository: RecordRepository {
     func fetchMyRecords(in filter: LocationFilter?) async throws -> [Record] {
@@ -187,6 +179,7 @@ private struct UnimplementedMarkerRepository: MarkerRepository {
     func initializeDefaultMarkers() async throws {
         throw UnimplementedError()
     }
+
     func fetchAll() async throws -> [Marker] {
         throw UnimplementedError()
     }
