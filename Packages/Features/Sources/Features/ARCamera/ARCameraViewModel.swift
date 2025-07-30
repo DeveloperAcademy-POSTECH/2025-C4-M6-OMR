@@ -359,6 +359,9 @@ public class ARCameraViewModel: NSObject, ObservableObject {
 
         Task {
             do {
+                
+                arSceneManager.removePreviewFlower()
+                
                 // Domain Record로 변환
                 let domainRecord = RecordMapper.toDomainRecord(
                     from: placement,
@@ -372,6 +375,7 @@ public class ARCameraViewModel: NSObject, ObservableObject {
                 isSavingRecord = false
                 currentPlacement = nil
                 cameraMode = .normal
+                
                 await fetchAndPlaceRecords()
             } catch {
                 statusMessage = "저장 실패: \(error.localizedDescription)"
