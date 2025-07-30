@@ -2,6 +2,7 @@ import Foundation
 import CoreLocation
 import Domain
 import Combine
+import Dependencies
 
 @MainActor
 final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
@@ -20,12 +21,15 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
     
     private let locationManager = CLLocationManager()
     
+    private let fetchMyRecordsUseCase: FetchMyRecordsUseCase
+    
     // TODO: 향후 의존성 주입(DI) 컨테이너를 통해 UseCase를 주입
     // private let fetchUseCase: FetchNearbyMotesUseCase
     
     // MARK: - Initialization
     
-    override init() {
+    init(fetchMyRecordsUseCase: FetchMyRecordsUseCase) {
+        self.fetchMyRecordsUseCase = fetchMyRecordsUseCase
         super.init()
         locationManager.delegate = self
         locationManager.requestWhenInUseAuthorization()
@@ -37,18 +41,25 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
     // 지도에 표시할 오브젝트 데이터를 가져옴
     
     func fetchMapObjects() {
-        // MockDataProvider에서 Mote 배열 받아오기
-        let mockMotes = MockDataProvider.mockObjects()
-        
-        // Mote를 ObjectSummary로 매핑
-        self.objectSummaries = mockMotes.map { mote in
-            ObjectSummary(
-                id: mote.id, // 또는 mote 자체의 id가 있다면 그것 사용
-                title: mote.title,
-                latitude: mote.latitude,
-                longitude: mote.longitude,
-                flowerImage: mote.flower.objetImage
-            )
+        Task {
+            do {
+                // ✅ UseCase를 통해 실제 기록 데이터를 가져옵니다.
+                let records = try await fetchMyRecordsUseCase()
+                
+                // ✅ 가져온 Record를 ObjectSummary로 매핑합니다.
+                self.objectSummaries = records.map { record in
+                    ObjectSummary(
+                        id: record.record.id,
+                        title: record.record.title ?? "제목 없음",
+                        latitude: record.record.coordinate.latitude,
+                        longitude: record.record.coordinate.longitude,
+                        // Marker 정보에서 이미지를 가져와야 할 수 있습니다.
+                        flowerImage: record.marker.imageName
+                    )
+                }
+            } catch {
+                print(" 지도 기록 가져오기 실패: \(error.localizedDescription)")
+            }
         }
     }
     

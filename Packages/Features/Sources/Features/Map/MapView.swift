@@ -11,11 +11,17 @@ import Dependencies
 import DesignSystem
 
 public struct MapView: View {
-    @StateObject private var viewModel = MapViewModel()
+    @StateObject private var viewModel: MapViewModel
     @State private var moveToUserLocation = false
     @EnvironmentObject private var nav: NavigationViewModel
     
-    public init() {}
+    public init() {
+        @Dependency(\.fetchMyRecordsUseCase) var fetchMyRecordsUseCase
+        
+        _viewModel = StateObject(
+            wrappedValue: MapViewModel(fetchMyRecordsUseCase: fetchMyRecordsUseCase)
+        )
+    }
     
     public var body: some View {
         ZStack {
