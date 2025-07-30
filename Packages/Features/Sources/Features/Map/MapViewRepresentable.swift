@@ -12,6 +12,10 @@ struct MapViewRepresentable: UIViewRepresentable {
         mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: "marker")
         mapView.showsUserLocation = true
         mapView.showsCompass = true
+        
+        // 사용자 위치 탭 비활성화
+        mapView.isUserInteractionEnabled = true
+        
         return mapView
     }
 
@@ -85,12 +89,22 @@ struct MapViewRepresentable: UIViewRepresentable {
         }
 
         func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+            // 사용자 위치 탭 무시
+            if view.annotation is MKUserLocation {
+                mapView.deselectAnnotation(view.annotation, animated: false)
+                return
+            }
+            
             guard let objectAnnotation = view.annotation as? ObjectAnnotation else { return }
             parent.viewModel.objectPinTapped(id: objectAnnotation.id)
         }
 
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-            if annotation is MKUserLocation { return nil }
+            // 사용자 위치는 기본 뷰 사용 (nil 반환하면 시스템 기본 뷰 사용)
+            if annotation is MKUserLocation {
+                return nil
+            }
+            
             if let cluster = annotation as? MKClusterAnnotation {
                 return createClusterView(for: mapView, cluster: cluster)
             }
@@ -130,7 +144,7 @@ struct MapViewRepresentable: UIViewRepresentable {
             annotationView.canShowCallout = false
             annotationView.clusteringIdentifier = "customPinCluster"
 
-            let viewSize = CGSize(width: 60, height: 60)  // 기존보다 크게 설정
+            let viewSize = CGSize(width: 60, height: 60)
             annotationView.frame.size = viewSize
 
             if annotationView.viewWithTag(1001) == nil {
@@ -141,14 +155,13 @@ struct MapViewRepresentable: UIViewRepresentable {
                let imageName = parent.viewModel.objectSummaries.first(where: { $0.id == objectAnnotation.id })?.flowerImage,
                let rawImage = DesignSystemAssets.uiImage(named: imageName),
                let resized = rawImage.resize(to: CGSize(width: 40, height: 40)) {
-                // 이미지 크기는 그대로 40x40, 중앙 배치
                 annotationView.image = resized
 
                 let imageView = UIImageView(image: resized)
                 imageView.center = CGPoint(x: viewSize.width / 2, y: viewSize.height / 2)
                 imageView.frame = CGRect(x: (viewSize.width - 40) / 2, y: (viewSize.height - 40) / 2, width: 40, height: 40)
                 annotationView.addSubview(imageView)
-                annotationView.image = nil  // 기본 image는 제거 (이미지뷰로 대체)
+                annotationView.image = nil
             }
 
             if let titleLabel = annotationView.viewWithTag(1001) as? UILabel {
