@@ -25,7 +25,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     
     // MARK: - Placement Anchor (Single Source of Truth)
     private var placementAnchor: AnchorEntity?
-    private var currentFlowerAnchor: AnchorEntity? // 현재 배치된 꽃 앵커 추적
     
     // MARK: - Location Tracking
     private var arSessionStartLocation: CLLocation? // AR 세션 시작 시 위치
@@ -221,9 +220,11 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         statusUpdate: @escaping (String) -> Void
     ) {
         // 기존 꽃이 있다면 제거 (새로운 꽃 선택 시)
-        if let arView = arView, let existingFlower = currentFlowerAnchor {
-            arView.scene.removeAnchor(existingFlower)
-            currentFlowerAnchor = nil
+        if let arView = arView {
+            if let previewAnchor = arView.scene.findEntity(named: "PreviewFlowerAnchor") {
+                previewAnchor.removeFromParent()
+                print("🔄 재배치를 위해 '미리보기 꽃' 제거 완료.")
+            }
         }
         
         placementState.reset()
@@ -328,10 +329,12 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         
         // 앵커 생성 및 설정
         let indicatorAnchor = AnchorEntity(world: position)
+        indicatorAnchor.name = "PlacementIndicatorAnchor"
+        
         indicatorAnchor.addChild(dashedCircle)
         indicatorAnchor.addChild(shadow)
-        arView.scene.addAnchor(indicatorAnchor)
         
+        arView.scene.addAnchor(indicatorAnchor)
         self.placementAnchor = indicatorAnchor
         
         print("✅ 새로운 indicator 생성 완료: [\(String(format: "%.3f", position.x)), \(String(format: "%.3f", position.y)), \(String(format: "%.3f", position.z))]")
@@ -359,7 +362,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         flowerEntity.addChild(ambientLight)
     }
     
-    private func addNaturalSunlight(to flowerEntity: ModelEntity, cameraPosition: SIMD3<Float>) {
+    private func addNaturalSunlight(to entity: Entity, cameraPosition: SIMD3<Float>) {
         // 🌅 시간대별 햇빛 색상 (더 미묘하고 자연스럽게)
         let sunlightColor = getSunlightColorForCurrentTime()
         
@@ -372,12 +375,12 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         
         
         // 📐 카메라 위치 기반 보조 조명 (너무 어두운 부분 방지)
-        let fillLight = createCameraFillLight(cameraPosition: cameraPosition, flowerPosition: flowerEntity.position)
+        let fillLight = createCameraFillLight(cameraPosition: cameraPosition, flowerPosition: entity.position)
         
         // 조명들을 꽃에 추가
-        flowerEntity.addChild(mainSunlight)
-        flowerEntity.addChild(skyLight)
-        flowerEntity.addChild(fillLight)
+        entity.addChild(mainSunlight)
+        entity.addChild(skyLight)
+        entity.addChild(fillLight)
         
         print("🌸 자연스러운 햇빛 조명 적용 완료")
     }
@@ -460,51 +463,17 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         return fillLight
     }
     
-    // MARK: - 개선된 꽃 배치 시 조명 적용
-    func confirmPlacementWithNaturalLighting() {
-        guard placementState.canConfirm,
-              let arView = arView,
-              let position = placementAnchor?.position,
-              let currentFrame = arView.session.currentFrame else { return }
+    func removePreviewFlower() {
+        guard let arView = arView else { return }
         
-        if let entity = placementState.entity {
-            let flowerAnchor = AnchorEntity(world: position)
-            let flowerClone = entity.clone(recursive: true)
-            
-            // 🌸 카메라를 향하도록 꽃 회전 설정
-            let cameraPosition = extractPositionFromTransform(currentFrame.camera.transform)
-            let flowerPosition = position
-            
-            // 🌸 꽃 크기 조정
-            let distanceVector = cameraPosition - flowerPosition
-            let distance = simd_length(distanceVector)
-            let dynamicScale = max(0.3, min(0.5, 0.8 / distance))
-            flowerClone.transform.scale = SIMD3<Float>(dynamicScale, dynamicScale, dynamicScale)
-            
-            // 꽃 회전 설정
-            let directionToCamera = normalize(cameraPosition - flowerPosition)
-            let horizontalDirection = normalize(SIMD3<Float>(directionToCamera.x, 0, directionToCamera.z))
-            let angle = atan2(horizontalDirection.x, -horizontalDirection.z)
-            let rotation = simd_quatf(angle: angle, axis: SIMD3<Float>(0, 1, 0))
-            flowerClone.transform.rotation = rotation
-            
-            // 🌞 자연스러운 햇빛 조명 적용
-            addNaturalSunlight(to: flowerClone, cameraPosition: cameraPosition)
-            
-            flowerAnchor.addChild(flowerClone)
-            arView.scene.addAnchor(flowerAnchor)
-            
-            // 현재 꽃 앵커 추적
-            self.currentFlowerAnchor = flowerAnchor
-            
-            print("🌸 자연스러운 조명과 함께 꽃 배치 완료")
+        // 이름으로 '미리보기 꽃' 앵커를 찾아서 씬에서 제거합니다.
+        if let previewAnchor = arView.scene.findEntity(named: "PreviewFlowerAnchor") {
+            previewAnchor.removeFromParent()
+            print("✅ '미리보기 꽃' 제거 완료.")
         }
-        
-        placementState.confirm()
-        removePlacementAnchor()
-        onPlacementStateChanged?(placementState.status)
     }
-    private func addSubtleWindEffect(to flowerEntity: ModelEntity) {
+    
+    private func addSubtleWindEffect(to entity: ModelEntity) {
         // 매우 미묘한 흔들림 효과
         let swayAmount: Float = 0.02  // 2cm 정도의 미묘한 움직임
         let swayDuration: Float = 3.0 + Float.random(in: -0.5...0.5)  // 랜덤한 주기
@@ -526,51 +495,44 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         )
         
         if let animationResource = try? AnimationResource.generate(with: swayAnimation) {
-            flowerEntity.playAnimation(animationResource.repeat())
+            entity.playAnimation(animationResource.repeat())
         }
     }
     
     
     func confirmPlacement() {
+        // 1. 필요한 정보가 있는지 확인합니다.
         guard placementState.canConfirm,
               let arView = arView,
               let position = placementAnchor?.position,
-              let currentFrame = arView.session.currentFrame else { return }
+              let currentFrame = arView.session.currentFrame,
+              let entityToClone = placementState.entity else { return }
+
+        // 2. '미리보기 꽃'을 위한 앵커를 생성하고, 나중에 쉽게 찾도록 고유한 이름을 부여합니다.
+        let previewAnchor = AnchorEntity(world: position)
+        previewAnchor.name = "PreviewFlowerAnchor"
         
-        // 인디케이터 위치에 꽃 생성
-        if let entity = placementState.entity {
-            let flowerAnchor = AnchorEntity(world: position)
-            let flowerClone = entity.clone(recursive: true)
-            
-            // 🌸 카메라 위치 (크기 조정용)
-            let cameraPosition = extractPositionFromTransform(currentFrame.camera.transform)
-            let flowerPosition = position
-            
-            // 🌸 꽃 크기 조정
-            let distanceVector = cameraPosition - flowerPosition
-            let distance = simd_length(distanceVector)
-            let dynamicScale = max(0.3, min(0.5, 0.8 / distance)) //꽃 크기 조정 가능
-            flowerClone.transform.scale = SIMD3<Float>(dynamicScale, dynamicScale, dynamicScale)
-            
-            addNaturalSunlight(to: flowerClone, cameraPosition: cameraPosition)
-            addSubtleWindEffect(to: flowerClone)
-            
-            flowerAnchor.addChild(flowerClone)
-            arView.scene.addAnchor(flowerAnchor)
-            
-            // 현재 꽃 앵커 추적 (재배치 시 제거용)
-            self.currentFlowerAnchor = flowerAnchor
-            
-            // 배치된 좌표 정보 로그 출력
-            logPlacementCoordinates(arPosition: position)
-            
-            print("🌸 꽃 크기 동적 조정: \(String(format: "%.1f", dynamicScale * 100))% (거리: \(String(format: "%.2f", distance))m)")
-        }
+        // 3. 원본 모델을 복제하여 '미리보기 꽃'을 만듭니다.
+        let flowerClone = entityToClone.clone(recursive: true)
+
+        // 4. 이전에 논의했던 모든 시각 효과(크기, 조명 등)를 '미리보기 꽃'에 적용합니다.
+        let cameraPosition = getCameraPosition()
+        let distance = length(cameraPosition - position)
+        let dynamicScale = max(0.3, min(0.5, 0.8 / distance))
+        flowerClone.transform.scale = SIMD3<Float>(dynamicScale, dynamicScale, dynamicScale)
+        addNaturalSunlight(to: flowerClone, cameraPosition: cameraPosition)
+        addSubtleWindEffect(to: flowerClone)
         
+        // 5. '미리보기 꽃'을 씬에 추가합니다.
+        previewAnchor.addChild(flowerClone)
+        arView.scene.addAnchor(previewAnchor)
+        
+        // 6. 상태를 변경하고, 역할을 다한 인디케이터를 제거합니다.
         placementState.confirm()
-        removePlacementAnchor() // 앵커 제거
+        removePlacementAnchor()
         onPlacementStateChanged?(placementState.status)
     }
+    
     /// 현재 배치된 위치의 GPS 좌표를 반환합니다.
     /// - Returns: 배치된 위치의 GPS 좌표, 배치되지 않았거나 변환 실패 시 nil
     func getCurrentPlacementCoordinate() -> CLLocationCoordinate2D? {
@@ -611,9 +573,10 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         guard placementState.status == .confirmed else { return }
         
         // 기존 꽃 제거
-        if let arView = arView, let existingFlower = currentFlowerAnchor {
-            arView.scene.removeAnchor(existingFlower)
-            currentFlowerAnchor = nil
+        if let arView = arView {
+            if let previewAnchor = arView.scene.findEntity(named: "PreviewFlowerAnchor") {
+                previewAnchor.removeFromParent()
+            }
         }
         
         if let arView = arView {
@@ -652,6 +615,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             arSessionStartHeading = userHeading
         }
         
+        let cameraPosition = getCameraPosition()
         
         removeObsoleteMarkers(currentRecords: records)
         
@@ -684,7 +648,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
                     continue
                 }
                 
-                createMarkerForRecord(record, at: arPosition, arView: arView)
+                createMarkerForRecord(record, at: arPosition, arView: arView, cameraPosition: cameraPosition)
             }
         }
     }
@@ -703,13 +667,21 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     private func createMarkerForRecord(
         _ record: ARRecordModel,
         at position: SIMD3<Float>,
-        arView: ARView
+        arView: ARView,
+        cameraPosition: SIMD3<Float>
     ) {
         let marker = ARMarker(record: record)
         marker.generateCollisionShapes(recursive: true)
-        let anchor = AnchorEntity(world: position)
         
-        // 디버깅을 위한 이름 설정
+        
+        let flowerPosition = position
+        let distanceVector = cameraPosition - flowerPosition
+        let distance = simd_length(distanceVector)
+        let dynamicScale = max(0.3, min(0.5, 0.8 / distance))
+        marker.transform.scale = SIMD3<Float>(dynamicScale, dynamicScale, dynamicScale)
+        
+        
+        let anchor = AnchorEntity(world: position)
         marker.name = "ARMarker_\(record.id)"
         anchor.name = "Anchor_\(record.id)"
         
@@ -1047,7 +1019,11 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         guard let arView = arView,
               let anchor = placementAnchor else { return }
         
-        arView.scene.removeAnchor(anchor)
+        if let anchor = arView.scene.findEntity(named: "PlacementIndicatorAnchor") {
+            anchor.removeFromParent()
+            print("🗑️ 이름으로 인디케이터 찾아서 제거 완료")
+        }
+        
         self.placementAnchor = nil
         self.isRaycastActive = false // raycast 비활성화
         raycastStatus = .idle
@@ -1056,10 +1032,11 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     }
     
     func removePlacementObject() {
-        if let arView = arView, let existingFlower = currentFlowerAnchor {
-                    arView.scene.removeAnchor(existingFlower)
-                    currentFlowerAnchor = nil
-                }
+        if let arView = arView {
+            if let previewAnchor = arView.scene.findEntity(named: "PreviewFlowerAnchor") {
+                previewAnchor.removeFromParent()
+            }
+        }
         if let arView = arView {
             placementState.removeFrom(arView: arView)
         }
