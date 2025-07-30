@@ -1,8 +1,8 @@
 import CoreLocation
+import Dependencies
 import DesignSystem
 import Lottie
 import SwiftUI
-import Dependencies
 
 // MARK: - MainView
 
@@ -16,17 +16,18 @@ struct MainView: View {
     @State private var previousLocation: CLLocation? = nil
     private let updateThresholdMeters: Double = 20.0
 
-    public init(factory: MainViewModelFactory? = nil) {
-        // factory가 nil이면 Dependencies에서 가져오기
-        let actualFactory: MainViewModelFactory =
-            factory
-            ?? {
-                @Dependency(\.mainViewModelFactory) var defaultFactory:
-                    MainViewModelFactory
-                return defaultFactory
-            }()
-
-        _viewModel = StateObject(wrappedValue: actualFactory.create())
+    public init() {
+        // View가 생성되는 시점의 의존성을 가져옵니다.
+        @Dependency(\.fetchMyRecordsUseCase) var fetchMyRecordsUseCase
+        @Dependency(\.initializeAppDataUseCase) var initializeAppDataUseCase
+        
+        // 가져온 의존성을 ViewModel에 직접 주입합니다.
+        self._viewModel = StateObject(
+            wrappedValue: MainViewModel(
+                fetchMyRecordsUseCase: fetchMyRecordsUseCase,
+                initializeAppDataUseCase: initializeAppDataUseCase
+            )
+        )
     }
 
     var body: some View {
@@ -58,12 +59,6 @@ struct MainView: View {
             )
             .onAppear {
                 viewModel.requestCurrentLocation()
-                UIFont.familyNames.forEach { family in
-                    print("Font Family: \(family)")
-                    for name in UIFont.fontNames(forFamilyName: family) {
-                        print("- \(name)")
-                    }
-                }
             }
             .onReceive(
                 viewModel.locationManager.$currentLocation.compactMap { $0 }
@@ -72,7 +67,6 @@ struct MainView: View {
                     handleLocationUpdate(location)
                     return
                 }
-                
 
                 previousLocation = location
                 viewModel.loadNearbyMotesMock(center: location, radius: 1000)

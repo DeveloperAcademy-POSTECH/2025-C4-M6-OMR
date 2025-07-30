@@ -5,12 +5,12 @@
 //  Created by eunsong on 7/20/25.
 //
 
-public struct DeleteRecordUseCase: Sendable {
-    private let repo: RecordRepository
+import Dependencies
 
-    public init(repo: RecordRepository) {
-        self.repo = repo
-    }
+public struct DeleteRecordUseCase: Sendable {
+    @Dependency(\.recordRepository) private var repo
+
+    public init() { }
 
     /// Record 삭제
     public func callAsFunction(

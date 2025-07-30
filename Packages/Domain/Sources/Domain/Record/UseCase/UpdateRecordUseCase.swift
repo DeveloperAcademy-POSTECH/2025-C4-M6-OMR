@@ -5,12 +5,12 @@
 //  Created by eunsong on 7/20/25.
 //
 
-public struct UpdateRecordUseCase: Sendable {
-    private let repo: RecordRepository
+import Dependencies
 
-    public init(repo: RecordRepository) {
-        self.repo = repo
-    }
+public struct UpdateRecordUseCase: Sendable {
+    @Dependency(\.recordRepository) private var repo
+
+    public init() { }
 
     /// 기존 Record 업데이트
     public func callAsFunction(

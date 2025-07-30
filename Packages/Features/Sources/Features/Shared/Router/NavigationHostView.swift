@@ -11,26 +11,30 @@ import SwiftUI
 
 public struct NavigationHostView: View {
     @EnvironmentObject private var nav: NavigationViewModel
+    
+    private let configureDependencies: (inout DependencyValues) -> Void
 
-    public init() {}
+    public init(
+        configureDependencies: @escaping (inout DependencyValues) -> Void
+    ) {
+        self.configureDependencies = configureDependencies
+    }
 
     public var body: some View {
         NavigationStack(path: $nav.path) {
-            MainView()
-                .navigationDestination(for: AppRoute.self) { route in
-                    // Wrap the destination view with dependencies
-                    withDependencies {
-                        // Use the configured dependencies from Features module
-                        $0.recordRepository =
-                            FeaturesDependencies.current.recordRepository
-                        $0.userRepository =
-                            FeaturesDependencies.current.userRepository
-                        $0.markerRepository =
-                            FeaturesDependencies.current.markerRepository
-                    } operation: {
-                        destinationView(for: route)
+            // 루트 뷰와 목적지 뷰 모두에 명시적으로 의존성을 주입합니다.
+            withDependencies(configureDependencies) {
+                MainView()
+                    .navigationDestination(for: AppRoute.self) { route in
+                        withDependencies(configureDependencies) {
+                            destinationView(for: route)
+                        }
                     }
-                }
+                    .task {
+                        // 의존성이 설정된 컨텍스트 내부에서 앱을 초기화합니다.
+                        await initializeAppData()
+                    }
+            }
         }
     }
 
@@ -43,20 +47,10 @@ public struct NavigationHostView: View {
                 longitude: longitude
             )
 
-            // Debug logging to verify dependencies
-            let _ = print("[DI] Creating ARCameraView with dependencies")
-
-            // Verify we have the right dependencies in this context
-            @Dependency(\.recordRepository) var recordRepo
-            let _ = print("[DI] RecordRepository type: \(type(of: recordRepo))")
-
             if #available(iOS 18.0, *) {
                 ToolbarHiddenWrapper(
                     content:
-                        ARCameraView(
-                            location: location,
-                            factory: LiveARCameraViewModelFactory()
-                        )
+                        ARCameraView(location: location)
                 )
             } else {
                 // Fallback on earlier versions
@@ -79,6 +73,19 @@ public struct NavigationHostView: View {
 
         default:
             Text("Not Found")
+        }
+    }
+    
+    @MainActor
+    private func initializeAppData() async {
+        @Dependency(\.initializeAppDataUseCase) var initializeAppDataUseCase
+
+        do {
+            print("[Features] Initializing app data...")
+            try await initializeAppDataUseCase()
+            print("[Features] App data initialized successfully")
+        } catch {
+            print("[Features] Failed to initialize app data: \(error)")
         }
     }
 }

@@ -8,12 +8,13 @@ import Dependencies
 import Domain
 import Foundation
 
-@MainActor
 public protocol FlowerSelectionViewModelFactory: Sendable {
-    func create() -> FlowerSelectionViewModel
+    @MainActor func create() -> FlowerSelectionViewModel
 }
 
 public struct LiveFlowerSelectionViewModelFactory: FlowerSelectionViewModelFactory {
+    public init() {}
+    
     @MainActor
     public func create() -> FlowerSelectionViewModel {
         @Dependency(\.fetchAllMarkersUseCase) var fetchAllMarkersUseCase

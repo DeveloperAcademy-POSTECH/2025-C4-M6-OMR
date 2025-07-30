@@ -10,7 +10,7 @@ import Foundation
 public struct FetchAllMarkersUseCase: Sendable {
     @Dependency(\.markerRepository) private var markerRepository
 
-    public init() {}
+    public init() { }
 
     public func callAsFunction() async throws -> [Marker] {
         return try await markerRepository.fetchAll()

@@ -8,7 +8,38 @@
 import Domain
 import Foundation
 
-/// 기본 RecordRepository 구현체
+//public final class DefaultRecordRepository: RecordRepository {
+//    public init() { }
+//
+//    public func fetchMyRecords(in filter: LocationFilter?) async throws -> [Record] {
+//        print("✅ DefaultRecordRepository.fetchMyRecords called")
+//        return [] // 빈 배열 반환 (DI 연결 테스트용)
+//    }
+//
+//    public func fetchRecordDetail(id: UUID) async throws -> Record {
+//        print("✅ DefaultRecordRepository.fetchRecordDetail called")
+//        throw RecordRepositoryError.notFound
+//    }
+//
+//    public func fetchPublicRecords(in filter: LocationFilter) async throws -> [Record] {
+//        print("✅ DefaultRecordRepository.fetchPublicRecords called")
+//        return []
+//    }
+//
+//    public func save(_ record: Record) async throws {
+//        print("✅ DefaultRecordRepository.save called: \(record.id)")
+//    }
+//
+//    public func update(_ record: Record) async throws {
+//        print("✅ DefaultRecordRepository.update called: \(record.id)")
+//    }
+//
+//    public func delete(_ record: Record) async throws {
+//        print("✅ DefaultRecordRepository.delete called: \(record.id)")
+//    }
+//}
+
+// 기본 RecordRepository 구현체
 public final class DefaultRecordRepository: RecordRepository {
     private let local: LocalRecordDataSource
     private let remote: RemoteRecordDatasource  // TODO: 원격 데이터소스 구현 시 실제 타입으로 변경

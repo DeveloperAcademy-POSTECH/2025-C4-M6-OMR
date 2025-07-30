@@ -9,22 +9,19 @@ import Foundation
 import OSLog
 
 public struct SaveRecordUseCase: Sendable {
-    @Dependency(\.recordRepository) private var recordRepo
-    @Dependency(\.userRepository) private var userRepo
-    private let logger = Logger(
-        subsystem: "com.mote.Domain",
-        category: "SaveRecordUseCase"
-    )
+    @Dependency(\.recordRepository) private var recordRepository
+    @Dependency(\.userRepository) private var userRepository
 
-    public init() {}
+    public init() { }
 
     public func callAsFunction(_ record: Record) async throws {
         do {
-            let user = try await userRepo.getOrCreateDefaultUser()
+            let user = try await userRepository.getOrCreateDefaultUser()
             let updatedRecord = record.with(authorID: user.id)
-            try await recordRepo.save(updatedRecord)
+            try await recordRepository.save(updatedRecord)
+            print("[SaveRecordUseCase] Record saved successfully: \(record.id)")
         } catch {
-            logger.error("Failed to save record: \(error.localizedDescription)")
+            print("[SaveRecordUseCase] Save failed: \(error)")
             throw error
         }
     }
