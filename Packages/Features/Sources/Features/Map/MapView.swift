@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MapKit
+import Dependencies
 import DesignSystem
 import Dependencies
 
@@ -16,6 +17,7 @@ public struct MapView: View {
     @EnvironmentObject private var nav: NavigationViewModel
     
     public init() {
+
         // View가 생성되는 시점의 의존성을 가져옵니다.
         @Dependency(\.fetchMyRecordsUseCase) var fetchMyRecordsUseCase
         
@@ -27,7 +29,6 @@ public struct MapView: View {
             )
         )
     }
-
     public var body: some View {
         ZStack {
             MapViewRepresentable(
@@ -42,7 +43,14 @@ public struct MapView: View {
             viewModel.fetchMapObjects()
         }
         .sheet(item: $viewModel.selectObjectDetail) { summary in
-            RecordDetailBottomSheet(viewModel: RecordDetailViewModel(id: summary.id))
+            @Dependency(\.fetchRecordDetailUseCase) var fetchRecordDetailUseCase
+            
+            RecordDetailBottomSheet(
+                viewModel: RecordDetailViewModel(
+                    id: summary.id,
+                    fetchRecordDetailUseCase: fetchRecordDetailUseCase
+                )
+            )
         }
     }
     

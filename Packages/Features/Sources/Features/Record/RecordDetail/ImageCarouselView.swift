@@ -163,9 +163,6 @@ struct AddPhotoButton: View {
     }
 }
 
-#Preview {
-    ImageCarouselView(viewModel: RecordDetailViewModel(), isExpanded: true, isEditing: true)
-}
 
 
 

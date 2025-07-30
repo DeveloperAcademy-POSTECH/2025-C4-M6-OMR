@@ -81,16 +81,17 @@ public final class RecordSaveSheetViewModel: ObservableObject {
         isLoading = true
         Task {
             let images = self.selectedImages
-            var savedFileNames: [String] = []
+            var savedFileURLs: [URL] = []
             
             for image in images {
-                if let fileName = await FileStoreManager.shared.saveImage(image) {
-                    savedFileNames.append(fileName)
+                if let fileURL = await FileStoreManager.shared.saveImage(image) {
+                    savedFileURLs.append(fileURL)
                 }
             }
             
             let payload = FinalRecordPayload(
-                imageFileNames: savedFileNames,
+                imageURLs: savedFileURLs,
+                address: self.address,
                 description: ""
             )
             

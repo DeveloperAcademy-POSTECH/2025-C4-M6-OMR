@@ -1,6 +1,7 @@
 import Foundation
 
 public struct FinalRecordPayload {
-    let imageFileNames: [String]
+    let imageURLs: [URL]
+    let address: String
     let description: String
 }

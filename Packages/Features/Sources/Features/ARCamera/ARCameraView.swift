@@ -20,10 +20,12 @@ public struct ARCameraView: View {
         @Dependency(\.fetchMyRecordsUseCase) var fetchMyRecordsUseCase
         @Dependency(\.saveRecordUseCase) var saveRecordUseCase
         @Dependency(\.fetchAllMarkersUseCase) var fetchAllMarkersUseCase
+        @Dependency(\.fetchRecordDetailUseCase) var fetchRecordDetailUseCase
 
         // 1. BottomSheetCoordinator를 먼저 생성합니다.
         let coordinator = BottomSheetCoordinator(
-            fetchAllMarkersUseCase: fetchAllMarkersUseCase
+            fetchAllMarkersUseCase: fetchAllMarkersUseCase,
+            fetchRecordDetailUseCase: fetchRecordDetailUseCase
         )
         
         // 2. ARCameraViewModel을 생성하면서 필요한 모든 의존성을 주입합니다.

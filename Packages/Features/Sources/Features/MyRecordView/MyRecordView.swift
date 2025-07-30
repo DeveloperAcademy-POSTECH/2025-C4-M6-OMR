@@ -5,6 +5,7 @@
 //  Created by Jimin on 7/20/25.
 //
 
+import SwiftUI
 import DesignSystem
 import SwiftUI
 import Dependencies
@@ -67,8 +68,14 @@ struct MyRecordView: View {
             .background(DesignSystem.Color.BgScreen)
             .navigationBarHidden(true)
             .sheet(item: $selectedRecordID) { identifiableID in
+                @Dependency(\.fetchRecordDetailUseCase) var fetchRecordDetailUseCase
+                
                 RecordDetailBottomSheet(
-                    viewModel: RecordDetailViewModel(id: identifiableID.id)
+                    viewModel: RecordDetailViewModel(
+                        id: identifiableID.id,
+                        fetchRecordDetailUseCase: fetchRecordDetailUseCase
+                    )
+
                 )
             }
         }

@@ -2,6 +2,7 @@ import Foundation
 import CoreLocation
 import Domain
 import Combine
+import Dependencies
 
 @MainActor
 final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
@@ -29,9 +30,11 @@ final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate 
     // MARK: - Methods
     
     func fetchMapObjects() {
+
+
         isLoading = true
         errorMessage = nil
-        
+
         Task {
             do {
                 let motes = try await fetchMyRecordsUseCase()

@@ -306,7 +306,9 @@ public class ARCameraViewModel: NSObject, ObservableObject {
         }
     }
     private func handleRecordTapped(_ record: ARRecordModel) {
-        bottomSheetCoordinator.showRecordDetail(record: record)
+        Task {
+            await bottomSheetCoordinator.showRecordDetail(recordId: record.id)
+        }
     }
 
     private func handlePlacementStateChanged(_ status: ARPlacementState.Status)

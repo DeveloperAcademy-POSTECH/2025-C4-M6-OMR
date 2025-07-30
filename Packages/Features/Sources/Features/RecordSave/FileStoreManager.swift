@@ -33,7 +33,7 @@ public actor FileStoreManager {
         return imagesPath
     }
     
-    func saveImage(_ image: UIImage) -> String? {
+    func saveImage(_ image: UIImage) -> URL? {
         guard let directory = imagesDirectory else { return nil }
         
         let fileName = "\(UUID().uuidString).jpeg"
@@ -46,8 +46,8 @@ public actor FileStoreManager {
         
         do {
             try data.write(to: fileURL)
-            print("✅ 이미지 저장 성공: \(fileName)")
-            return fileName
+            print("✅ 이미지 저장 성공: \(fileURL.path)")
+            return fileURL
         } catch {
             print("Error: 이미지 파일 쓰기 실패 - \(error.localizedDescription)")
             return nil

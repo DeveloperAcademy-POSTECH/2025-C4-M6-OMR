@@ -275,8 +275,3 @@ public struct RecordDetailBottomSheet: View {
     }
 }
 
-// MARK: - Preview
-
-#Preview {
-    RecordDetailBottomSheet(viewModel: RecordDetailViewModel())
-}

@@ -14,95 +14,93 @@ struct RecordDetailUIModel {
 
 @MainActor
 public final class RecordDetailViewModel: ObservableObject {
-
+    
     // MARK: - Published Properties
     @Published var detail: RecordDetailUIModel?
     @Published var isEditing: Bool = false
     @Published var isLoading: Bool = false
-
+    
     // 수정 전 원본 데이터를 저장할 프로퍼티
     private var originalDetail: RecordDetailUIModel?
     // Combine 구독 관리를 위한 cancellables
     private var cancellables: Set<AnyCancellable> = []
-
+    private let fetchRecordDetailUseCase: FetchRecordDetailUseCase
+    
     // MARK: - Computed Properties
     public var isSaveButtonDisabled: Bool {
         // 수정 모드가 아닐 때는 항상 비활성화
         guard isEditing else { return true }
-
+        
         // detail이 존재하고 이미지가 하나 이상 있어야 저장 버튼 활성화
         guard let detail = detail else { return true }
-
+        
         return detail.images.isEmpty
     }
-
+    
     
     // MARK: - Initialization
     
-    public init() {
-        // 기본 초기화 - 추후 필요시 기본 동작 추가
+    public init(id: UUID, fetchRecordDetailUseCase: FetchRecordDetailUseCase) {
+        self.fetchRecordDetailUseCase = fetchRecordDetailUseCase
+        
+        // 생성과 동시에 데이터 로딩 시작
+        Task {
+            await fetchFullRecordDetail(id: id)
+        }
     }
     
-//    public convenience init(record: Record) {
-//        self.init() // 기존 init 호출
-//        
-//        // Task를 이용해 파일 경로로부터 이미지를 비동기적으로 불러옵니다.
-//        Task {
-//            var loadedImages: [UIImage] = []
-//            for fileName in record.imageFileNames {
-//                if let image = await FileStoreManager.shared.loadImage(fileName: fileName) {
-//                    loadedImages.append(image)
-//                }
-//            }
-//            
-//            let dateFormatter = DateFormatter()
-//            dateFormatter.dateFormat = "yyyy년 M월 d일"
-//
-//            // 불러온 이미지와 Record의 정보로 UI 모델을 생성합니다.
-//            let detailModel = RecordDetailUIModel(
-//                title: record.flower.name, // 제목은 우선 꽃 이름으로 설정
-//                flowerName: record.flower.name,
-//                flowerMeaning: record.flower.meaning,
-//                location: "위치 정보 미정", // 위치 정보는 추후 추가
-//                date: dateFormatter.string(from: Date()),
-//                images: loadedImages
-//            )
-//
-//            // @Published 프로퍼티를 업데이트하여 View에 반영합니다.
-//            self.detail = detailModel
-//            // 수정 기능을 위해 원본도 함께 저장해 둡니다.
-//            self.originalDetail = detailModel
-//        }
-//    }
-    
-    public init(id: UUID) {
-        fetchRecordDetails(id: id)
+    private func fetchFullRecordDetail(id: UUID) async {
+        self.isLoading = true
+        
+        do {
+            // 1. UseCase를 통해 기록의 기본 정보를 가져옵니다.
+            let domainDetail = try await fetchRecordDetailUseCase(id: id)
+            
+            // 2. 파일 이름 목록으로 실제 이미지를 비동기 로드합니다.
+            let images = await loadImages(from: domainDetail.record.photos)
+            
+            // 3. 모든 데이터를 사용해 최종 UI 모델을 만듭니다.
+            let uiModel = mapToUIModel(entity: domainDetail, images: images)
+            
+            // 4. Main 쓰레드에서 UI 상태를 업데이트합니다.
+            self.detail = uiModel
+            self.originalDetail = uiModel
+            
+        } catch {
+            print("RecordDetailViewModel fetch error: \(error.localizedDescription)")
+            // TODO: 사용자에게 에러 알림 표시
+        }
+        
+        self.isLoading = false
     }
     
-    // ARCamera 연동을 위한 추가 초기화
-    public convenience init(arRecord: ARRecordModel) {
-        self.init()
-
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy년 M월 d일"
-
-        // 기존 fetchRecordDetails와 동일한 방식으로 Mock 이미지 생성
-        let dummyPhotos = ["photo.artframe", "camera.fill", "tree.fill"]
-        let images = dummyPhotos.compactMap { UIImage(systemName: $0) }
-
-        // ARRecordModel의 데이터를 RecordDetailUIModel로 변환
-        let mockDetail = RecordDetailUIModel(
-            title: arRecord.title.isEmpty ? "제목 없음" : arRecord.title,
-            flowerName: "프리지아",  // TODO: MarkerType에서 꽃 이름 가져오기
-            flowerMeaning: "영원한 사랑",  // TODO: MarkerType에서 꽃말 가져오기
-            location: "포항공과대학교",  // TODO: 실제 주소 정보 사용
-            date: dateFormatter.string(from: arRecord.createdDate),
-            images: images
-        )
-
-        self.setDetail(mockDetail)
+    private func loadImages(from photos: [Photo]) async -> [UIImage] {
+        guard !photos.isEmpty else { return [] }
+        
+        return await withTaskGroup(of: UIImage?.self, body: { group in
+            var loadedImages: [UIImage] = []
+            
+            for photo in photos {
+                group.addTask {
+                    // FileStoreManager를 거치지 않고 URL에서 직접 로드 시도
+                    do {
+                        let (data, _) = try await URLSession.shared.data(from: photo.url)
+                        return UIImage(data: data)
+                    } catch {
+                        return nil
+                    }
+                }
+            }
+            
+            for await image in group {
+                if let image = image {
+                    loadedImages.append(image)
+                }
+            }
+            return loadedImages
+        })
     }
-  
+    
     // MARK: - Methods
     
     // ARCamera에서 사용할 수 있도록 detail을 설정하는 메서드
@@ -111,53 +109,78 @@ public final class RecordDetailViewModel: ObservableObject {
         self.originalDetail = detail
     }
     
-    /// id 기반으로 RecordDetailUIModel 생성 및 detail 세팅
-    func fetchRecordDetails(id: UUID) {
-        let motes = MockDataProvider.mockObjects()
-        
-        guard let mote = motes.first(where: { $0.id == id }) else {
-            print("❌ 해당 ID의 Mote를 찾을 수 없습니다.")
-            return
-        }
-
+    private func mapToUIModel(entity: RecordDetail, images: [UIImage]) -> RecordDetailUIModel {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy년 M월 d일"
-
-        let images: [UIImage] = mote.images.compactMap {
-            UIImage(named: $0) ?? UIImage(systemName: "photo")
+        
+        let locationString = entity.record.address.fullAddress
+        
+        let titleString: String
+        // entity.record.title이 nil이 아니면서, 공백을 제외한 실제 내용이 있을 경우
+        if let originalTitle = entity.record.title, !originalTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            titleString = originalTitle
+        } else {
+            // 그 외의 경우 (nil이거나 빈 문자열일 때) location을 사용
+            titleString = "\(locationString)에서"
         }
-
-        self.detail = RecordDetailUIModel(
-            title: mote.title,
-            flowerName: mote.flower.name,
-            flowerMeaning: mote.flower.floriography,
-            location: mote.address,
-            date: dateFormatter.string(from: mote.createdAt),
+        
+        return RecordDetailUIModel(
+            title: titleString,
+            flowerName: entity.marker.displayName,
+            flowerMeaning: entity.marker.floriography,
+            location: locationString,
+            date: dateFormatter.string(from: entity.record.date),
             images: images
         )
-        
-        self.originalDetail = self.detail
     }
-
+    
+    /// id 기반으로 RecordDetailUIModel 생성 및 detail 세팅
+    //    func fetchRecordDetails(id: UUID) {
+    //        let motes = MockDataProvider.mockObjects()
+    //
+    //        guard let mote = motes.first(where: { $0.id == id }) else {
+    //            print("❌ 해당 ID의 Mote를 찾을 수 없습니다.")
+    //            return
+    //        }
+    //
+    //        let dateFormatter = DateFormatter()
+    //        dateFormatter.dateFormat = "yyyy년 M월 d일"
+    //
+    //        let images: [UIImage] = mote.images.compactMap {
+    //            UIImage(named: $0) ?? UIImage(systemName: "photo")
+    //        }
+    //
+    //        self.detail = RecordDetailUIModel(
+    //            title: mote.title,
+    //            flowerName: mote.flower.name,
+    //            flowerMeaning: mote.flower.floriography,
+    //            location: mote.address,
+    //            date: dateFormatter.string(from: mote.createdAt),
+    //            images: images
+    //        )
+    //
+    //        self.originalDetail = self.detail
+    //    }
+    
     // MARK: - User Actions
-
+    
     func editButtonTapped() {
         originalDetail = detail
         isEditing = true
     }
-
+    
     func saveButtonTapped() {
         if let detail = detail,
            detail.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             self.detail?.title = "\(detail.location)에서"
         }
-
+        
         // TODO: 변경된 detail 객체를 저장
         print("저장할 제목: \(detail?.title ?? "")")
         isEditing = false
     }
-
-
+    
+    
     func deleteButtonTapped() {
         print("삭제 버튼 탭됨")
     }
@@ -170,9 +193,9 @@ public final class RecordDetailViewModel: ObservableObject {
             }
             .store(in: &cancellables)
     }
-
+    
     // MARK: - Image Handling
-
+    
     func addImages(from assets: [PHAsset], using albumViewModel: CustomAlbumViewModel) {
         guard detail != nil else { return }
         
@@ -195,15 +218,9 @@ public final class RecordDetailViewModel: ObservableObject {
             isLoading = false
         }
     }
-
+    
     func deleteImage(_ image: UIImage) {
         detail?.images.removeAll { $0 == image }
     }
 }
 
-extension RecordDetailViewModel {
-    public convenience init(summary: ObjectSummary) {
-        self.init()
-        // TODO: summary 객체로부터 실제 데이터를 받아와 프로퍼티를 채우는 로직 구현
-    }
-}
