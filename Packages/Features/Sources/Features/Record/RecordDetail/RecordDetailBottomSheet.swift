@@ -20,6 +20,9 @@ public struct RecordDetailBottomSheet: View {
     // 2) 부모 레벨 @FocusState
     @FocusState private var focusedField: Field?
     
+    // dismiss 콜백 추가
+      private let onDismiss: (() -> Void)?
+    
     @State private var currentDetent: PresentationDetent = .fraction(0.45)
     
     private var isExpanded: Bool {
@@ -29,8 +32,16 @@ public struct RecordDetailBottomSheet: View {
     // MapView에서 데이터 주입을 위해 사용
     // MyRecordView에서 데이터 주입을 위해
     public init(viewModel: RecordDetailViewModel) {
-        _viewModel = StateObject(wrappedValue: viewModel)
-    }
+           _viewModel = StateObject(wrappedValue: viewModel)
+           self.onDismiss = nil
+       }
+    
+    // onDismiss 콜백을 받는 새로운 이니셜라이저
+       public init(viewModel: RecordDetailViewModel, onDismiss: (() -> Void)? = nil) {
+           _viewModel = StateObject(wrappedValue: viewModel)
+           self.onDismiss = onDismiss
+       }
+       
     
     public var body: some View {
         GeometryReader { geometry in
@@ -71,6 +82,10 @@ public struct RecordDetailBottomSheet: View {
             guard newDetent != .large, viewModel.isEditing else { return }
             viewModel.saveButtonTapped()
         }
+        .onDisappear {
+                    // 뷰가 사라질 때 콜백 호출
+                    onDismiss?()
+                }
     }
     
     // MARK: - Composed Subviews

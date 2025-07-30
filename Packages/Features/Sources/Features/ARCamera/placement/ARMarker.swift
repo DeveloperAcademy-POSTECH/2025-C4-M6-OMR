@@ -101,10 +101,7 @@ class ARMarker: Entity, HasCollision {
 
         // Setup collision for tap detection
         setupCollisionDetection(for: modelEntity)
-
-        // Create focus indicator (simple approach)
-        setupFocusIndicator()
-
+        
         print("✅ ARMarker setup completed for record: \(record.id)")
     }
 

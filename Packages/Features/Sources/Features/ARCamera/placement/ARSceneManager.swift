@@ -151,28 +151,67 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     
     // MARK: - AR Session Control
     
-    /// AR 세션을 일시정지합니다 (배터리 절약)
+    private var isPaused: Bool = false
+    private var lastConfiguration: ARWorldTrackingConfiguration?
+
+    /// AR 세션을 일시정지합니다 (개선된 버전)
     func pauseARSession() {
-        guard let arView = arView else { return }
+        guard let arView = arView, !isPaused else {
+            print("⚠️ AR 세션이 이미 일시정지됨 또는 ARView가 없음")
+            return
+        }
         
-        print("⏸️ AR 세션 일시정지 - 배터리 절약 모드")
+        print("⏸️ AR 세션 일시정지 시작")
+        
+        // 현재 설정 저장
+        if let currentFrame = arView.session.currentFrame {
+            lastConfiguration = arView.session.configuration as? ARWorldTrackingConfiguration
+        }
+        
+        // 세션 일시정지
         arView.session.pause()
+        isPaused = true
+        
+        print("✅ AR 세션 일시정지 완료")
+    }
+
+    /// AR 세션을 재개합니다 (개선된 버전)
+    func resumeARSession() {
+        guard let arView = arView, isPaused else {
+            print("⚠️ AR 세션이 일시정지되지 않음 또는 ARView가 없음")
+            return
+        }
+        
+        print("▶️ AR 세션 재개 시작")
+        
+        // 기존 설정으로 재시작 (relocalization 활성화)
+        let configuration = lastConfiguration ?? ARWorldTrackingConfiguration()
+        configuration.planeDetection = [.horizontal]
+        
+        // Relocalization을 위한 설정
+        if ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
+            configuration.frameSemantics = .sceneDepth
+        }
+        
+        // 기존 앵커들을 유지하면서 재시작
+        // resetSceneReconstruction만 사용하여 앵커는 보존
+        arView.session.run(configuration, options: [.resetSceneReconstruction])
+        isPaused = false
+        
+        print("✅ AR 세션 재개 완료 - 기존 앵커들 유지됨")
+    }
+
+    // 현재 일시정지 상태 확인용
+    var isSessionPaused: Bool {
+        return isPaused
     }
     
-    /// AR 세션을 재개하고 좌표계를 리셋합니다
-    func resumeARSession() {
-        guard let arView = arView else { return }
+    nonisolated func sessionShouldAttemptRelocalization(_ session: ARSession) -> Bool {
+        print("🔄 sessionShouldAttemptRelocalization 호출됨")
         
-        print("▶️ AR 세션 재개 중...")
-        
-        // 좌표계 참조점 리셋 (pause/resume으로 인한 원점 변화 대응)
-        resetARSessionReference()
-        
-        let config = ARWorldTrackingConfiguration()
-        config.planeDetection = [.horizontal]
-        arView.session.run(config, options: [.resetTracking, .removeExistingAnchors])
-        
-        print("✅ AR 세션 재개 완료 - 새로운 좌표계로 설정")
+        // true: 기존 앵커들과 오브젝트들의 위치를 그대로 유지
+        // false: 새로운 위치 추적 시작 (오브젝트들이 움직일 수 있음)
+        return true
     }
     
     // MARK: - Placement Logic
@@ -1342,3 +1381,4 @@ extension SIMD4<Float> {
         return SIMD3<Float>(x, y, z)
     }
 }
+

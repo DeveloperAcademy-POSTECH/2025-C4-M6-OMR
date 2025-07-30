@@ -10,6 +10,11 @@ import SwiftUI
 @MainActor
 protocol BottomSheetCoordinatorDelegate: AnyObject {
     func didSelectFlower(_ flower: FlowerModel)
+    func didDismissBottomSheet()
+    
+    // AR 세션 제어를 위한 새로운 메서드들
+    func didPresentRecordDetail()
+    func didDismissRecordDetail()
 }
 
 // MARK: - SwiftUI ViewModifier for Bottom Sheets
@@ -20,6 +25,9 @@ struct BottomSheetCoordinatorModifier: ViewModifier {
         content
             .sheet(item: $coordinator.activeSheet) { sheetType in
                 sheetView(for: sheetType)
+            }
+            .onChange(of: coordinator.activeSheet) { oldValue, newValue in
+                handleSheetStateChange(from: oldValue, to: newValue)
             }
     }
     
@@ -47,12 +55,22 @@ struct BottomSheetCoordinatorModifier: ViewModifier {
             }
         }
     }
+    
+    private func handleSheetStateChange(from oldValue: BottomSheetType?, to newValue: BottomSheetType?) {
+        // RecordDetail이 나타날 때
+        if newValue == .recordDetail && oldValue != .recordDetail {
+            coordinator.delegate?.didPresentRecordDetail()
+        }
+        
+        // RecordDetail이 사라질 때
+        if oldValue == .recordDetail && newValue != .recordDetail {
+            coordinator.delegate?.didDismissRecordDetail()
+        }
+    }
 }
 
 extension View {
-    func bottomSheetCoordinator(coordinator: BottomSheetCoordinator)
-    -> some View
-    {
+    func bottomSheetCoordinator(coordinator: BottomSheetCoordinator) -> some View {
         modifier(BottomSheetCoordinatorModifier(coordinator: coordinator))
     }
 }
