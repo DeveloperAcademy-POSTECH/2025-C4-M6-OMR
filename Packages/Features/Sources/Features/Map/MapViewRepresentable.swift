@@ -79,7 +79,6 @@ struct MapViewRepresentable: UIViewRepresentable {
     class Coordinator: NSObject, MKMapViewDelegate {
         var parent: MapViewRepresentable
         private var hasCenteredOnUser = false
-        private let bundle = Bundle(for: DesignSystemMarker.self)
 
         init(_ parent: MapViewRepresentable) {
             self.parent = parent
