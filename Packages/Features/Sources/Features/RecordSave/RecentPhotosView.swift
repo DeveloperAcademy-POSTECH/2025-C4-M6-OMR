@@ -93,7 +93,8 @@ private struct PhotoItemView: View {
     let action: () -> Void
     
     @State private var image: UIImage?
-
+    @State private var isImageLoaded = false // 이미지 로딩 완료 여부 추적
+    
     var body: some View {
         Button(action: action) {
             ZStack {
@@ -115,9 +116,31 @@ private struct PhotoItemView: View {
             }
         }
         .buttonStyle(.plain)
-        .onAppear {
-            Task {
-                self.image = await viewModel.fetchImage(for: asset, size: CGSize(width: 250, height: 250))
+        .task(id: asset.localIdentifier) {
+            // 이미 로딩된 이미지가 있으면 다시 로딩하지 않음
+            guard !isImageLoaded else { return }
+            
+            let imageSize = CGSize(width: 250, height: 250) // RecentPhotosView 아이템 크기에 맞는 사이즈
+            
+            // 1단계: 캐시된 이미지 먼저 시도 (빠른 표시)
+            if let cachedImage = await viewModel.fetchImage(
+                for: asset,
+                targetSize: imageSize,
+                preferCached: true,
+                highQuality: false
+            ) {
+                self.image = cachedImage
+            }
+            
+            // 2단계: 고화질 이미지 로딩 (최근 사진도 고화질로 표시)
+            if let highQualityImage = await viewModel.fetchImage(
+                for: asset,
+                targetSize: imageSize,
+                preferCached: false,
+                highQuality: true
+            ) {
+                self.image = highQualityImage
+                self.isImageLoaded = true // 고화질 로딩 완료 표시
             }
         }
     }
