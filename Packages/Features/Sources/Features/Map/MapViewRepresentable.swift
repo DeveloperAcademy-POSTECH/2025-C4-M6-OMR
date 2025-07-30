@@ -115,7 +115,7 @@ struct MapViewRepresentable: UIViewRepresentable {
             var baseImage = UIImage(systemName: "photo")!
             if let first = cluster.memberAnnotations.compactMap({ $0 as? ObjectAnnotation }).first,
                let imageName = parent.viewModel.objectSummaries.first(where: { $0.id == first.id })?.flowerImage,
-               let flowerImage = UIImage(named: imageName) {
+               let flowerImage = DesignSystemAssets.uiImage(named: imageName) {
                 baseImage = flowerImage.resize(to: CGSize(width: 44, height: 44)) ?? baseImage
             }
 
@@ -136,18 +136,17 @@ struct MapViewRepresentable: UIViewRepresentable {
             }
 
             if let objectAnnotation = annotation as? ObjectAnnotation,
-               let imageName = parent.viewModel.objectSummaries.first(where: { $0.id == objectAnnotation.id })?.flowerImage {
-                annotationView.image = UIImage(named: imageName) ?? UIImage(systemName: "photo")
+               let imageName = parent.viewModel.objectSummaries.first(where: { $0.id == objectAnnotation.id })?.flowerImage,
+               let rawImage = DesignSystemAssets.uiImage(named: imageName),
+               let resized = rawImage.resize(to: CGSize(width: 40, height: 40)) {
+                annotationView.image = resized
             } else {
-                annotationView.image = UIImage(systemName: "mappin.circle.fill")
+                annotationView.image = UIImage(systemName: "photo")?.resize(to: CGSize(width: 40, height: 40))
             }
 
-            
-            
-            
             if let titleLabel = annotationView.viewWithTag(1001) as? UILabel {
                 let text = annotation.title ?? ""
-                let font = DesignSystem.Font.UIKit.Headline.medium // 14pt medium
+                let font = DesignSystem.Font.UIKit.Headline.medium
 
                 let strokeTextAttributes: [NSAttributedString.Key: Any] = [
                     .strokeColor: DesignSystem.Color.UIKit.Gray_white,
@@ -168,57 +167,36 @@ struct MapViewRepresentable: UIViewRepresentable {
             let renderer = UIGraphicsImageRenderer(size: base.size)
 
             return renderer.image { _ in
-                // 0. 현재 그래픽 컨텍스트를 가져옵니다.
                 guard let context = UIGraphicsGetCurrentContext() else { return }
 
-                // 1. 베이스 이미지를 먼저 그립니다. (꽃 모양 아이콘)
                 base.draw(in: CGRect(origin: .zero, size: base.size))
 
-                // 2. 배지 속성을 정의합니다.
                 let badgeSize: CGFloat = 24
-                let shadowRadius: CGFloat = 14.0  // 4.0에서 14.0으로 변경
-                let shadowColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.25) 
+                let shadowRadius: CGFloat = 14.0
+                let shadowColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.25)
                 let shadowOffset = CGSize.zero
                 let badgeRect = CGRect(x: base.size.width - badgeSize - 2, y: 2, width: badgeSize, height: badgeSize)
 
-                // 3. 그림자 효과를 위해 현재 그래픽 상태를 저장하고, 그림자를 설정합니다.
                 context.saveGState()
                 context.setShadow(offset: shadowOffset, blur: shadowRadius, color: shadowColor.cgColor)
-                
-                // 4. ✨ [새로운 로직] 방사형 그라데이션을 그립니다.
-                // SwiftUI의 EllipticalGradient 코드를 CoreGraphics 코드로 변환합니다.
+
                 let colors = [
                     UIColor.white.withAlphaComponent(0.2).cgColor,
                     UIColor.white.withAlphaComponent(0.4).cgColor,
                     UIColor.white.withAlphaComponent(0.52).cgColor
                 ]
                 let locations: [CGFloat] = [0.0, 0.78, 1.0]
-                
-                // CGGradient 객체를 생성합니다.
+
                 if let gradient = CGGradient(colorsSpace: nil, colors: colors as CFArray, locations: locations) {
-                    // 그라데이션의 시작/끝 위치와 반경을 정의합니다.
                     let center = CGPoint(x: badgeRect.midX, y: badgeRect.midY)
                     let radius = badgeRect.width / 2
-                    
-                    // 중요: 그라데이션이 원 밖으로 나가지 않도록 그릴 영역을 원 모양으로 제한(clip)합니다.
                     let badgePath = UIBezierPath(ovalIn: badgeRect)
                     badgePath.addClip()
-                    
-                    // 방사형 그라데이션을 그립니다.
-                    context.drawRadialGradient(
-                        gradient,
-                        startCenter: center,
-                        startRadius: 0,
-                        endCenter: center,
-                        endRadius: radius,
-                        options: .drawsAfterEndLocation // 끝 위치 이후까지 색상을 채웁니다.
-                    )
+                    context.drawRadialGradient(gradient, startCenter: center, startRadius: 0, endCenter: center, endRadius: radius, options: .drawsAfterEndLocation)
                 }
-                
-                // 5. 그래픽 상태를 복원합니다. (그림자 및 클리핑 경로 제거)
+
                 context.restoreGState()
 
-                // 6. 배지 위에 클러스터된 핀의 개수를 텍스트로 그립니다.
                 let font = DesignSystem.Font.UIKit.Headline.medium
                 let paragraphStyle = NSMutableParagraphStyle()
                 paragraphStyle.alignment = .center
@@ -229,21 +207,16 @@ struct MapViewRepresentable: UIViewRepresentable {
                 ]
                 let text = "\(count)"
                 let textSize = text.size(withAttributes: attributes)
-                let textRect = CGRect(
-                    x: badgeRect.midX - textSize.width / 2,
-                    y: badgeRect.midY - textSize.height / 2,
-                    width: textSize.width,
-                    height: textSize.height
-                )
+                let textRect = CGRect(x: badgeRect.midX - textSize.width / 2, y: badgeRect.midY - textSize.height / 2, width: textSize.width, height: textSize.height)
                 text.draw(in: textRect, withAttributes: attributes)
             }
         }
-        
+
         private func makeTitleLabel() -> UILabel {
             let label = UILabel()
             label.tag = 1001
-            label.font = DesignSystem.Font.UIKit.Headline.regular // 14pt regular
-            label.textColor = DesignSystem.Color.UIKit.Gray_black // DesignSystem 검은색
+            label.font = DesignSystem.Font.UIKit.Headline.regular
+            label.textColor = DesignSystem.Color.UIKit.Gray_black
             label.textAlignment = .center
             label.backgroundColor = UIColor.white.withAlphaComponent(0.0)
             label.layer.cornerRadius = 4
