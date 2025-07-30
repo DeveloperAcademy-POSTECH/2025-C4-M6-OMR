@@ -89,6 +89,7 @@ struct CustomModalView: View {
                     VStack(alignment: .leading) {
                         Text("내 꽃")
                             .font(DesignSystem.Font.Title1.semibold)
+                            .foregroundColor(DesignSystem.Color.Gray_black)
                             .padding(.bottom, 8)
 
                         if totalCount == 0 {
@@ -106,6 +107,7 @@ struct CustomModalView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 40)
                     .transition(.opacity)
+                    .background(.white)
                     .opacity(sheetDetent == .low ? 1 : 0)
 
                 }
@@ -185,6 +187,7 @@ struct CustomModalView: View {
                                 Spacer(minLength: 90)
 
                             }
+                            .background(DesignSystem.Color.BgScreen)
                         }
                         .padding(.top, 130)
                         .coordinateSpace(name: "scroll")
@@ -193,7 +196,6 @@ struct CustomModalView: View {
                             print("[Debug] Scroll offset:", offset)
                             print("[Debug] isAtTop 상태:", isAtTop)
                         }
-
                     }
                     .transition(.opacity)
                     .opacity(sheetDetent == .large ? 1 : 0)
