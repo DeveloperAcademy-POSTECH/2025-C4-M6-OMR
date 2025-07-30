@@ -8,6 +8,8 @@ struct CustomAlbumView: View {
     
     @State private var showLimitAlert = false
     
+    @State private var visibleIndices: IndexSet = []
+    
     private let columns = 3
     private let spacing: CGFloat = 2
     private var gridItems: [GridItem] {
@@ -16,6 +18,11 @@ struct CustomAlbumView: View {
     private var cellSize: CGFloat {
         let totalSpacing = spacing * CGFloat(columns - 1)
         return (UIScreen.main.bounds.width - totalSpacing) / CGFloat(columns)
+    }
+    
+    private var targetThumbnailSize: CGSize {
+        let scale = UIScreen.main.scale
+        return CGSize(width: cellSize * scale, height: cellSize * scale)
     }
     
     var body: some View {
@@ -50,6 +57,12 @@ struct CustomAlbumView: View {
                                     viewModel.toggleAssetSelection(asset)
                                 }
                             }
+                            .onAppear {
+                                visibleIndices.insert(index)
+                            }
+                            .onDisappear {
+                                visibleIndices.remove(index)
+                            }
                         }
                     }
                 } else {
@@ -58,10 +71,15 @@ struct CustomAlbumView: View {
             }
         }
         .onAppear {
-            viewModel.prepareForAllPhotos()
+            // ◀️ View가 나타날 때, 계산된 셀 크기로 초기 캐싱을 요청합니다.
+            viewModel.startInitialCaching(targetSize: targetThumbnailSize)
         }
         .alert("최대 \(viewModel.maxImageCount)장까지 선택할 수 있어요", isPresented: $showLimitAlert) {
             Button("확인", role: .cancel) { }
+        }
+        .onChange(of: visibleIndices) { _, newIndices in
+            // ◀️ 스크롤 시 보이는 인덱스가 바뀔 때마다 셀 크기와 함께 캐싱 업데이트를 요청합니다.
+            viewModel.updateCachedAssets(visibleIndices: newIndices, targetSize: targetThumbnailSize)
         }
     }
     
@@ -71,7 +89,10 @@ struct CustomAlbumView: View {
                 Button(action: { dismiss() }) {
                     Image(systemName: "xmark")
                         .font(.headline)
+                        .foregroundColor(DesignSystem.Color.Gray_Text2)
+
                 }
+                .padding(.vertical, 18)
                 
                 Spacer()
                 
@@ -85,7 +106,7 @@ struct CustomAlbumView: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
-                            .background(DesignSystem.Color.Prime)
+                            .background(DesignSystem.Color.Prime2)
                             .clipShape(Capsule())
                     }
                 }

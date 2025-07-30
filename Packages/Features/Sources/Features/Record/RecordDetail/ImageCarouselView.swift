@@ -47,7 +47,7 @@ struct ImageCarouselView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: halfSize, height: halfSize)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
                 
                 if images.count > 1 {
                     Text("+\(images.count - 1)")
@@ -68,7 +68,7 @@ struct ImageCarouselView: View {
             } else {
                 Rectangle()
                     .fill(Color.gray.opacity(0.2))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
             }
         }
         .frame(maxWidth: .infinity)
@@ -101,7 +101,7 @@ struct ImageCarouselView: View {
         }
         .scrollTargetBehavior(.viewAligned)
         .frame(height: fullSize)
-        .sheet(isPresented: $isCustomAlbumPresented) {
+        .fullScreenCover(isPresented: $isCustomAlbumPresented) {
             CustomAlbumView(viewModel: albumViewModel)
         }
         .onAppear {
@@ -123,7 +123,7 @@ struct ImageItemView: View {
             .resizable()
             .aspectRatio(contentMode: .fill)
             .frame(width: size, height: size)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(alignment: .topTrailing) {
                 if isEditing {
                     Button(action: deleteAction) {
@@ -149,13 +149,16 @@ struct AddPhotoButton: View {
         Button(action: addAction) {
             VStack(spacing: 8) {
                 Image(systemName: "plus")
+                    .font(.system(size: 54, weight: .regular))
+                    .foregroundColor(DesignSystem.Color.Gray_IC)
                 Text("사진 추가")
+                    .font(DesignSystem.Font.Title2.medium)
+                    .foregroundColor(DesignSystem.Color.Gray_Text)
             }
             .font(.headline)
-            .foregroundColor(DesignSystem.Color.Gray_Text)
             .frame(width: size, height: size)
             .background(DesignSystem.Color.Gray_BG)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
         }
     }
 }

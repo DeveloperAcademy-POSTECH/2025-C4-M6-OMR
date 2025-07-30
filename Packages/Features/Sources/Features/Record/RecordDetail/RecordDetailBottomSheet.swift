@@ -139,7 +139,7 @@ public struct RecordDetailBottomSheet: View {
         
         var body: some View {
             HStack(spacing: 8) {
-                DesignSystemAssets.image(named: "mainFlower")
+                DesignSystemAssets.image(named: "MainFlower")
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: 17, height: 17)

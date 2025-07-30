@@ -11,7 +11,7 @@ public struct ARCameraView: View {
     @StateObject private var viewModel: ARCameraViewModel
     @StateObject private var permissionsManager = PermissionsManager()
     @Environment(\.dismiss) private var dismiss
-
+    
     @State private var showPermissionAlert = false
     @StateObject private var bottomSheetCoordinator: BottomSheetCoordinator
 
@@ -41,7 +41,7 @@ public struct ARCameraView: View {
         _viewModel = StateObject(wrappedValue: viewModel)
         _bottomSheetCoordinator = StateObject(wrappedValue: coordinator)
     }
-
+    
     public var body: some View {
         ZStack {
             if permissionsManager.status == .granted {
@@ -77,10 +77,10 @@ public struct ARCameraView: View {
         }
         .bottomSheetCoordinator(coordinator: viewModel.bottomSheetCoordinator)
     }
-
+    
     private func checkAndRequestPermissions() {
         permissionsManager.check()
-
+        
         switch permissionsManager.status {
         case .unknown:
             Task {
@@ -100,7 +100,7 @@ public struct ARCameraView: View {
             UIApplication.shared.open(url)
         }
     }
-
+    
     private var arContentView: some View {
         ZStack {
             if #available(iOS 18.0, *) {
@@ -109,7 +109,7 @@ public struct ARCameraView: View {
             } else {
                 // Fallback on earlier versions
             }
-
+            
             VStack {
                 ARTopBarView(
                     onClose: { dismiss() },
@@ -122,29 +122,36 @@ public struct ARCameraView: View {
                     heading: viewModel.currentHeading,
                     direction: viewModel.currentDirection
                 )
-                CameraPitchView(
-                               pitch: viewModel.currentPitch,
-                               direction: viewModel.currentPitchDirection
-                           )
                 
-                // RayCast 상태 표시 (추가)
-                                RaycastStatusView(
-                                    status: viewModel.raycastStatus,
-                                    distance: viewModel.raycastDistance
-                                )
+                CameraPitchView(
+                    pitch: viewModel.currentPitch,
+                    direction: viewModel.currentPitchDirection
+                )
+                
+                // RayCast 상태 표시
+                RaycastStatusView(
+                    status: viewModel.raycastStatus,
+                    distance: viewModel.raycastDistance
+                )
+                
+                
+               
+              
                 
                 Spacer()
+                
                 ARStatusView(message: viewModel.statusMessage)
                 ARBottomBarView(
-                                mode: viewModel.cameraMode,
-                                isPlacementConfirmed: viewModel.isPlacementConfirmed,
-                                onSwitchToPlacement: viewModel.switchToPlacementMode,
-                                onSelectFlower: viewModel.showFlowerSelectionSheet,
-                                onCancelPlacement: viewModel.cancelPlacement,
-                                onConfirmPlacement: viewModel.confirmPlacement,
-                                onRepositionPlacement: viewModel.repositionPlacement,
-                                onSave: viewModel.requestSave
-                            )
+                    mode: viewModel.cameraMode,
+                    isPlacementConfirmed: viewModel.isPlacementConfirmed,
+                    onSwitchToPlacement: viewModel.switchToPlacementMode,
+                    onSelectFlower: viewModel.showFlowerSelectionSheet,
+                    onCancelPlacement: viewModel.cancelPlacement,
+                    onConfirmPlacement: viewModel.confirmPlacement,
+                    onRepositionPlacement: viewModel.repositionPlacement,
+                    onSave: viewModel.requestSave,
+                    status: viewModel.raycastStatus
+                )
             }
             .padding()
         }
@@ -155,13 +162,13 @@ public struct ARCameraView: View {
 @available(iOS 18.0, *)
 internal struct ARViewContainer: UIViewRepresentable {
     public let sceneManager: ARSceneManager
-
+    
     public func makeUIView(context: Context) -> ARView {
         let arView = ARView(frame: .zero)
         sceneManager.setup(arView: arView)
         return arView
     }
-
+    
     public func updateUIView(_ uiView: ARView, context: Context) {
         // ARView 업데이트가 필요한 경우 여기에 로직 추가
     }

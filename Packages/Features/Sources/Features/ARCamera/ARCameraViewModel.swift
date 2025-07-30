@@ -225,7 +225,7 @@ public class ARCameraViewModel: NSObject, ObservableObject {
             placedAt: Date()
         )
         isPlacementConfirmed = true
-        statusMessage = "배치가 확정되었습니다. 저장 버튼을 눌러 기록을 저장하세요."
+        statusMessage = "다른 곳을 비쳐서 재배치 버튼을 탭하면\n다시 심을 수 있어요"
         print("🔥 confirmPlacement() 완료")
     }
 
@@ -239,7 +239,7 @@ public class ARCameraViewModel: NSObject, ObservableObject {
         )
         isPlacementConfirmed = false
         arSceneManager.startRepositioning()
-        statusMessage = "꽃을 다시 배치하세요."
+        statusMessage = "🔴 여기에 \(currentPlacement?.flower.name ?? "")를 심을까요?"
     }
 
     func requestSave() {
