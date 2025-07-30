@@ -8,14 +8,26 @@
 import SwiftUI
 import MapKit
 import DesignSystem
+import Dependencies
 
 public struct MapView: View {
-    @StateObject private var viewModel = MapViewModel()
+    @StateObject private var viewModel: MapViewModel
     @State private var moveToUserLocation = false
     @EnvironmentObject private var nav: NavigationViewModel
     
-    public init() {}
-    
+    public init() {
+        // View가 생성되는 시점의 의존성을 가져옵니다.
+        @Dependency(\.fetchMyRecordsUseCase) var fetchMyRecordsUseCase
+        
+        // 가져온 의존성을 ViewModel에 직접 주입합니다.
+        self._viewModel = StateObject(
+            wrappedValue:
+                MapViewModel(
+                fetchMyRecordsUseCase: fetchMyRecordsUseCase
+            )
+        )
+    }
+
     public var body: some View {
         ZStack {
             MapViewRepresentable(
