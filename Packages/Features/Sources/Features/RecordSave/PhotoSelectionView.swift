@@ -59,12 +59,14 @@ public struct PhotoSelectionView: View {
             showCustomAlbum = true
         }) {
             HStack {
-                Image(systemName: "photo.on.rectangle.angled")
+                Image(systemName: "photo")
+                    .font(.system(size: 16).weight(.medium))
+                    .foregroundColor(DesignSystem.Color.Gray_black)
                 Text("사진 라이브러리")
+                    .font(DesignSystem.Font.Title3.medium)
+                    .foregroundColor(DesignSystem.Color.Gray_black)
                 Spacer()
             }
-            .font(.system(size: 16, weight: .semibold))
-            .foregroundColor(DesignSystem.Color.Gray_black)
             .background(.clear)
         }
         .fullScreenCover(isPresented: $showCustomAlbum) {

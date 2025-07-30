@@ -68,6 +68,10 @@ public extension DesignSystem {
             SwiftUI.Color("Gray_Text2", bundle: .module)
         }
         
+        public static var Gray_IC: SwiftUI.Color {
+            SwiftUI.Color("Gray_IC", bundle: .module)
+        }
+        
 
     }
 }
@@ -138,5 +142,6 @@ extension DesignSystem.Color {
         public static var Gray_Text2: UIColor {
             UIColor(DesignSystem.Color.Gray_Text2)
         }
+        
     }
 }

@@ -89,7 +89,10 @@ struct CustomAlbumView: View {
                 Button(action: { dismiss() }) {
                     Image(systemName: "xmark")
                         .font(.headline)
+                        .foregroundColor(DesignSystem.Color.Gray_Text2)
+
                 }
+                .padding(.vertical, 18)
                 
                 Spacer()
                 
@@ -103,7 +106,7 @@ struct CustomAlbumView: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 7)
-                            .background(DesignSystem.Color.Prime)
+                            .background(DesignSystem.Color.Prime2)
                             .clipShape(Capsule())
                     }
                 }

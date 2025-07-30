@@ -34,7 +34,7 @@ struct AllRecordButtonView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity)
-            .background(DesignSystem.Color.Gray_01)
+            .background(DesignSystem.Color.Prime5)
             .cornerRadius(16)
         }
         .padding(.bottom, 16)

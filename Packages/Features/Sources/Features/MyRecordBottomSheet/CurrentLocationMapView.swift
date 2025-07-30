@@ -21,7 +21,7 @@ struct CurrentLocationMapView: View {
                 )
             )
             .frame(height: 150)
-            .cornerRadius(12)
+            .cornerRadius(20)
             .allowsHitTesting(false)
             
             // 그라데이션 오버레이 (아래쪽에만)
@@ -42,7 +42,7 @@ struct CurrentLocationMapView: View {
                     )
             }
             .frame(height: 150)
-            .cornerRadius(12)
+            .cornerRadius(20)
             .allowsHitTesting(false)
             
             // 그래픽 아이콘 (좌측 하단에 고정 배치)
@@ -58,7 +58,7 @@ struct CurrentLocationMapView: View {
                 }
             }
             .frame(height: 150)
-            .cornerRadius(12)
+            .cornerRadius(20)
             .allowsHitTesting(false)
 
             // 터치 버튼
@@ -68,7 +68,7 @@ struct CurrentLocationMapView: View {
                 Color.white.opacity(0.01) // invisible touch area
             }
             .frame(height: 150)
-            .cornerRadius(12)
+            .cornerRadius(20)
             .buttonStyle(.plain)
         }
     }

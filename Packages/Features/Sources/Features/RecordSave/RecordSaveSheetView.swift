@@ -45,12 +45,14 @@ public struct RecordSaveSheetView: View {
                     .padding(.bottom, 20)
             }
             
+            Spacer() // Spacer를 버튼 위로 이동시켜 버튼을 하단으로 밀어냅니다.
+            
             SaveButtonView(
                 isDisabled: viewModel.isSaveButtonDisabled,
                 viewModel: viewModel,
                 dismiss: { dismiss() }
             )
-            Spacer()
+            .padding(.bottom, 45) // 하단에 45만큼의 여백을 추가합니다.
         }
         .padding(.horizontal, 20)
         .presentationDetents([.fraction(0.8)])
@@ -83,6 +85,7 @@ private struct RecordSaveHeaderView: View {
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(DesignSystem.Color.Gray_black.opacity(0.25))
                     }
+                    .padding(.top, 15)
                 }
                 .alert(
                     "꽃 심기를 그만두실래요?",
@@ -99,10 +102,10 @@ private struct RecordSaveHeaderView: View {
             }
             
             Text("꽃 심기 완료!")
-                .font(DesignSystem.Font.custom(size: 18, weight: .bold))
+                .font(DesignSystem.Font.Title2.semibold)
             
             Text("함께 기억할 사진과 글을 저장해주세요.")
-                .font(DesignSystem.Font.custom(size: 18, weight: .bold))
+                .font(DesignSystem.Font.Title2.semibold)
         }
         .padding(.top, 20)
         .padding(.bottom, 30)
@@ -122,21 +125,21 @@ private struct SelectedFlowerCardView: View {
                     .frame(width: 16, height: 16)
                 
                 Text(flowerName)
-                    .font(DesignSystem.Font.custom(size: 16, weight: .medium))
+                    .font(DesignSystem.Font.Title3.medium)
             }
             
             Text(flowerMeaning)
-                .font(DesignSystem.Font.custom(size: 14, weight: .regular))
+                .font(DesignSystem.Font.Headline.medium)
                 .foregroundColor(DesignSystem.Color.Prime2)
             
             DesignSystemAssets.image(named: flowerImageName)
                 .resizable()
                 .scaledToFit()
-                .frame(width: 120, height: 120)
+                .frame(width: 155, height: 125)
         }
         .padding(.top, 14)
         .padding(.bottom, 30)
-        .padding(.horizontal, 45)
+        .padding(.horizontal, 45) // 카드의 좌우 폭이 너무 넓어지는 문제를 해결하기 위해 원래 코드로 복원합니다.
         .background(DesignSystem.Color.Gray_01)
         .cornerRadius(20)
     }
@@ -161,8 +164,5 @@ private struct SaveButtonView: View {
                 .cornerRadius(12)
         }
         .disabled(isDisabled)
-        .padding(.top, 30)
     }
 }
-
-
