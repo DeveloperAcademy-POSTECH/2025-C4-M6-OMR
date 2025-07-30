@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MapKit
+import Dependencies
 import DesignSystem
 
 public struct MapView: View {
@@ -30,7 +31,14 @@ public struct MapView: View {
             viewModel.fetchMapObjects()
         }
         .sheet(item: $viewModel.selectObjectDetail) { summary in
-            RecordDetailBottomSheet(viewModel: RecordDetailViewModel(id: summary.id))
+            @Dependency(\.fetchRecordDetailUseCase) var fetchRecordDetailUseCase
+            
+            RecordDetailBottomSheet(
+                viewModel: RecordDetailViewModel(
+                    id: summary.id,
+                    fetchRecordDetailUseCase: fetchRecordDetailUseCase
+                )
+            )
         }
     }
     

@@ -30,8 +30,8 @@ enum RecordMapper {
         payload: FinalRecordPayload
     ) -> Domain.Record {
         // TODO: 이미지 저장 및 URL 변환 로직 필요
-        let photoURLs = payload.imageFileNames.compactMap { image in
-            URL(string: image)
+        let photos = payload.imageURLs.map { url in
+            Domain.Photo(url: url)
         }
 
         // ✅ 최종 저장되는 위치 정보 로그
@@ -49,16 +49,17 @@ enum RecordMapper {
 
         return Domain.Record(
             id: UUID(),
-            authorID: UUID(),  // TODO: Replace with actual author ID
+            authorID: UUID(),  // TODO: 실제 사용자 ID로 교체
             markerTypeID: placementData.flower.id,
             coordinate: Domain.Coordinate(
-                latitude: finalLatitude,
-                longitude: finalLongitude
+                latitude: placementData.position.latitude,
+                longitude: placementData.position.longitude
             ),
-            address: Domain.Address(fullAddress: payload.description),
+            // Address 모델의 실제 프로퍼티에 맞게 수정
+            address: Domain.Address(fullAddress: )
             date: placementData.placedAt,
-            photos: photoURLs.map { Domain.Photo(url: $0) },
-            isPublic: true  // TODO: Replace with actual visibility if needed
+            photos: photos, // ✅ 변환된 photos 배열 전달
+            isPublic: true
         )
     }
 

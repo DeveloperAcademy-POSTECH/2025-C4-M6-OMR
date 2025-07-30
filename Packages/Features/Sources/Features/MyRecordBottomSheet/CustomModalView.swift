@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MapKit
+import Dependencies
 import CoreLocation
 import DesignSystem
 
@@ -252,7 +253,16 @@ struct CustomModalView: View {
         }
         .ignoresSafeArea(.all)
         .sheet(item: $selectedRecordID) { identifiableID in
-            RecordDetailBottomSheet(viewModel: RecordDetailViewModel(id: identifiableID.id))
+            // @Dependency로 UseCase를 가져옵니다.
+            @Dependency(\.fetchRecordDetailUseCase) var fetchRecordDetailUseCase
+            
+            RecordDetailBottomSheet(
+                // 생성자에 id와 함께 useCase를 전달합니다.
+                viewModel: RecordDetailViewModel(
+                    id: identifiableID.id,
+                    fetchRecordDetailUseCase: fetchRecordDetailUseCase
+                )
+            )
         }
 
     }

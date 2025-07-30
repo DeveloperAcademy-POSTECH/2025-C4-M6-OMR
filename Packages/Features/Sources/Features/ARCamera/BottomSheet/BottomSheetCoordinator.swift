@@ -64,38 +64,23 @@ public class BottomSheetCoordinator: ObservableObject {
         print("📱 activeSheet = .flowerSelection 설정됨")
     }
 
-    // TODO record Id로 받아오기 -> usecase로 조회해오기
-    func showRecordDetail(record: ARRecordModel) {
-        print("📱 showRecordDetail 호출됨: \(record.title)")
-        selectedRecord = record
+    func showRecordDetail(recordId: UUID) async {
+        do {
+            // UseCase로 데이터 가져오기
+            let domainDetail = try await fetchRecordDetailUseCase(id: recordId)
+            
+            let viewModel = RecordDetailViewModel(
+                id: domainDetail.record.id, // domainDetail 안의 record를 전달
+                fetchRecordDetailUseCase: self.fetchRecordDetailUseCase
+            )
 
-        // 기본 RecordDetailViewModel 생성 후 데이터 설정
-        let viewModel = RecordDetailViewModel(
-            id: record.id,
-            fetchRecordDetailUseCase: fetchRecordDetailUseCase
-        )
-
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy년 M월 d일"
-
-        // 기존 방식과 동일하게 Mock 이미지 생성
-        let dummyPhotos = ["photo.artframe", "camera.fill", "tree.fill"]
-        let images = dummyPhotos.compactMap { UIImage(systemName: $0) }
-
-        // ARRecordModel의 데이터를 RecordDetailUIModel로 변환
-        let mockDetail = RecordDetailUIModel(
-            title: record.title.isEmpty ? "제목 없음" : record.title,
-            flowerName: "프리지아",
-            flowerMeaning: "영원한 사랑",
-            location: "포항공과대학교",
-            date: dateFormatter.string(from: record.createdDate),
-            images: images
-        )
-
-        viewModel.setDetail(mockDetail)
-        recordDetailViewModel = viewModel
-        activeSheet = .recordDetail
-        print("📱 RecordDetail 시트 설정 완료")
+            self.recordDetailViewModel = viewModel
+            self.activeSheet = .recordDetail
+            
+        } catch {
+            print("❌ 상세 기록을 불러오는 데 실패했습니다: \(error.localizedDescription)")
+            dismissSheet()
+        }
     }
 
     func showSaveSheet(

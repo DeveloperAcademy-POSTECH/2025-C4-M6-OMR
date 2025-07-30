@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Dependencies
 import DesignSystem
 
 struct MyRecordView: View {
@@ -49,7 +50,14 @@ struct MyRecordView: View {
             .padding(.horizontal, 20)
             .navigationBarHidden(true)
             .sheet(item: $selectedRecordID) { identifiableID in
-                RecordDetailBottomSheet(viewModel: RecordDetailViewModel(id: identifiableID.id))
+                @Dependency(\.fetchRecordDetailUseCase) var fetchRecordDetailUseCase
+                
+                RecordDetailBottomSheet(
+                    viewModel: RecordDetailViewModel(
+                        id: identifiableID.id,
+                        fetchRecordDetailUseCase: fetchRecordDetailUseCase
+                    )
+                )
             }
         }
     }
