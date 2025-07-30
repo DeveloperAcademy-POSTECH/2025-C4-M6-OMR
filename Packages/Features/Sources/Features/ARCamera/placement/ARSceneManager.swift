@@ -176,6 +176,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     }
     
     // MARK: - Placement Logic
+    // MARK: - Placement Logic (수정된 버전)
     func placeTemporaryObject(
         flower: ARFlower,
         statusUpdate: @escaping (String) -> Void
@@ -199,7 +200,10 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
                 },
                 receiveValue: { [weak self] modelEntity in
                     self?.placementState.setEntity(modelEntity, flower: flower)
-                    self?.createPlacementAnchor() // 앵커 생성
+                    
+                    // 🆕 핵심 수정: indicator 위치를 현재 카메라 위치 기준으로 강제 업데이트
+                    self?.forceUpdatePlacementIndicator()
+                    
                     self?.onPlacementStateChanged?(
                         self?.placementState.status ?? .idle
                     )
@@ -208,6 +212,92 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             )
             .store(in: &cancellables)
     }
+    // MARK: - 새로운 메서드: 강제 indicator 위치 업데이트
+    private func forceUpdatePlacementIndicator() {
+        guard let arView = arView else { return }
+        
+        print("🎯 강제 indicator 위치 업데이트 시작")
+        
+        // 기존 인디케이터 제거
+        removePlacementAnchor()
+        
+        // 현재 카메라 위치 기준으로 새로운 위치 계산
+        var newPosition: SIMD3<Float>?
+        
+        // 1차 시도: 현재 raycast로 정확한 위치 찾기
+        newPosition = getPlacementPositionFromRaycast()
+        
+        // 2차 시도: fallback 위치
+        if newPosition == nil {
+            newPosition = getFallbackPlacementPosition()
+        }
+        
+        // 3차 시도: emergency 위치 (절대 실패하지 않음)
+        if newPosition == nil {
+            newPosition = getEmergencyPlacementPosition()
+        }
+        
+        guard let finalPosition = newPosition else {
+            print("❌ 강제 업데이트도 실패")
+            return
+        }
+        
+        // 새로운 indicator 생성
+        createPlacementIndicator(at: finalPosition)
+        
+        print("✅ Indicator 위치 강제 업데이트 완료: [\(String(format: "%.3f", finalPosition.x)), \(String(format: "%.3f", finalPosition.y)), \(String(format: "%.3f", finalPosition.z))]")
+    }
+    // MARK: - Placement Indicator 생성 (분리된 메서드)
+    private func createPlacementIndicator(at position: SIMD3<Float>) {
+        guard let arView = arView else { return }
+        
+        // 🎭 펄스 애니메이션 설정
+        let scaleUp = Transform(scale: SIMD3<Float>(1.2, 1.2, 1.2), rotation: simd_quatf(), translation: SIMD3<Float>(0, 0, 0))
+        let scaleDown = Transform(scale: SIMD3<Float>(0.8, 0.8, 0.8), rotation: simd_quatf(), translation: SIMD3<Float>(0, 0, 0))
+        
+        let scaleAnimation = FromToByAnimation(
+            name: "pulse",
+            from: scaleDown,
+            to: scaleUp,
+            duration: 0.8,
+            timing: .easeInOut,
+            isAdditive: false
+        )
+        
+        let animationResource = try? AnimationResource.generate(with: scaleAnimation)
+        
+        // 그림자 효과
+        let shadowMesh = MeshResource.generatePlane(width: 0.25, depth: 0.25, cornerRadius: 50)
+        var shadowMaterial = UnlitMaterial()
+        shadowMaterial.baseColor = MaterialColorParameter.color(UIColor.red.withAlphaComponent(0.3))
+        
+        let shadow = ModelEntity(mesh: shadowMesh, materials: [shadowMaterial])
+        shadow.position.y = -0.12
+        
+        let dashedCircle = makeDashedCircle(
+            radius: 0.125,
+            dotCount: 24,
+            dotSize: 0.005,
+            color: UIColor.white.withAlphaComponent(0.8)
+        )
+        dashedCircle.position.y = -0.12
+        
+        if let resource = animationResource {
+            shadow.playAnimation(resource.repeat())
+            dashedCircle.playAnimation(resource.repeat())
+        }
+        
+        // 앵커 생성 및 설정
+        let indicatorAnchor = AnchorEntity(world: position)
+        indicatorAnchor.addChild(dashedCircle)
+        indicatorAnchor.addChild(shadow)
+        arView.scene.addAnchor(indicatorAnchor)
+        
+        self.placementAnchor = indicatorAnchor
+        
+        print("✅ 새로운 indicator 생성 완료: [\(String(format: "%.3f", position.x)), \(String(format: "%.3f", position.y)), \(String(format: "%.3f", position.z))]")
+    }
+
     
     private func addLightingToFlower(_ flowerEntity: ModelEntity) {
         // 🌞 방향성 조명: 햇빛 역할
@@ -423,10 +513,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             let dynamicScale = max(0.3, min(0.5, 0.8 / distance)) //꽃 크기 조정 가능
             flowerClone.transform.scale = SIMD3<Float>(dynamicScale, dynamicScale, dynamicScale)
             
-            // 🧭 currentUserHeading을 기준으로 꽃 방향 설정
-            let flowerRotation = calculateFlowerRotationFromHeading()
-            flowerClone.transform.rotation = flowerRotation
-            
             addNaturalSunlight(to: flowerClone, cameraPosition: cameraPosition)
             addSubtleWindEffect(to: flowerClone)
             
@@ -446,49 +532,6 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         removePlacementAnchor() // 앵커 제거
         onPlacementStateChanged?(placementState.status)
     }
-    
-    // MARK: - 나침반 기준 꽃 방향 계산
-    private func calculateFlowerRotationFromHeading() -> simd_quatf {
-        guard let userHeading = currentUserHeading else {
-            print("⚠️ currentUserHeading이 nil입니다. 기본 방향 사용")
-            return simd_quatf(angle: 0, axis: SIMD3<Float>(0, 1, 0))
-        }
-        
-        // 🧭 사용자의 현재 나침반 방향 (자북 기준, 도 단위)
-        let userHeadingDegrees = userHeading.trueHeading
-        print("🧭 현재 사용자 헤딩: \(String(format: "%.1f", userHeadingDegrees))도")
-        
-        // 🌸 꽃이 바라볼 방향 설정 (사용자와 같은 방향 또는 반대 방향)
-        let flowerTargetHeading = getFlowerTargetHeading(userHeading: userHeadingDegrees)
-        print("🌸 꽃 목표 방향: \(String(format: "%.1f", flowerTargetHeading))도")
-        
-        // 🔄 도 단위를 라디안으로 변환
-        let flowerHeadingRadians = Float(flowerTargetHeading * .pi / 180.0)
-        
-        // 🎯 ARKit 좌표계에서의 회전 계산
-        // ARKit: Z축이 뒤쪽, X축이 오른쪽
-        // 나침반: 0도가 북쪽, 시계방향으로 증가
-        
-        // 나침반 방향을 ARKit 좌표계로 변환
-        // 나침반 0도(북쪽) = ARKit에서 -Z 방향
-        // 나침반 90도(동쪽) = ARKit에서 +X 방향
-        let arKitRotationAngle = -flowerHeadingRadians + Float.pi / 2
-        
-        // Y축 중심 회전 (수평면에서만 회전)
-        let rotation = simd_quatf(angle: arKitRotationAngle, axis: SIMD3<Float>(0, 1, 0))
-        
-        return rotation
-    }
-    
-    // MARK: - 꽃이 바라볼 목표 방향 결정
-    private func getFlowerTargetHeading(userHeading: Double) -> Double {
-        
-        // 사용자 반대 방향 (사용자를 바라보는 방향)
-        let oppositeDirection = userHeading >= 180 ? userHeading - 180 : userHeading + 180
-        
-        return oppositeDirection  // 사용자를 바라보게 하려면
-    }
-    
     /// 현재 배치된 위치의 GPS 좌표를 반환합니다.
     /// - Returns: 배치된 위치의 GPS 좌표, 배치되지 않았거나 변환 실패 시 nil
     func getCurrentPlacementCoordinate() -> CLLocationCoordinate2D? {
@@ -524,7 +567,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     }
     
     
-    
+    // MARK: - 재배치 시에도 강제 업데이트 적용
     func startRepositioning() {
         guard placementState.status == .confirmed else { return }
         
@@ -537,7 +580,10 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
         if let arView = arView {
             placementState.startRepositioning(in: arView)
         }
-        createPlacementAnchor() // 재배치 시 새로운 인디케이터 생성
+        
+        // 🆕 재배치 시에도 현재 카메라 위치 기준으로 indicator 업데이트
+        forceUpdatePlacementIndicator()
+        
         onPlacementStateChanged?(placementState.status)
     }
     
@@ -903,6 +949,7 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     
     
     // MARK: - Placement Anchor Creation (수정된 버전)
+    // MARK: - 기존 createPlacementAnchor 메서드 수정
     private func createPlacementAnchor() {
         guard let arView = arView else { return }
         
@@ -930,58 +977,10 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
             return
         }
         
-        // 🎭 펄스 애니메이션 추가
-        let scaleUp = Transform(scale: SIMD3<Float>(1.2, 1.2, 1.2), rotation: simd_quatf(), translation: SIMD3<Float>(0, 0, 0))
-        let scaleDown = Transform(scale: SIMD3<Float>(0.8, 0.8, 0.8), rotation: simd_quatf(), translation: SIMD3<Float>(0, 0, 0))
-        
-        let scaleAnimation = FromToByAnimation(
-            name: "pulse",
-            from: scaleDown,
-            to: scaleUp,
-            duration: 0.8,
-            timing: .easeInOut,
-            isAdditive: false
-        )
-        
-        let animationResource = try? AnimationResource.generate(with: scaleAnimation)
-        
-        
-        // 그림자 효과
-        let shadowMesh = MeshResource.generatePlane(width: 0.25, depth: 0.25,cornerRadius: 50)
-        
-        
-        
-        var shadowMaterial = UnlitMaterial()
-        shadowMaterial.baseColor = MaterialColorParameter.color(UIColor.red.withAlphaComponent(0.3))
-        
-        
-        
-        let shadow = ModelEntity(mesh: shadowMesh, materials: [shadowMaterial])
-        shadow.position.y = -0.12
-        
-        let dashedCircle = makeDashedCircle(
-            radius: 0.125,              // 바깥 원의 반지름
-            dotCount: 24,               // 점 개수 (숫자가 작을수록 간격 넓음)
-            dotSize: 0.005,             // 점 하나의 크기 (반지름)
-            color: UIColor.white.withAlphaComponent(0.8) // 점 색상 및 투명도
-        )
-        dashedCircle.position.y = -0.12
-        
-        if let resource = animationResource {
-            shadow.playAnimation(resource.repeat())
-            dashedCircle.playAnimation(resource.repeat())
-        }
-        
-        // 앵커 생성 및 설정
-        let indicatorAnchor = AnchorEntity(world: finalPosition)
-        indicatorAnchor.addChild(dashedCircle)
-        indicatorAnchor.addChild(shadow)
-        arView.scene.addAnchor(indicatorAnchor)
-        
-        self.placementAnchor = indicatorAnchor
-        
-        print("✅ 개선된 인디케이터 생성: [\(String(format: "%.3f", finalPosition.x)), \(String(format: "%.3f", finalPosition.y)), \(String(format: "%.3f", finalPosition.z))]")
+        // 분리된 메서드 사용
+        createPlacementIndicator(at: finalPosition)
     }
+
     
     func makeDashedCircle(radius: Float, dotCount: Int, dotSize: Float, color: UIColor) -> Entity {
         let parent = Entity()
@@ -1018,6 +1017,10 @@ class ARSceneManager: NSObject, ARSessionDelegate, ObservableObject {
     }
     
     func removePlacementObject() {
+        if let arView = arView, let existingFlower = currentFlowerAnchor {
+                    arView.scene.removeAnchor(existingFlower)
+                    currentFlowerAnchor = nil
+                }
         if let arView = arView {
             placementState.removeFrom(arView: arView)
         }
