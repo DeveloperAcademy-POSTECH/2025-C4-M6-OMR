@@ -7,13 +7,28 @@
 
 import SwiftUI
 import DesignSystem
+import Dependencies
 
 struct MyRecordView: View {
-    @StateObject private var viewModel = MyRecordViewModel()
+    @StateObject private var viewModel: MyRecordViewModel
     @EnvironmentObject private var nav: NavigationViewModel
 
     @State private var selectedRecordID: IdentifiableUUID? = nil
 
+    public init() {
+        // View가 생성되는 시점의 의존성을 가져옵니다.
+        @Dependency(\.fetchMyRecordsUseCase) var fetchMyRecordsUseCase
+        
+        // 가져온 의존성을 ViewModel에 직접 주입합니다.
+        self._viewModel = StateObject(
+            wrappedValue:
+                MyRecordViewModel(
+                fetchMyRecordsUseCase: fetchMyRecordsUseCase
+            )
+        )
+    }
+    
+    
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
