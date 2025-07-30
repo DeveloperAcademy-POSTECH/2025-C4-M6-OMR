@@ -456,6 +456,17 @@ extension ARCameraViewModel: BottomSheetCoordinatorDelegate {
     func didDismissBottomSheet() {
         arSceneManager.deselectCurrentMarker()
     }
+    
+    // MARK: - AR 세션 제어
+    func didPresentRecordDetail() {
+        print("🔴 RecordDetail 표시됨 - AR 세션 일시정지")
+        arSceneManager.pauseARSession()
+    }
+    
+    func didDismissRecordDetail() {
+        print("🟢 RecordDetail 숨겨짐 - AR 세션 재개")
+        arSceneManager.resumeARSession()
+    }
 }
 
 // MARK: - CLLocationManagerDelegate
@@ -521,3 +532,4 @@ extension ARCameraViewModel: CLLocationManagerDelegate {
         }
     }
 }
+

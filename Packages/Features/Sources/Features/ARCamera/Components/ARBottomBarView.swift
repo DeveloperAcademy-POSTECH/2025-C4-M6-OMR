@@ -46,7 +46,7 @@ struct ARBottomBarView: View {
             } else {
                 ARCheckButton(action: onConfirmPlacement)
                     .disabled(!getStatus())
-                      .opacity(getStatus() ? 1.0 : 0.4) // 상태 표시를 위해 반투명 처리
+                      .opacity(getStatus() ? 1.0 : 0.55) // 상태 표시를 위해 반투명 처리
             }
 
             if isPlacementConfirmed {
