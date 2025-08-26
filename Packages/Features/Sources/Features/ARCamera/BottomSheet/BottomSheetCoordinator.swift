@@ -1,0 +1,137 @@
+//
+//  BottomSheetCoordinator.swift
+//  Features
+//
+//  Created by eunsong on 7/26/25.
+//
+
+import Combine
+import SwiftUI
+import Domain
+
+@MainActor
+public class BottomSheetCoordinator: ObservableObject {
+
+    // MARK: - Published Properties
+    @Published var activeSheet: BottomSheetType?
+
+    // MARK: - Sheet Data
+    @Published var selectedRecord: ARRecordModel?
+    @Published var selectedFlower: FlowerModel?
+    @Published var flowerForSave: ARFlower?
+
+    // MARK: - ViewModels
+    @Published var flowerSelectionViewModel: FlowerSelectionViewModel
+    @Published var recordDetailViewModel: RecordDetailViewModel?
+    @Published var saveSheetViewModel: RecordSaveSheetViewModel?
+    
+    private let fetchRecordDetailUseCase: FetchRecordDetailUseCase
+
+    // MARK: - Delegate
+    weak var delegate: BottomSheetCoordinatorDelegate?
+
+    var onCancelPlacement: () -> Void = {}
+
+    init(
+        fetchAllMarkersUseCase: FetchAllMarkersUseCase,
+        fetchRecordDetailUseCase: FetchRecordDetailUseCase
+    ) {
+        self.fetchRecordDetailUseCase = fetchRecordDetailUseCase
+        self.flowerSelectionViewModel = FlowerSelectionViewModel(
+            fetchAllMarkersUseCase: fetchAllMarkersUseCase
+        )
+        setupFlowerSelectionCallback()
+    }
+
+    func cancelPlacement() {
+        onCancelPlacement()
+        dismissSheet()
+    }
+
+    private func setupFlowerSelectionCallback() {
+        print("🔧 FlowerSelection 콜백 설정 중...")
+        flowerSelectionViewModel.onFlowerSelected = { [weak self] flower in
+            print("🔧 FlowerSelection 콜백 호출됨: \(flower.name)")
+            self?.handleFlowerSelection(flower)
+        }
+        print("🔧 FlowerSelection 콜백 설정 완료")
+    }
+
+    // MARK: - Public Methods
+    func showFlowerSelection() {
+        print("📱 showFlowerSelection 호출됨")
+        activeSheet = .flowerSelection
+        print("📱 activeSheet = .flowerSelection 설정됨")
+    }
+
+    func showRecordDetail(recordId: UUID) async {
+        do {
+            // UseCase로 데이터 가져오기
+            let domainDetail = try await fetchRecordDetailUseCase(id: recordId)
+            
+            let viewModel = RecordDetailViewModel(
+                id: domainDetail.record.id, // domainDetail 안의 record를 전달
+                fetchRecordDetailUseCase: self.fetchRecordDetailUseCase
+            )
+
+            self.recordDetailViewModel = viewModel
+            self.activeSheet = .recordDetail
+            
+        } catch {
+            print("❌ 상세 기록을 불러오는 데 실패했습니다: \(error.localizedDescription)")
+            dismissSheet()
+        }
+    }
+
+    func showSaveSheet(
+        info: RecordSaveSheetInfo,
+        onSave: @escaping (FinalRecordPayload) -> Void,
+        onCancel: @escaping () -> Void
+    ) {
+        print("📱 showSaveSheet 호출됨: \(info.flower.name)")
+
+        let CustomAlbumVM = CustomAlbumViewModel()
+        
+        let viewModel = RecordSaveSheetViewModel(
+            info: info,
+            albumViewModel: CustomAlbumVM,
+            onSave: { [weak self] payload in
+                onSave(payload)
+                self?.dismissSheet()
+            }
+        )
+        
+        self.saveSheetViewModel = viewModel
+        self.onCancelPlacement = onCancel
+        self.activeSheet = .saveSheet
+        print("📱 SaveSheet 설정 완료")
+    }
+
+    func dismissSheet() {
+        print("📱 dismissSheet 호출됨")
+        activeSheet = nil
+        clearSheetData()
+        print("📱 시트 해제 완료")
+    }
+
+    // MARK: - Private Methods
+    private func handleFlowerSelection(_ flower: FlowerModel) {
+        print("🌻 handleFlowerSelection 호출됨: \(flower.name)")
+        print("🌻 delegate: \(delegate != nil ? "있음" : "없음")")
+
+        selectedFlower = flower
+        delegate?.didSelectFlower(flower)
+        print("🌻 delegate?.didSelectFlower 호출 완료")
+
+        dismissSheet()
+        print("🌻 시트 해제 완료")
+    }
+
+    private func clearSheetData() {
+        selectedRecord = nil
+        selectedFlower = nil
+        flowerForSave = nil
+        recordDetailViewModel = nil
+        saveSheetViewModel = nil
+    }
+}

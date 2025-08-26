@@ -1,73 +1,65 @@
-//
-//  AppDI.swift
-//  MoteApp
-//
-//  Created by eunsong on 7/15/25.
-//
+import Core
+import Data
 import Dependencies
+import Domain
+import Features
 import Foundation
 import SwiftData
-import Domain
-import Data
-import Core
-import Features
+import SwiftUI
 
 public struct AppDI {
-    public static func registerDependencies() {
-        // Register all application-level dependencies here
-    }
-}
+    // MARK: - SwiftData & DataSource Setup
 
-// MARK: - MoteUseCase DI
+    // 메인 큐용 ModelContext (UI 및 동기 작업용)
+    @MainActor
+    internal static let modelContext = ModelContext(AppModelContainer.shared)
 
-private enum FetchNearbyMotesUseCaseKey: DependencyKey {
-    static var liveValue: FetchNearbyMotesUseCase {
-        let modelContext = ModelContext(AppModelContainer.shared)
-        let local = LocalMoteDatasource(modelContext: modelContext)
-        let remote = RemoteMoteDatasource()
-        let repo  = DefaultMoteRepository(local: local, remote: remote) {
-            // 임시: 현재 로그인 유저 ID를 무명 UUID로 대체
-            return UUID()
-        }
-        return FetchNearbyMotesUseCase(repository: repo)
-    }
-}
+    internal static let localRecordDS = LocalRecordDataSource(
+        container: AppModelContainer.shared
+    )
+    internal static let remoteRecordDS = RemoteRecordDatasource()
+    internal static let userLocalDS = UserLocalDatasource(
+        modelContext: modelContext
+    )
+    internal static let markerLocalDS = MarkerLocalDatasource(
+        modelContext: modelContext
+    )
+    internal static let markderDefaultDS = DefaultMarkerDataSource()
 
-private enum FetchMyMotesUseCaseKey: DependencyKey {
-    static var liveValue: FetchMyMotesUseCase {
-        let modelContext = ModelContext(AppModelContainer.shared)
-        let local = LocalMoteDatasource(modelContext: modelContext)
-        let remote = RemoteMoteDatasource()
-        let repo  = DefaultMoteRepository(local: local, remote: remote) {
-            return UUID()
-        }
-        return FetchMyMotesUseCase(repository: repo)
-    }
-}
+    // MARK: - Repository Live Values
 
-private enum FetchMoteDetailUseCaseKey: DependencyKey {
-    static var liveValue: FetchMoteDetailUseCase {
-        let modelContext = ModelContext(AppModelContainer.shared)
-        let local = LocalMoteDatasource(modelContext: modelContext)
-        let remote = RemoteMoteDatasource()
-        let repo  = DefaultMoteRepository(local: local, remote: remote) {
-            return UUID()
-        }
-        return FetchMoteDetailUseCase(repository: repo)
-    }
-}
+    public static let recordRepository: RecordRepository =
+        DefaultRecordRepository(
+            local: localRecordDS,
+            remote: remoteRecordDS,
+            currentUserIDProvider: { try await getCurrentUserID() }
+        )
 
-extension DependencyValues {
-    var fetchNearbyMotesUseCase: FetchNearbyMotesUseCase {
-        get { self[FetchNearbyMotesUseCaseKey.self] }
-        set { self[FetchNearbyMotesUseCaseKey.self] = newValue }
+    public static let userRepository: UserRepository = DefaultUserRepository(
+        local: userLocalDS
+    )
+
+    public static let markerRepository: MarkerRepository =
+        DefaultMarkerRepository(
+            local: markerLocalDS,
+            defaultDataSource: markderDefaultDS
+        )
+
+    // MARK: - Helper Methods
+
+    private static func getCurrentUserID() async throws -> UUID {
+        UUID(uuidString: "00000000-0000-0000-0000-000000000001") ?? UUID()
     }
-    var fetchMyMotesUseCase: FetchMyMotesUseCase {
-        get { self[FetchMyMotesUseCaseKey.self] }
-        set { self[FetchMyMotesUseCaseKey.self] = newValue }
-    }
-    var fetchMoteDetailUseCase: FetchMoteDetailUseCase {
-        get { self[FetchMoteDetailUseCaseKey.self] }
-        set { self[FetchMoteDetailUseCaseKey.self] = newValue }
+
+    // MARK: - Setup Method
+
+    public static func setup() {
+        print("[AppDI] Setup completed - Repository instances created")
+        print("  - RecordRepository: \(type(of: recordRepository))")
+        print("  - UserRepository: \(type(of: userRepository))")
+        print("  - MarkerRepository: \(type(of: markerRepository))")
+
+        // ✅ FeaturesDependencies 관련 코드 모두 제거
+        // withDependencies가 자동으로 전파하므로 별도 설정 불필요
     }
 }

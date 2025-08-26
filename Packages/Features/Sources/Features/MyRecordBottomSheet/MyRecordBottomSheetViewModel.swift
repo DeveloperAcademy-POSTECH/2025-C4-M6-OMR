@@ -1,0 +1,71 @@
+import Combine
+import CoreLocation
+import Foundation
+import SwiftUI
+import Domain
+
+@MainActor
+final class MyRecordBottomSheetViewModel: ObservableObject {
+    @Published var allMotes: [Mote] = []
+    @Published var filteredMotes: [Mote] = []
+    @Published var isLoading: Bool = false
+    @Published var errorMessage: String?
+    
+    private let fetchMyRecordsUseCase: FetchMyRecordsUseCase
+
+    init(fetchMyRecordsUseCase: FetchMyRecordsUseCase) {
+        self.fetchMyRecordsUseCase = fetchMyRecordsUseCase
+    }
+
+    func loadAllMotes() {
+        print("CustomLocationViewModel: loadAllMotes")
+        isLoading = true
+        Task {
+            let motes = try await fetchMyRecordsUseCase()
+            await MainActor.run {
+                self.allMotes = motes.map { RecordDetailMapper.toMote(from: $0) }
+                print("loadAllMotes: \(self.allMotes)")
+                isLoading = false
+            }
+            print("All Motes:")
+            self.allMotes.forEach {
+                print("Mote \($0.flower.name): lat = \($0.latitude), lon = \($0.longitude)")
+            }
+        }
+    }
+
+//    func loadAllMotes() {
+//        isLoading = true
+//        errorMessage = nil
+//
+//        Task {
+//            self.allMotes = MockDataProvider.mockObjects()
+//            self.filteredMotes = allMotes
+//            isLoading = false
+//        }
+//    }
+
+    func filterMotesByLocation(
+        currentLocation: CLLocation,
+        radiusInMeters: Double = 5000
+    ) {
+        isLoading = true
+        errorMessage = nil
+
+        Task {
+            let filtered = allMotes.filter { mote in
+                let moteLocation = CLLocation(
+                    latitude: mote.latitude,
+                    longitude: mote.longitude
+                )
+                let distance = currentLocation.distance(from: moteLocation)
+                print("mote: \(mote.title), distance: \(distance)")  // 거리 출력
+                return distance <= radiusInMeters
+            }
+
+            print("Filtered count: \(filtered.count)")
+            self.filteredMotes = filtered
+            isLoading = false
+        }
+    }
+}

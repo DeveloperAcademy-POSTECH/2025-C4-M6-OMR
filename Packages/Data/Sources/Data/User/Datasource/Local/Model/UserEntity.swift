@@ -2,7 +2,7 @@
 //  UserEntity.swift
 //  Data
 //
-//  Created by eunsong on 7/15/25.
+//  Created by eunsong on 7/20/25.
 //
 import Foundation
 import SwiftData
@@ -10,13 +10,12 @@ import SwiftData
 @Model
 public final class UserEntity {
     @Attribute(.unique) public var id: UUID
-    
-    // 역관계: 이 유저가 작성한 Mote들
-    @Relationship(deleteRule: .cascade, inverse: \MoteEntity.author)
-    public var motes: [MoteEntity]
-    
-    public init(id: UUID, motes: [MoteEntity] = []) {
+    public var name: String?
+    public var isPublic: Bool
+
+    public init(id: UUID = .init(), name: String? = nil, isPublic: Bool = false) {
         self.id = id
-        self.motes = motes
+        self.name = name
+        self.isPublic = isPublic
     }
 }

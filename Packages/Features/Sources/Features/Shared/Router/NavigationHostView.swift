@@ -4,52 +4,88 @@
 //
 //  Created by eunsong on 7/15/25.
 //
+import CoreLocation
 import Dependencies
+import Domain
 import SwiftUI
 
 public struct NavigationHostView: View {
-    @StateObject private var nav = NavigationViewModel()
+    @EnvironmentObject private var nav: NavigationViewModel
     
-    public init() {}
-    
-    // 각 화면 ViewModel은 DI로 내부에서 생성
+    private let configureDependencies: (inout DependencyValues) -> Void
+
+    public init(
+        configureDependencies: @escaping (inout DependencyValues) -> Void
+    ) {
+        self.configureDependencies = configureDependencies
+    }
+
     public var body: some View {
         NavigationStack(path: $nav.path) {
-            MainView()  // 첫 화면
-                .navigationDestination(for: AppRoute.self) { route in
-                    switch route {
-                    case .home:
-                        MainView()
-                    // TODO: 나머지 route 처리
-                    default:
-                        Text("Not Found")
-
-//                    case .map(let lat, let lon):
-//                        MapView(latitude: lat, longitude: lon)
-//
-//                    case .arCamera:
-//                        ARCameraView()
-//
-//                    case .detail(let moteId):
-//                        DetailRecordView(moteId: moteId)
-//
-//                    case .recordStart:
-//                        RecordView()
-//
-//                    case .recordSelectSong:
-//                        SongSearchView()
-//
-//                    case .recordCompose(let songId):
-//                        RecordComposeView(songId: songId)
-//
-//                    case .recordOverview(let tempId):
-//                        RecordOverviewView(tempId: tempId)
-//
-//                    case .recordComplete(let moteId):
-//                        RecordCompleteView(moteId: moteId)
+            // 루트 뷰와 목적지 뷰 모두에 명시적으로 의존성을 주입합니다.
+            withDependencies(configureDependencies) {
+                MainView()
+                    .navigationDestination(for: AppRoute.self) { route in
+                        withDependencies(configureDependencies) {
+                            destinationView(for: route)
+                        }
                     }
-                }
+                    .task {
+                        // 의존성이 설정된 컨텍스트 내부에서 앱을 초기화합니다.
+                        await initializeAppData()
+                    }
+            }
         }
-        .environmentObject(nav)  // 하위 View에서 @EnvironmentObject 로 사용
+    }
+
+    @ViewBuilder
+    private func destinationView(for route: AppRoute) -> some View {
+        switch route {
+        case .arCamera(let latitude, let longitude):
+            let location = CLLocation(
+                latitude: latitude,
+                longitude: longitude
+            )
+
+            if #available(iOS 18.0, *) {
+                ToolbarHiddenWrapper(
+                    content:
+                        ARCameraView(location: location)
+                )
+            } else {
+                // Fallback on earlier versions
+            }
+
+        case .map:
+            ToolbarHiddenWrapper(
+                content: MapView()
+            )
+
+        case .myRecord:
+            ToolbarHiddenWrapper(
+                content: MyRecordView()
+            )
+
+        case .home:
+            ToolbarHiddenWrapper(
+                content: MainView()
+            )
+
+        default:
+            Text("Not Found")
+        }
+    }
+    
+    @MainActor
+    private func initializeAppData() async {
+        @Dependency(\.initializeAppDataUseCase) var initializeAppDataUseCase
+
+        do {
+            print("[Features] Initializing app data...")
+            try await initializeAppDataUseCase()
+            print("[Features] App data initialized successfully")
+        } catch {
+            print("[Features] Failed to initialize app data: \(error)")
+        }
     }
 }

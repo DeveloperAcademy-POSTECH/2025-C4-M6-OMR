@@ -1,15 +1,8 @@
-//
-//  FeaturesDI.swift
-//  Features
-//
-//  Created by eunsong on 7/15/25.
-//
+import CoreLocation
+import Dependencies
+import Domain
 import Foundation
-import Domain // Features module can depend on Domain
 
-public struct FeaturesDI {
-    public static func registerDependencies() {
-        // Features module specific dependencies can be registered here if any.
-        // CharacterUseCaseDI content has been moved to AppDI.swift
-    }
-}
+// ViewModelFactory 관련 코드를 모두 삭제합니다.
+// View가 ViewModel을 직접 생성하고 의존성을 주입합니다.
+

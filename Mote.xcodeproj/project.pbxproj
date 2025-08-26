@@ -17,6 +17,7 @@
 		C0530CD62E259A0E008CB908 /* Data in Frameworks */ = {isa = PBXBuildFile; productRef = C0530CD52E259A0E008CB908 /* Data */; };
 		C0530CD92E259A20008CB908 /* Domain in Frameworks */ = {isa = PBXBuildFile; productRef = C0530CD82E259A20008CB908 /* Domain */; };
 		C0530CDB2E259A33008CB908 /* Core in Frameworks */ = {isa = PBXBuildFile; productRef = C0530CDA2E259A33008CB908 /* Core */; };
+		C07F58FB2E3608AB00F95AEB /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = C07F58FA2E3608AB00F95AEB /* Lottie */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -42,9 +43,22 @@
 		C03BFF5D2E252F3400DAEB35 /* MoteUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MoteUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C0344F792E313024001FF89D /* Exceptions for "App" folder in "App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C03BFF432E252F3300DAEB35 /* App */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C03BFF462E252F3300DAEB35 /* App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C0344F792E313024001FF89D /* Exceptions for "App" folder in "App" target */,
+			);
 			path = App;
 			sourceTree = "<group>";
 		};
@@ -72,6 +86,7 @@
 			files = (
 				C0530BA62E2547DD008CB908 /* Features in Frameworks */,
 				C0530CD92E259A20008CB908 /* Domain in Frameworks */,
+				C07F58FB2E3608AB00F95AEB /* Lottie in Frameworks */,
 				C03BFFC22E253D8E00DAEB35 /* Dependencies in Frameworks */,
 				C0530CD62E259A0E008CB908 /* Data in Frameworks */,
 				C0530CD42E2599EF008CB908 /* Features in Frameworks */,
@@ -150,6 +165,7 @@
 				C0530CD52E259A0E008CB908 /* Data */,
 				C0530CD82E259A20008CB908 /* Domain */,
 				C0530CDA2E259A33008CB908 /* Core */,
+				C07F58FA2E3608AB00F95AEB /* Lottie */,
 			);
 			productName = Mote;
 			productReference = C03BFF442E252F3300DAEB35 /* App.app */;
@@ -241,6 +257,7 @@
 				C0530BA42E2547DD008CB908 /* XCLocalSwiftPackageReference "../EchoNote/Packages/Features" */,
 				C0530CB32E258CE2008CB908 /* XCLocalSwiftPackageReference "../EchoNote/Packages/Data" */,
 				C0530CD72E259A20008CB908 /* XCLocalSwiftPackageReference "../EchoNote/Packages/Domain" */,
+				C07F58F92E3608AB00F95AEB /* XCRemoteSwiftPackageReference "lottie-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C03BFF452E252F3300DAEB35 /* Products */;
@@ -444,9 +461,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = NB42482NDH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = App/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "AR 기능을 사용하려면 카메라 권한이 필요합니다.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "앱 사용 중 위치 정보를 활용합니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -472,9 +492,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = NB42482NDH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = App/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "AR 기능을 사용하려면 카메라 권한이 필요합니다.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "앱 사용 중 위치 정보를 활용합니다.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -634,6 +657,14 @@
 				minimumVersion = 1.9.2;
 			};
 		};
+		C07F58F92E3608AB00F95AEB /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.5.2;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -678,6 +709,11 @@
 		C0530CDA2E259A33008CB908 /* Core */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Core;
+		};
+		C07F58FA2E3608AB00F95AEB /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C07F58F92E3608AB00F95AEB /* XCRemoteSwiftPackageReference "lottie-ios" */;
+			productName = Lottie;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

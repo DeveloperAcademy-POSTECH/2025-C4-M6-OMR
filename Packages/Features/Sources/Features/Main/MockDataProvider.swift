@@ -1,0 +1,128 @@
+//
+//  SwiftUIView.swift
+//  Features
+//
+//  Created by Woody on 7/18/25.
+//
+import Dependencies
+import Foundation
+import FileProvider
+
+
+struct MockDataProvider {
+    static func mockObjects() -> [Mote] {
+        let flower1 = EmotionObject(
+            name: "장미",
+            floriography: "사랑",
+            thumbnail: "rose_thumb.png",
+            objetImage: "flower1"
+        )
+
+        let flower2 = EmotionObject(
+            name: "해바라기",
+            floriography: "희망",
+            thumbnail: "sunflower_thumb.png",
+            objetImage: "flower1"
+        )
+
+        let flower3 = EmotionObject(
+            name: "백합",
+            floriography: "순수",
+            thumbnail: "lily_thumb.png",
+            objetImage: "flower2"
+        )
+
+        let flower4 = EmotionObject(
+            name: "수국",
+            floriography: "변화",
+            thumbnail: "hydrangea_thumb.png",
+            objetImage: "flower2"
+        )
+
+        let baseDate = Date()
+
+        // 고정 UUID 선언
+        let id1 = UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
+        let id2 = UUID(uuidString: "22222222-2222-2222-2222-222222222222")!
+        let id3 = UUID(uuidString: "33333333-3333-3333-3333-333333333333")!
+        let id4 = UUID(uuidString: "44444444-4444-4444-4444-444444444444")!
+        let id5 = UUID(uuidString: "55555555-5555-5555-5555-555555555555")!
+        let id6 = UUID(uuidString: "66666666-6666-6666-6666-666666666666")!
+
+        return [
+            Mote(
+                id: id1,
+                userId: UUID(),
+                title: "첫 번째 기록",
+                images: ["img1.jpg", "img2.jpg"],
+                createdAt: baseDate,
+                latitude: 36.0427,
+                longitude: 129.3589,
+                address: "경상북도 포항시",
+                flower: flower1,
+                isPublic: true
+            ),
+            Mote(
+                id: id2,
+                userId: UUID(),
+                title: "두 번째 기록",
+                images: ["img3.jpg"],
+                createdAt: baseDate.addingTimeInterval(-86400),
+                latitude: 36.0425,
+                longitude: 129.3591,
+                address: "경상북도 포항시",
+                flower: flower2,
+                isPublic: false
+            ),
+            Mote(
+                id: id3,
+                userId: UUID(),
+                title: "포스텍 정문 앞 장미",
+                images: ["rose1.jpg"],
+                createdAt: baseDate.addingTimeInterval(-3600),
+                latitude: 36.0135,
+                longitude: 129.3235,
+                address: "경상북도 포항시 남구 청암로 77 포스텍 정문 앞",
+                flower: flower1,
+                isPublic: true
+            ),
+            Mote(
+                id: id4,
+                userId: UUID(),
+                title: "수국이 피어난 과학관 뒤",
+                images: ["hydrangea1.jpg"],
+                createdAt: baseDate.addingTimeInterval(-7200),
+                latitude: 36.0138,
+                longitude: 129.3242,
+                address: "경상북도 포항시 남구 청암로 77 과학관 뒤편",
+                flower: flower4,
+                isPublic: true
+            ),
+            Mote(
+                id: id5,
+                userId: UUID(),
+                title: "백합이 있는 중앙도서관 옆",
+                images: ["lily1.jpg"],
+                createdAt: baseDate.addingTimeInterval(-10800),
+                latitude: 36.0142,
+                longitude: 129.3228,
+                address: "경상북도 포항시 남구 청암로 77 중앙도서관 옆",
+                flower: flower3,
+                isPublic: false
+            ),
+            Mote(
+                id: id6,
+                userId: UUID(),
+                title: "햇살 가득한 학생회관 앞 해바라기",
+                images: ["sunflower1.jpg"],
+                createdAt: baseDate.addingTimeInterval(-14400),
+                latitude: 36.0140,
+                longitude: 129.3239,
+                address: "경상북도 포항시 남구 청암로 77 학생회관 앞",
+                flower: flower2,
+                isPublic: true
+            )
+        ]
+    }
+}
+

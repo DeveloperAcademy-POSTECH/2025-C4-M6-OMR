@@ -10,9 +10,9 @@ import SwiftData
 public enum AppModelContainer {
     public static let shared: ModelContainer = {
         let schema = Schema([
-            MoteEntity.self,
+            RecordEntity.self,
             UserEntity.self,
-                // 필요한 Entity들을 추가
+            MarkerEntity.self
         ])
 
         let config = ModelConfiguration(
