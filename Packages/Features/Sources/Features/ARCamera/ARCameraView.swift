@@ -11,24 +11,22 @@ public struct ARCameraView: View {
     @StateObject private var viewModel: ARCameraViewModel
     @StateObject private var permissionsManager = PermissionsManager()
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     
     @State private var showPermissionAlert = false
     @StateObject private var bottomSheetCoordinator: BottomSheetCoordinator
 
     public init(location: CLLocation) {
-        // ARCameraView가 생성되는 시점의 의존성을 직접 주입받습니다.
         @Dependency(\.fetchMyRecordsUseCase) var fetchMyRecordsUseCase
         @Dependency(\.saveRecordUseCase) var saveRecordUseCase
         @Dependency(\.fetchAllMarkersUseCase) var fetchAllMarkersUseCase
         @Dependency(\.fetchRecordDetailUseCase) var fetchRecordDetailUseCase
 
-        // 1. BottomSheetCoordinator를 먼저 생성합니다.
         let coordinator = BottomSheetCoordinator(
             fetchAllMarkersUseCase: fetchAllMarkersUseCase,
             fetchRecordDetailUseCase: fetchRecordDetailUseCase
         )
         
-        // 2. ARCameraViewModel을 생성하면서 필요한 모든 의존성을 주입합니다.
         let viewModel = ARCameraViewModel(
             fetchMyRecordsUseCase: fetchMyRecordsUseCase,
             saveRecordUseCase: saveRecordUseCase,
@@ -37,7 +35,6 @@ public struct ARCameraView: View {
             bottomSheetCoordinator: coordinator
         )
         
-        // 3. StateObject들을 초기화합니다.
         _viewModel = StateObject(wrappedValue: viewModel)
         _bottomSheetCoordinator = StateObject(wrappedValue: coordinator)
     }
@@ -45,25 +42,24 @@ public struct ARCameraView: View {
     public var body: some View {
         ZStack {
             if permissionsManager.status == .granted {
-                arContentView
-                    .onAppear { viewModel.startARSession() }
+                ARContentView(viewModel: viewModel,  dismiss: dismiss)
+                    .onAppear {
+                        print("ARCameraView onAppear - AR 세션 시작")
+                        viewModel.startARSession()
+                    }
+                    .onDisappear {
+                        print("ARCameraView onDisappear - AR 세션 중지")
+                        viewModel.pauseARSession()
+                    }
             } else {
-                // 권한이 없을 때 보여줄 플레이스홀더
-                Color.black
-                    .ignoresSafeArea()
-                    .overlay(
-                        VStack {
-                            Image(systemName: "camera.fill")
-                                .font(.system(size: 60))
-                                .foregroundColor(.white.opacity(0.5))
-                            Text("카메라 준비 중...")
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                    )
+                ARPermissionPlaceholderView()
             }
         }
         .onAppear {
             checkAndRequestPermissions()
+        }
+        .onChange(of: scenePhase) { phase in
+            handleScenePhaseChange(phase)
         }
         .alert("카메라 접근 권한 필요", isPresented: $showPermissionAlert) {
             Button("설정") {
@@ -76,6 +72,21 @@ public struct ARCameraView: View {
             Text("AR 경험을 위해 카메라 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.")
         }
         .bottomSheetCoordinator(coordinator: viewModel.bottomSheetCoordinator)
+    }
+    
+    private func handleScenePhaseChange(_ phase: ScenePhase) {
+        switch phase {
+        case .active:
+            print("앱이 활성 상태로 전환 - AR 세션 재개")
+            if permissionsManager.status == .granted {
+                viewModel.resumeARSession()
+            }
+        case .inactive, .background:
+            print("앱이 비활성/백그라운드 상태로 전환 - AR 세션 일시정지")
+            viewModel.pauseARSession()
+        @unknown default:
+            break
+        }
     }
     
     private func checkAndRequestPermissions() {
@@ -95,48 +106,71 @@ public struct ARCameraView: View {
             break
         }
     }
+    
     private func openSettings() {
         if let url = URL(string: UIApplication.openSettingsURLString) {
             UIApplication.shared.open(url)
         }
     }
+}
+
+// MARK: - ARPermissionPlaceholderView
+
+@available(iOS 18.0, *)
+private struct ARPermissionPlaceholderView: View {
+    var body: some View {
+        Color.black
+            .ignoresSafeArea()
+            .overlay(
+                VStack {
+                    Image(systemName: "camera.fill")
+                        .font(.system(size: 60))
+                        .foregroundColor(.white.opacity(0.5))
+                    Text("카메라 준비 중...")
+                        .foregroundColor(.white.opacity(0.7))
+                }
+            )
+    }
+}
+
+// MARK: - ARContentView
+
+@available(iOS 18.0, *)
+private struct ARContentView: View {
+    @ObservedObject var viewModel: ARCameraViewModel
+    @EnvironmentObject private var nav: NavigationViewModel
+
+    let dismiss: DismissAction
     
-    private var arContentView: some View {
+    var body: some View {
         ZStack {
-            if #available(iOS 18.0, *) {
-                ARViewContainer(sceneManager: viewModel.arSceneManager)
-                    .edgesIgnoringSafeArea(.all)
-            } else {
-                // Fallback on earlier versions
-            }
+            ARViewContainer(sceneManager: viewModel.arSceneManager)
+                .edgesIgnoringSafeArea(.all)
             
             VStack {
                 ARTopBarView(
-                    onClose: { dismiss() },
+                    onClose: {
+                        print("AR 화면 종료")
+                        viewModel.pauseARSession()
+                        dismiss()
+                    },
                     onCancelPlacement: viewModel.cancelPlacement,
+                    onMapTapped: {
+                        print("🗺️ Map button tapped")
+                        print("📍 Current navigation path: \(nav.path)")
+                        viewModel.pauseARSession()
+                        
+                        // 바로 push 하지 말고, AR에서 나간 후 맵으로 이동
+                        nav.pop() // AR에서 나가기
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            nav.push(.map) // 맵으로 이동
+                            print("📍 Updated navigation path: \(nav.path)")
+                        }
+                    },
                     mode: viewModel.cameraMode
                 )
                 
-                // 실시간 헤딩 정보 표시
-                HeadingDebugView(
-                    heading: viewModel.currentHeading,
-                    direction: viewModel.currentDirection
-                )
-                
-                CameraPitchView(
-                    pitch: viewModel.currentPitch,
-                    direction: viewModel.currentPitchDirection
-                )
-                
-                // RayCast 상태 표시
-                RaycastStatusView(
-                    status: viewModel.raycastStatus,
-                    distance: viewModel.raycastDistance
-                )
-                
-                
-               
-              
+                ARDebugInfoView(viewModel: viewModel)
                 
                 Spacer()
                 
@@ -158,7 +192,34 @@ public struct ARCameraView: View {
     }
 }
 
+// MARK: - ARDebugInfoView
+
+@available(iOS 18.0, *)
+private struct ARDebugInfoView: View {
+    @ObservedObject var viewModel: ARCameraViewModel
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            HeadingDebugView(
+                heading: viewModel.currentHeading,
+                direction: viewModel.currentDirection
+            )
+            
+            CameraPitchView(
+                pitch: viewModel.currentPitch,
+                direction: viewModel.currentPitchDirection
+            )
+            
+            RaycastStatusView(
+                status: viewModel.raycastStatus,
+                distance: viewModel.raycastDistance
+            )
+        }
+    }
+}
+
 // MARK: - ARViewContainer
+
 @available(iOS 18.0, *)
 internal struct ARViewContainer: UIViewRepresentable {
     public let sceneManager: ARSceneManager
@@ -175,6 +236,7 @@ internal struct ARViewContainer: UIViewRepresentable {
 }
 
 // MARK: - HeadingDebugView
+
 @available(iOS 18.0, *)
 internal struct HeadingDebugView: View {
     let heading: Double
@@ -182,7 +244,6 @@ internal struct HeadingDebugView: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // 나침반 아이콘
             Image(systemName: "location.north.circle.fill")
                 .font(.title2)
                 .foregroundColor(.white)
@@ -212,6 +273,8 @@ internal struct HeadingDebugView: View {
     }
 }
 
+// MARK: - CameraPitchView
+
 @available(iOS 18.0, *)
 internal struct CameraPitchView: View {
     let pitch: Double
@@ -219,7 +282,6 @@ internal struct CameraPitchView: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // 카메라 방향 아이콘
             Image(systemName: getCameraIcon())
                 .font(.title2)
                 .foregroundColor(getIconColor())
@@ -261,19 +323,20 @@ internal struct CameraPitchView: View {
     
     private func getIconColor() -> Color {
         switch pitch {
-        case 60...: return .cyan    // 하늘
-        case 30..<60: return .blue  // 위쪽
-        case 10..<30: return .green // 약간 위
-        case -10..<10: return .white // 수평
-        case -30..<(-10): return .yellow // 약간 아래
-        case -60..<(-30): return .orange // 아래쪽
-        case ..<(-60): return .red   // 바닥
+        case 60...: return .cyan
+        case 30..<60: return .blue
+        case 10..<30: return .green
+        case -10..<10: return .white
+        case -30..<(-10): return .yellow
+        case -60..<(-30): return .orange
+        case ..<(-60): return .red
         default: return .white
         }
     }
 }
 
-// MARK: - RaycastStatusView (새로 추가)
+// MARK: - RaycastStatusView
+
 @available(iOS 18.0, *)
 internal struct RaycastStatusView: View {
     let status: ARSceneManager.RaycastStatus
@@ -281,7 +344,6 @@ internal struct RaycastStatusView: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // RayCast 상태 아이콘
             Image(systemName: getStatusIcon())
                 .font(.title2)
                 .foregroundColor(Color(status.color))

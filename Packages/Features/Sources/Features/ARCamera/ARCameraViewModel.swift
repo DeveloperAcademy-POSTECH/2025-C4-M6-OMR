@@ -19,6 +19,9 @@ public class ARCameraViewModel: NSObject, ObservableObject {
     @Published var isSavingRecord: Bool = false
     @Published var isFocused: Bool = false
     
+    // MARK: - AR 세션 상태
+      @Published var isARSessionActive: Bool = false
+      private var wasARSessionRunning: Bool = false
     // MARK: - Real-time Heading Info
     @Published var currentHeading: Double = 0.0
     @Published var currentDirection: String = "북쪽"
@@ -137,6 +140,43 @@ public class ARCameraViewModel: NSObject, ObservableObject {
             await fetchAndPlaceRecords()
         }
     }
+    func pauseARSession() {
+           print("AR 세션 일시정지")
+           guard isARSessionActive else {
+               print("AR 세션이 이미 비활성화됨")
+               return
+           }
+           
+           wasARSessionRunning = isARSessionActive
+           arSceneManager.pauseARSession()
+           locationManager.stopUpdatingHeading()
+           locationManager.stopUpdatingLocation()
+           isARSessionActive = false
+           statusMessage = "AR 세션이 일시정지되었습니다"
+       }
+       
+       func resumeARSession() {
+           print("AR 세션 재개 요청")
+           guard !isARSessionActive && wasARSessionRunning else {
+               if isARSessionActive {
+                   print("AR 세션이 이미 활성화됨")
+               } else {
+                   print("이전에 실행 중인 AR 세션이 없음")
+               }
+               return
+           }
+           
+           checkLocationPermissionAndStart()
+           arSceneManager.resumeARSession()
+           isARSessionActive = true
+           statusMessage = "AR 세션이 재개되었습니다"
+           
+           Task {
+               await fetchAndPlaceRecords()
+           }
+       }
+       
+    
 
     // MARK: - Location Permission Management
     
