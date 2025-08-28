@@ -11,11 +11,17 @@ import DesignSystem
 struct ARTopBarView: View {
     let onClose: () -> Void
     let onCancelPlacement: () -> Void
+    let onMapTapped: () -> Void
     let mode: ARCameraMode
     @State private var showCancelAlert = false
 
     var body: some View {
         HStack {
+            // Map 버튼
+            ARMapButton {
+                onMapTapped()
+            }
+            
             Spacer()
             
             if mode == .normal {

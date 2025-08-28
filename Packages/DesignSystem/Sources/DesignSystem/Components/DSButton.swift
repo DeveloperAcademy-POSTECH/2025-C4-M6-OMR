@@ -113,6 +113,18 @@ public func ARCloseButton(action: @escaping () -> Void) -> some View {
 }
 
 @MainActor
+public func ARMapButton(action: @escaping () -> Void) -> some View {
+    ARButton(
+        systemName: "map.fill",
+        width: 36,
+        height: 36,
+        iconSize: 16,
+        iconWeight: .medium,
+        action: action
+    )
+}
+
+@MainActor
 public func ARConfirmationButton(action: @escaping () -> Void) -> some View {
     Button(action: action) {
         Button(action: action) {
@@ -220,6 +232,7 @@ public func ARCancelButton(action: @escaping () -> Void) -> some View {
     }
     .buttonStyle(PlainButtonStyle())
 }
+
 
 @MainActor
 public func MyLocationButton(action: @escaping () -> Void) -> some View {
